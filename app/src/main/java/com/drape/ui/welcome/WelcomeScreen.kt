@@ -1,4 +1,4 @@
-package com.drape.screen
+package com.drape.ui.welcome
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,7 +62,7 @@ fun WelcomeScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.logo_bg),
-                    contentDescription = "Drape Logo",
+                    contentDescription = stringResource(R.string.welcome_logo_description),
                     modifier = Modifier
                         .size(36.dp)
                         .clip(RoundedCornerShape(8.dp)),
@@ -69,7 +70,7 @@ fun WelcomeScreen(
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Drape",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = DrapeBlue,
@@ -85,7 +86,7 @@ fun WelcomeScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
-                text = "Il tuo stile, organizzato.",
+                text = stringResource(R.string.welcome_title),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -97,7 +98,7 @@ fun WelcomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Crea il tuo guardaroba digitale e componi outfit perfetti in pochi secondi.",
+                text = stringResource(R.string.welcome_subtitle),
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.Black.copy(alpha = 0.6f),
                     lineHeight = 22.sp
@@ -119,7 +120,7 @@ fun WelcomeScreen(
                 shape = RoundedCornerShape(28.dp)
             ) {
                 Text(
-                    text = "Inizia ora",
+                    text = stringResource(R.string.welcome_start_button),
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -130,12 +131,12 @@ fun WelcomeScreen(
             TextButton(onClick = onSignInClick) {
                 Row {
                     Text(
-                        text = "Hai già un account? ",
+                        text = stringResource(R.string.welcome_have_account),
                         color = DrapeBlue,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "Accedi",
+                        text = stringResource(R.string.welcome_sign_in),
                         color = DrapeBlue,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyLarge
@@ -177,7 +178,7 @@ fun CaroselloBenvenuto(lista: List<Int>) {
             ) {
                 Image(
                     painter = painterResource(id = lista[pagina]),
-                    contentDescription = "Anteprima stile Drape",
+                    contentDescription = stringResource(R.string.welcome_carousel_description),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )

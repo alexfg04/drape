@@ -5,59 +5,63 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.drape.control.AccountService
-import com.drape.screen.EmailSignUpScreen
-import com.drape.screen.HomeScreen
-import com.drape.screen.SceltaLogScreen
-import com.drape.screen.SignInScreen
-import com.drape.screen.WelcomeScreen
+import com.drape.ui.home.HomeScreen
+import com.drape.ui.login.SceltaLogScreen
+import com.drape.ui.signin.SignInScreen
+import com.drape.ui.signup.EmailSignUpScreen
+import com.drape.ui.welcome.WelcomeScreen
 
 @Composable
 fun DrapeNavHost(
     navController: NavHostController,
-    accountService: AccountService,
     modifier: Modifier = Modifier
 ) {
     NavHost(
         navController = navController,
-        startDestination = "welcome",
+        startDestination = Welcome,
         modifier = modifier
     ) {
-        composable(route = "welcome") {
+        composable<Welcome> {
             WelcomeScreen(
-                onStartClick = { navController.navigate("sceltaLog") },
-                onSignInClick = { navController.navigate("signIn") }
+                onStartClick = { navController.navigate(SceltaLog) },
+                onSignInClick = { navController.navigate(SignIn) }
             )
         }
-        composable(route = "sceltaLog") {
+        composable<SceltaLog> {
             SceltaLogScreen(
                 onBackClick = { navController.popBackStack() },
-                onEmailSignUpClick = { navController.navigate("signUpEmail") }
+                onEmailSignUpClick = { navController.navigate(SignUpEmail) },
+                onNavigateToHome = {
+                    navController.navigate(Home) {
+                        popUpTo<Welcome> { inclusive = true }
+                    }
+                },
+                onGoogleSignInClick = {
+                    // TODO: Implementare Google Sign-In con ActivityResultLauncher
+                }
             )
         }
-        composable(route = "signUpEmail") {
+        composable<SignUpEmail> {
             EmailSignUpScreen(
-                accountService = accountService,
                 onBackClick = { navController.popBackStack() },
                 onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+                    navController.navigate(Home) {
+                        popUpTo<Welcome> { inclusive = true }
                     }
                 }
             )
         }
-        composable(route = "signIn") {
+        composable<SignIn> {
             SignInScreen(
-                accountService = accountService,
                 onBackClick = { navController.popBackStack() },
                 onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+                    navController.navigate(Home) {
+                        popUpTo<Welcome> { inclusive = true }
                     }
                 }
             )
         }
-        composable(route = "home") {
+        composable<Home> {
             HomeScreen(
                 onNavigateToProfile = { /* Naviga al profilo */ }
             )
