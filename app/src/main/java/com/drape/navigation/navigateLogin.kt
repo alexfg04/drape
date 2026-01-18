@@ -5,13 +5,17 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.drape.control.AccountService
 import com.drape.screen.EmailSignUpScreen
+import com.drape.screen.HomeScreen
 import com.drape.screen.SceltaLogScreen
+import com.drape.screen.SignInScreen
 import com.drape.screen.WelcomeScreen
 
 @Composable
 fun DrapeNavHost(
     navController: NavHostController,
+    accountService: AccountService,
     modifier: Modifier = Modifier
 ) {
     NavHost(
@@ -21,7 +25,8 @@ fun DrapeNavHost(
     ) {
         composable(route = "welcome") {
             WelcomeScreen(
-                onStartClick = { navController.navigate("sceltaLog") }
+                onStartClick = { navController.navigate("sceltaLog") },
+                onSignInClick = { navController.navigate("signIn") }
             )
         }
         composable(route = "sceltaLog") {
@@ -32,7 +37,29 @@ fun DrapeNavHost(
         }
         composable(route = "signUpEmail") {
             EmailSignUpScreen(
-                onBackClick = { navController.popBackStack() }
+                accountService = accountService,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate("home") {
+                        popUpTo("welcome") { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(route = "signIn") {
+            SignInScreen(
+                accountService = accountService,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToHome = {
+                    navController.navigate("home") {
+                        popUpTo("welcome") { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(route = "home") {
+            HomeScreen(
+                onNavigateToProfile = { /* Naviga al profilo */ }
             )
         }
     }

@@ -38,7 +38,8 @@ private val InactiveDotColor = Color(0xFFD1E1FF)
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,
-    onStartClick: () -> Unit = {}
+    onStartClick: () -> Unit = {},
+    onSignInClick: () -> Unit = {}
 ) {
     val caroselloImages = listOf(R.drawable.carosello1, R.drawable.carosello1, R.drawable.carosello1)
     val scrollState = rememberScrollState()
@@ -126,7 +127,7 @@ fun WelcomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            TextButton(onClick = { }) {
+            TextButton(onClick = onSignInClick) {
                 Row {
                     Text(
                         text = "Hai già un account? ",

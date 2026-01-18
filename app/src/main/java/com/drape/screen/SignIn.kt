@@ -24,16 +24,15 @@ import com.drape.ui.theme.DrapeTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun EmailSignUpScreen(
+fun SignInScreen(
     modifier: Modifier = Modifier,
     accountService: AccountService? = null,
     onBackClick: () -> Unit = {},
     onNavigateToHome: () -> Unit = {}
 ) {
-    val customGreen = Color(0xFF0F6D46)
     val drapeBlue = Color(0xFF00458D)
+    val customGreen = Color(0xFF0F6D46)
     
-    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
@@ -44,11 +43,7 @@ fun EmailSignUpScreen(
     val scope = rememberCoroutineScope()
 
     val isEmailValid = email.contains("@")
-    val isPasswordValid = password.length >= 8 &&
-            password.any { it.isDigit() } &&
-            password.any { !it.isLetterOrDigit() } &&
-            password.any { it.isUpperCase() }
-    val isFormValid = isEmailValid && name.isNotEmpty() && isPasswordValid && !isLoading
+    val isFormValid = isEmailValid && password.isNotEmpty() && !isLoading
 
     val scrollState = rememberScrollState()
 
@@ -77,7 +72,7 @@ fun EmailSignUpScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Usa la tua email.",
+                text = "Accedi con l'Email",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -94,22 +89,6 @@ fun EmailSignUpScreen(
                 )
             }
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nome Completo") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !isLoading,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = drapeBlue,
-                    unfocusedBorderColor = drapeBlue.copy(alpha = 0.5f),
-                    focusedLabelColor = drapeBlue,
-                    cursorColor = drapeBlue
-                ),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -130,7 +109,7 @@ fun EmailSignUpScreen(
                 singleLine = true,
                 supportingText = {
                     if (email.isNotEmpty() && !isEmailValid) {
-                        Text("Inserisci un'email valida (deve contenere @)")
+                        Text("Inserisci un'email valida")
                     }
                 }
             )
@@ -138,19 +117,16 @@ fun EmailSignUpScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Crea Password") },
+                label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isLoading,
                 singleLine = true,
-                isError = password.isNotEmpty() && !isPasswordValid,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = drapeBlue,
                     unfocusedBorderColor = drapeBlue.copy(alpha = 0.5f),
                     focusedLabelColor = drapeBlue,
-                    cursorColor = drapeBlue,
-                    errorBorderColor = Color.Red,
-                    errorLabelColor = Color.Red
+                    cursorColor = drapeBlue
                 ),
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -164,15 +140,6 @@ fun EmailSignUpScreen(
                         )
                     }
                 }
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Min. 8 caratteri, un numero, un simbolo e una maiuscola",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 12.sp,
-                    color = if (password.isNotEmpty() && !isPasswordValid) Color.Red else Color.Gray
-                ),
-                modifier = Modifier.padding(start = 4.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -205,11 +172,10 @@ fun EmailSignUpScreen(
                         isLoading = true
                         errorMessage = null
                         try {
-                            // Passiamo email, password, il nome inserito e un colore vuoto ("")
-                            accountService?.signUp(email, password, name, "")
+                            accountService?.authenticate(email, password)
                             onNavigateToHome()
                         } catch (e: Exception) {
-                            errorMessage = e.localizedMessage ?: "Errore durante la registrazione"
+                            errorMessage = e.localizedMessage ?: "Errore durante l'accesso"
                         } finally {
                             isLoading = false
                         }
@@ -229,7 +195,7 @@ fun EmailSignUpScreen(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
-                        text = "Crea Account",
+                        text = "Accedi",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -245,8 +211,8 @@ fun EmailSignUpScreen(
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
-fun EmailSignUpPreview() {
+fun SignInPreview() {
     DrapeTheme {
-        EmailSignUpScreen()
+        SignInScreen()
     }
 }
