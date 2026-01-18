@@ -1,4 +1,4 @@
-package com.drape.screen
+package com.drape.ui.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn

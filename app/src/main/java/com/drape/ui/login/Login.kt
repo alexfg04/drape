@@ -1,4 +1,4 @@
-package com.drape.screen
+package com.drape.ui.login
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -7,6 +7,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,18 +22,50 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 
 @Composable
 fun SceltaLogScreen(
     modifier: Modifier = Modifier,
+    viewModel: LoginViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {},
-    onEmailSignUpClick: () -> Unit = {}
+    onEmailSignUpClick: () -> Unit = {},
+    onNavigateToHome: () -> Unit = {},
+    onGoogleSignInClick: () -> Unit = {}
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.isLoginSuccessful) {
+        if (uiState.isLoginSuccessful) {
+            onNavigateToHome()
+        }
+    }
+
+    SceltaLogScreenContent(
+        modifier = modifier,
+        isLoading = uiState.isLoading,
+        errorMessage = uiState.errorMessage,
+        onBackClick = onBackClick,
+        onEmailSignUpClick = onEmailSignUpClick,
+        onGoogleSignInClick = onGoogleSignInClick
+    )
+}
+
+@Composable
+private fun SceltaLogScreenContent(
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
+    onBackClick: () -> Unit = {},
+    onEmailSignUpClick: () -> Unit = {},
+    onGoogleSignInClick: () -> Unit = {}
 ) {
     val localCustomGreen = Color(0xFF3F51B5)
     val scrollState = rememberScrollState()
-    
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -76,14 +110,20 @@ fun SceltaLogScreen(
                 modifier = Modifier.align(Alignment.Start)
             )
             Spacer(modifier = Modifier.height(32.dp))
+
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = Color.Red,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+            }
+
             SceltaLogSocialButton(
                 text = "Continua con Google",
-                iconRes = R.drawable.ic_google
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            SceltaLogSocialButton(
-                text = "Continua con Apple",
-                iconRes = R.drawable.ic_apple
+                iconRes = R.drawable.ic_google,
+                enabled = !isLoading,
+                onClick = onGoogleSignInClick
             )
             Spacer(modifier = Modifier.height(24.dp))
             Row(
@@ -108,19 +148,27 @@ fun SceltaLogScreen(
             Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onEmailSignUpClick,
+                enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = localCustomGreen),
                 shape = RoundedCornerShape(28.dp)
             ) {
-                Text(
-                    text = "Iscriviti con l'Email",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
-                )
+                } else {
+                    Text(
+                        text = "Iscriviti con l'Email",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(24.dp))
             SceltaLogLegalFooter(modifier = Modifier.padding(horizontal = 16.dp))
@@ -133,10 +181,13 @@ fun SceltaLogScreen(
 fun SceltaLogSocialButton(
     iconRes: Int,
     text: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit = {}
 ) {
     OutlinedButton(
-        onClick = { },
+        onClick = onClick,
+        enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp),
@@ -193,7 +244,7 @@ fun SceltaLogLegalFooter(modifier: Modifier = Modifier) {
 @Composable
 fun SceltaLogScreenPreview() {
     DrapeTheme {
-        SceltaLogScreen()
+        SceltaLogScreenContent()
     }
 }
 

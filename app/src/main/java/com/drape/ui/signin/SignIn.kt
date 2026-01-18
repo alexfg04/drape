@@ -1,4 +1,4 @@
-package com.drape.screen
+package com.drape.ui.signin
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -18,37 +18,53 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drape.R
-import com.drape.control.AccountService
 import com.drape.ui.theme.DrapeTheme
-import kotlinx.coroutines.launch
 
 @Composable
-fun EmailSignUpScreen(
+fun SignInScreen(
     modifier: Modifier = Modifier,
-    accountService: AccountService? = null,
+    viewModel: SignInViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {},
     onNavigateToHome: () -> Unit = {}
 ) {
-    val customGreen = Color(0xFF0F6D46)
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(uiState.isSignInSuccessful) {
+        if (uiState.isSignInSuccessful) {
+            onNavigateToHome()
+        }
+    }
+
+    SignInScreenContent(
+        modifier = modifier,
+        isLoading = uiState.isLoading,
+        errorMessage = uiState.errorMessage,
+        onBackClick = onBackClick,
+        onSignIn = viewModel::signIn
+    )
+}
+
+@Composable
+private fun SignInScreenContent(
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    errorMessage: String? = null,
+    onBackClick: () -> Unit = {},
+    onSignIn: (String, String) -> Unit = { _, _ -> }
+) {
     val drapeBlue = Color(0xFF00458D)
-    
-    var name by remember { mutableStateOf("") }
+    val customGreen = Color(0xFF0F6D46)
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
     var isPasswordVisible by remember { mutableStateOf(false) }
-    
-    var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    val scope = rememberCoroutineScope()
 
     val isEmailValid = email.contains("@")
-    val isPasswordValid = password.length >= 8 &&
-            password.any { it.isDigit() } &&
-            password.any { !it.isLetterOrDigit() } &&
-            password.any { it.isUpperCase() }
-    val isFormValid = isEmailValid && name.isNotEmpty() && isPasswordValid && !isLoading
+    val isFormValid = isEmailValid && password.isNotEmpty() && !isLoading
 
     val scrollState = rememberScrollState()
 
@@ -77,7 +93,7 @@ fun EmailSignUpScreen(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Usa la tua email.",
+                text = "Accedi con l'Email",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -85,31 +101,15 @@ fun EmailSignUpScreen(
                 )
             )
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             if (errorMessage != null) {
                 Text(
-                    text = errorMessage!!,
+                    text = errorMessage,
                     color = Color.Red,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nome Completo") },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
-                enabled = !isLoading,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = drapeBlue,
-                    unfocusedBorderColor = drapeBlue.copy(alpha = 0.5f),
-                    focusedLabelColor = drapeBlue,
-                    cursorColor = drapeBlue
-                ),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -130,7 +130,7 @@ fun EmailSignUpScreen(
                 singleLine = true,
                 supportingText = {
                     if (email.isNotEmpty() && !isEmailValid) {
-                        Text("Inserisci un'email valida (deve contenere @)")
+                        Text("Inserisci un'email valida")
                     }
                 }
             )
@@ -138,19 +138,16 @@ fun EmailSignUpScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Crea Password") },
+                label = { Text("Password") },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isLoading,
                 singleLine = true,
-                isError = password.isNotEmpty() && !isPasswordValid,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = drapeBlue,
                     unfocusedBorderColor = drapeBlue.copy(alpha = 0.5f),
                     focusedLabelColor = drapeBlue,
-                    cursorColor = drapeBlue,
-                    errorBorderColor = Color.Red,
-                    errorLabelColor = Color.Red
+                    cursorColor = drapeBlue
                 ),
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -164,15 +161,6 @@ fun EmailSignUpScreen(
                         )
                     }
                 }
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Min. 8 caratteri, un numero, un simbolo e una maiuscola",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 12.sp,
-                    color = if (password.isNotEmpty() && !isPasswordValid) Color.Red else Color.Gray
-                ),
-                modifier = Modifier.padding(start = 4.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -200,21 +188,7 @@ fun EmailSignUpScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = {
-                    scope.launch {
-                        isLoading = true
-                        errorMessage = null
-                        try {
-                            // Passiamo email, password, il nome inserito e un colore vuoto ("")
-                            accountService?.signUp(email, password, name, "")
-                            onNavigateToHome()
-                        } catch (e: Exception) {
-                            errorMessage = e.localizedMessage ?: "Errore durante la registrazione"
-                        } finally {
-                            isLoading = false
-                        }
-                    }
-                },
+                onClick = { onSignIn(email, password) },
                 enabled = isFormValid,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -229,7 +203,7 @@ fun EmailSignUpScreen(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
-                        text = "Crea Account",
+                        text = "Accedi",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -245,8 +219,8 @@ fun EmailSignUpScreen(
 
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
-fun EmailSignUpPreview() {
+fun SignInPreview() {
     DrapeTheme {
-        EmailSignUpScreen()
+        SignInScreenContent()
     }
 }
