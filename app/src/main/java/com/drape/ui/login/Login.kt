@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -75,7 +76,7 @@ private fun SceltaLogScreenContent(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_back),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.back_description),
                     tint = Color.Black
                 )
             }
@@ -92,7 +93,7 @@ private fun SceltaLogScreenContent(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Crea il tuo profilo.",
+                text = stringResource(R.string.login_title),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -102,7 +103,7 @@ private fun SceltaLogScreenContent(
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = "Scegli un metodo di accesso adatto al tuo profilo qui sotto.",
+                text = stringResource(R.string.login_subtitle),
                 style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.Gray,
                     fontSize = 16.sp
@@ -120,7 +121,7 @@ private fun SceltaLogScreenContent(
             }
 
             SceltaLogSocialButton(
-                text = "Continua con Google",
+                text = stringResource(R.string.login_continue_google),
                 iconRes = R.drawable.ic_google,
                 enabled = !isLoading,
                 onClick = onGoogleSignInClick
@@ -135,7 +136,7 @@ private fun SceltaLogScreenContent(
                     color = Color.LightGray.copy(alpha = 0.5f)
                 )
                 Text(
-                    text = "oppure",
+                    text = stringResource(R.string.login_or_divider),
                     color = Color.Gray,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     fontSize = 14.sp
@@ -162,7 +163,7 @@ private fun SceltaLogScreenContent(
                     )
                 } else {
                     Text(
-                        text = "Iscriviti con l'Email",
+                        text = stringResource(R.string.login_email_signup),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -219,16 +220,22 @@ fun SceltaLogSocialButton(
 
 @Composable
 fun SceltaLogLegalFooter(modifier: Modifier = Modifier) {
+    val prefix = stringResource(R.string.login_legal_prefix)
+    val terms = stringResource(R.string.login_terms_of_service)
+    val and = stringResource(R.string.login_legal_and)
+    val privacy = stringResource(R.string.login_privacy_policy)
+    val suffix = stringResource(R.string.login_legal_suffix)
+    
     val annotatedString = buildAnnotatedString {
-        append("Continuando, accetti i nostri ")
+        append(prefix)
         withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-            append("Termini di Servizio")
+            append(terms)
         }
-        append(" e la ")
+        append(and)
         withStyle(style = SpanStyle(textDecoration = TextDecoration.Underline)) {
-            append("Privacy Policy")
+            append(privacy)
         }
-        append(".")
+        append(suffix)
     }
     Text(
         text = annotatedString,
@@ -254,7 +261,7 @@ fun SceltaLogSocialButtonPreview() {
     DrapeTheme {
         SceltaLogSocialButton(
             iconRes = R.drawable.ic_google,
-            text = "Continua con Google",
+            text = "Continua con Google", // Preview-only, uses stringResource in production
             modifier = Modifier.padding(16.dp)
         )
     }

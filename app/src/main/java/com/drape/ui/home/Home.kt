@@ -13,10 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 
 private val DrapeBlue = Color(0xFF00458D)
@@ -33,7 +35,7 @@ fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Drape",
+                        stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = DrapeBlue
@@ -42,12 +44,12 @@ fun HomeScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { /* Apri menu */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.home_menu_description))
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.Person, contentDescription = "Profilo")
+                        Icon(Icons.Default.Person, contentDescription = stringResource(R.string.home_profile_description))
                     }
                 }
             )
@@ -59,7 +61,7 @@ fun HomeScreen(
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Aggiungi")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_add_description))
             }
         }
     ) { innerPadding ->
@@ -73,18 +75,18 @@ fun HomeScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Ciao, Bentornato!",
+                    text = stringResource(R.string.home_greeting),
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                 )
                 Text(
-                    text = "Ecco cosa c'è nel tuo armadio oggi.",
+                    text = stringResource(R.string.home_greeting_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
             }
 
             item {
-                HomeSectionTitle(title = "I tuoi Outfit")
+                HomeSectionTitle(title = stringResource(R.string.home_section_outfits))
             }
 
             // Placeholder per gli outfit
@@ -93,13 +95,13 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutfitPlaceholderCard(modifier = Modifier.weight(1f), title = "Casual")
-                    OutfitPlaceholderCard(modifier = Modifier.weight(1f), title = "Elegante")
+                    OutfitPlaceholderCard(modifier = Modifier.weight(1f), title = stringResource(R.string.home_outfit_casual))
+                    OutfitPlaceholderCard(modifier = Modifier.weight(1f), title = stringResource(R.string.home_outfit_elegant))
                 }
             }
 
             item {
-                HomeSectionTitle(title = "Ultimi Capi Aggiunti")
+                HomeSectionTitle(title = stringResource(R.string.home_section_recent_items))
             }
 
             // Lista fittizia di capi
@@ -155,7 +157,7 @@ fun HomeSectionTitle(title: String) {
             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
         )
         TextButton(onClick = { /* Vedi tutto */ }) {
-            Text("Vedi tutto", color = DrapeBlue)
+            Text(stringResource(R.string.home_see_all), color = DrapeBlue)
         }
     }
 }

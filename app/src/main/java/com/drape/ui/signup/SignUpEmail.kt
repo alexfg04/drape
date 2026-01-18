@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -82,7 +83,7 @@ private fun EmailSignUpScreenContent(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_back),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.back_description),
                     tint = Color.Black
                 )
             }
@@ -98,7 +99,7 @@ private fun EmailSignUpScreenContent(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             Text(
-                text = "Usa la tua email.",
+                text = stringResource(R.string.sign_up_title),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
@@ -118,7 +119,7 @@ private fun EmailSignUpScreenContent(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Nome Completo") },
+                label = { Text(stringResource(R.string.sign_up_full_name)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isLoading,
@@ -134,7 +135,7 @@ private fun EmailSignUpScreenContent(
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = { Text("Indirizzo Email") },
+                label = { Text(stringResource(R.string.auth_email_label)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isLoading,
@@ -151,7 +152,7 @@ private fun EmailSignUpScreenContent(
                 singleLine = true,
                 supportingText = {
                     if (email.isNotEmpty() && !isEmailValid) {
-                        Text("Inserisci un'email valida (deve contenere @)")
+                        Text(stringResource(R.string.auth_email_error_at))
                     }
                 }
             )
@@ -159,7 +160,7 @@ private fun EmailSignUpScreenContent(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("Crea Password") },
+                label = { Text(stringResource(R.string.sign_up_create_password)) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 enabled = !isLoading,
@@ -180,7 +181,7 @@ private fun EmailSignUpScreenContent(
                             painter = painterResource(
                                 id = if (isPasswordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
                             ),
-                            contentDescription = if (isPasswordVisible) "Nascondi password" else "Mostra password",
+                            contentDescription = if (isPasswordVisible) stringResource(R.string.auth_hide_password) else stringResource(R.string.auth_show_password),
                             tint = Color.Gray
                         )
                     }
@@ -188,7 +189,7 @@ private fun EmailSignUpScreenContent(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Min. 8 caratteri, un numero, un simbolo e una maiuscola",
+                text = stringResource(R.string.sign_up_password_hint),
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontSize = 12.sp,
                     color = if (password.isNotEmpty() && !isPasswordValid) Color.Red else Color.Gray
@@ -211,7 +212,7 @@ private fun EmailSignUpScreenContent(
                     )
                 )
                 Text(
-                    text = "Ricordami",
+                    text = stringResource(R.string.auth_remember_me),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Black,
                     modifier = Modifier.padding(start = 4.dp)
@@ -236,7 +237,7 @@ private fun EmailSignUpScreenContent(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
-                        text = "Crea Account",
+                        text = stringResource(R.string.sign_up_button),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,

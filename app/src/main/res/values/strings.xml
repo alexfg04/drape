@@ -1,3 +1,59 @@
 <resources>
     <string name="app_name">Drape</string>
+
+    <!-- Welcome Screen -->
+    <string name="welcome_logo_description">Drape Logo</string>
+    <string name="welcome_title">Il tuo stile, organizzato.</string>
+    <string name="welcome_subtitle">Crea il tuo guardaroba digitale e componi outfit perfetti in pochi secondi.</string>
+    <string name="welcome_start_button">Inizia ora</string>
+    <string name="welcome_have_account">Hai già un account? </string>
+    <string name="welcome_sign_in">Accedi</string>
+    <string name="welcome_carousel_description">Anteprima stile Drape</string>
+
+    <!-- Sign In Screen -->
+    <string name="sign_in_title">Accedi con l\'Email</string>
+    <string name="sign_in_button">Accedi</string>
+
+    <!-- Sign Up Screen -->
+    <string name="sign_up_title">Usa la tua email.</string>
+    <string name="sign_up_full_name">Nome Completo</string>
+    <string name="sign_up_create_password">Crea Password</string>
+    <string name="sign_up_password_hint">Min. 8 caratteri, un numero, un simbolo e una maiuscola</string>
+    <string name="sign_up_button">Crea Account</string>
+
+    <!-- Common Auth -->
+    <string name="auth_email_label">Indirizzo Email</string>
+    <string name="auth_email_error">Inserisci un\'email valida</string>
+    <string name="auth_email_error_at">Inserisci un\'email valida (deve contenere @)</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_show_password">Mostra password</string>
+    <string name="auth_hide_password">Nascondi password</string>
+    <string name="auth_remember_me">Ricordami</string>
+
+    <!-- Login / SceltaLog Screen -->
+    <string name="login_title">Crea il tuo profilo.</string>
+    <string name="login_subtitle">Scegli un metodo di accesso adatto al tuo profilo qui sotto.</string>
+    <string name="login_continue_google">Continua con Google</string>
+    <string name="login_or_divider">oppure</string>
+    <string name="login_email_signup">Iscriviti con l\'Email</string>
+    <string name="login_legal_prefix">Continuando, accetti i nostri </string>
+    <string name="login_terms_of_service">Termini di Servizio</string>
+    <string name="login_legal_and"> e la </string>
+    <string name="login_privacy_policy">Privacy Policy</string>
+    <string name="login_legal_suffix">.</string>
+
+    <!-- Home Screen -->
+    <string name="home_menu_description">Menu</string>
+    <string name="home_profile_description">Profilo</string>
+    <string name="home_add_description">Aggiungi</string>
+    <string name="home_greeting">Ciao, Bentornato!</string>
+    <string name="home_greeting_subtitle">Ecco cosa c\'è nel tuo armadio oggi.</string>
+    <string name="home_section_outfits">I tuoi Outfit</string>
+    <string name="home_section_recent_items">Ultimi Capi Aggiunti</string>
+    <string name="home_see_all">Vedi tutto</string>
+    <string name="home_outfit_casual">Casual</string>
+    <string name="home_outfit_elegant">Elegante</string>
+
+    <!-- Common -->
+    <string name="back_description">Indietro</string>
 </resources>

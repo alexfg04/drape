@@ -18,22 +18,22 @@ fun DrapeNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "welcome",
+        startDestination = Welcome,
         modifier = modifier
     ) {
-        composable(route = "welcome") {
+        composable<Welcome> {
             WelcomeScreen(
-                onStartClick = { navController.navigate("sceltaLog") },
-                onSignInClick = { navController.navigate("signIn") }
+                onStartClick = { navController.navigate(SceltaLog) },
+                onSignInClick = { navController.navigate(SignIn) }
             )
         }
-        composable(route = "sceltaLog") {
+        composable<SceltaLog> {
             SceltaLogScreen(
                 onBackClick = { navController.popBackStack() },
-                onEmailSignUpClick = { navController.navigate("signUpEmail") },
+                onEmailSignUpClick = { navController.navigate(SignUpEmail) },
                 onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+                    navController.navigate(Home) {
+                        popUpTo<Welcome> { inclusive = true }
                     }
                 },
                 onGoogleSignInClick = {
@@ -41,27 +41,27 @@ fun DrapeNavHost(
                 }
             )
         }
-        composable(route = "signUpEmail") {
+        composable<SignUpEmail> {
             EmailSignUpScreen(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+                    navController.navigate(Home) {
+                        popUpTo<Welcome> { inclusive = true }
                     }
                 }
             )
         }
-        composable(route = "signIn") {
+        composable<SignIn> {
             SignInScreen(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToHome = {
-                    navController.navigate("home") {
-                        popUpTo("welcome") { inclusive = true }
+                    navController.navigate(Home) {
+                        popUpTo<Welcome> { inclusive = true }
                     }
                 }
             )
         }
-        composable(route = "home") {
+        composable<Home> {
             HomeScreen(
                 onNavigateToProfile = { /* Naviga al profilo */ }
             )
