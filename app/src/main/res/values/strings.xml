@@ -54,6 +54,12 @@
     <string name="home_outfit_casual">Casual</string>
     <string name="home_outfit_elegant">Elegante</string>
 
+    <!-- Color Selection Screen -->
+    <string name="color_selection_title">Scegli il tuo colore preferito</string>
+    <string name="color_selection_subtitle">Personalizza la tua esperienza e scopri outfit abbinati al tuo gusto.</string>
+    <string name="continue_button">Continua</string>
+    <string name="outfit_preview_label">Anteprima Outfit</string>
+
     <!-- Common -->
     <string name="back_description">Indietro</string>
 </resources>
