@@ -12,7 +12,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -20,8 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
-
-private val DrapeBlue = Color(0xFF00458D)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,32 +35,44 @@ fun HomeScreen(
                         stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = DrapeBlue
+                            color = MaterialTheme.colorScheme.primary
                         )
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { /* Apri menu */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = stringResource(R.string.home_menu_description))
+                        Icon(
+                            Icons.Default.Menu, 
+                            contentDescription = stringResource(R.string.home_menu_description),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.Person, contentDescription = stringResource(R.string.home_profile_description))
+                        Icon(
+                            Icons.Default.Person, 
+                            contentDescription = stringResource(R.string.home_profile_description),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { /* Aggiungi nuovo elemento */ },
-                containerColor = DrapeBlue,
-                contentColor = Color.White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_add_description))
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -76,12 +85,15 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = stringResource(R.string.home_greeting),
-                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 )
                 Text(
                     text = stringResource(R.string.home_greeting_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -110,7 +122,7 @@ fun HomeScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
                 ) {
                     Row(
                         modifier = Modifier
@@ -126,12 +138,16 @@ fun HomeScreen(
                             // Placeholder per immagine capo
                             Surface(
                                 modifier = Modifier.fillMaxSize(),
-                                color = DrapeBlue.copy(alpha = 0.1f),
+                                color = MaterialTheme.colorScheme.primaryContainer,
                                 shape = RoundedCornerShape(8.dp)
                             ) {}
                         }
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(text = garment, fontWeight = FontWeight.Medium)
+                        Text(
+                            text = garment, 
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
@@ -154,10 +170,13 @@ fun HomeSectionTitle(title: String) {
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
         )
         TextButton(onClick = { /* Vedi tutto */ }) {
-            Text(stringResource(R.string.home_see_all), color = DrapeBlue)
+            Text(stringResource(R.string.home_see_all), color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -167,7 +186,7 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
     Card(
         modifier = modifier.height(150.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DrapeBlue.copy(alpha = 0.05f))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -177,7 +196,8 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
                 text = title,
                 modifier = Modifier.padding(12.dp),
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

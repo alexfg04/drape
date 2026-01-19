@@ -19,7 +19,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -33,9 +32,6 @@ import com.drape.ui.theme.DrapeTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private val DrapeBlue = Color(0xFF00458D)
-private val InactiveDotColor = Color(0xFFD1E1FF)
-
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,
@@ -47,7 +43,7 @@ fun WelcomeScreen(
 
     Surface(
         modifier = modifier.fillMaxSize(),
-        color = Color.White
+        color = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
@@ -74,7 +70,7 @@ fun WelcomeScreen(
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 ),
                 textAlign = TextAlign.Center
             )
@@ -84,7 +80,7 @@ fun WelcomeScreen(
             Text(
                 text = stringResource(R.string.welcome_subtitle),
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    color = Color.Black.copy(alpha = 0.6f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     lineHeight = 22.sp
                 ),
                 textAlign = TextAlign.Center,
@@ -99,13 +95,13 @@ fun WelcomeScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DrapeBlue
+                    containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(28.dp)
             ) {
                 Text(
                     text = stringResource(R.string.welcome_start_button),
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -116,12 +112,12 @@ fun WelcomeScreen(
                 Row {
                     Text(
                         text = stringResource(R.string.welcome_have_account),
-                        color = DrapeBlue,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
                         text = stringResource(R.string.welcome_sign_in),
-                        color = DrapeBlue,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodyLarge
                     )
@@ -178,7 +174,7 @@ fun CaroselloBenvenuto(lista: List<Int>) {
         ) {
             repeat(pagerState.pageCount) { iteration ->
                 val active = pagerState.currentPage == iteration
-                val color = if (active) DrapeBlue else InactiveDotColor
+                val color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
                 val width = if (active) 24.dp else 8.dp
                 Box(
                     modifier = Modifier

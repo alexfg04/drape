@@ -11,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -64,7 +63,6 @@ private fun SceltaLogScreenContent(
     onEmailSignUpClick: () -> Unit = {},
     onGoogleSignInClick: () -> Unit = {}
 ) {
-    val localCustomGreen = Color(0xFF3F51B5)
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -77,11 +75,11 @@ private fun SceltaLogScreenContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back_description),
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -97,7 +95,7 @@ private fun SceltaLogScreenContent(
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 ),
                 modifier = Modifier.align(Alignment.Start)
             )
@@ -105,7 +103,7 @@ private fun SceltaLogScreenContent(
             Text(
                 text = stringResource(R.string.login_subtitle),
                 style = MaterialTheme.typography.bodyLarge.copy(
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 16.sp
                 ),
                 modifier = Modifier.align(Alignment.Start)
@@ -115,7 +113,7 @@ private fun SceltaLogScreenContent(
             if (errorMessage != null) {
                 Text(
                     text = errorMessage,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
@@ -133,17 +131,17 @@ private fun SceltaLogScreenContent(
             ) {
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
-                    color = Color.LightGray.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.outlineVariant
                 )
                 Text(
                     text = stringResource(R.string.login_or_divider),
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     fontSize = 14.sp
                 )
                 HorizontalDivider(
                     modifier = Modifier.weight(1f),
-                    color = Color.LightGray.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.outlineVariant
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
@@ -153,12 +151,12 @@ private fun SceltaLogScreenContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = localCustomGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 shape = RoundedCornerShape(28.dp)
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(24.dp)
                     )
                 } else {
@@ -166,7 +164,7 @@ private fun SceltaLogScreenContent(
                         text = stringResource(R.string.login_email_signup),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                 }
@@ -193,8 +191,8 @@ fun SceltaLogSocialButton(
             .fillMaxWidth()
             .height(56.dp),
         shape = RoundedCornerShape(28.dp),
-        border = BorderStroke(1.dp, Color.LightGray),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -203,13 +201,13 @@ fun SceltaLogSocialButton(
             Icon(
                 painter = painterResource(id = iconRes),
                 contentDescription = null,
-                tint = Color.Unspecified,
+                tint = androidx.compose.ui.graphics.Color.Unspecified,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
                 text = text,
-                color = Color.Black,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium
                 )
@@ -241,7 +239,7 @@ fun SceltaLogLegalFooter(modifier: Modifier = Modifier) {
         text = annotatedString,
         modifier = modifier,
         fontSize = 12.sp,
-        color = Color.Gray,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
         lineHeight = 18.sp
     )
