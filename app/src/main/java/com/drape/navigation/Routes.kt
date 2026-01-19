@@ -4,8 +4,22 @@ import kotlinx.serialization.Serializable
 
 /**
  * Type-safe navigation routes using Kotlin Serialization.
- * Each route is a serializable object/data class.
+ * Organized by feature/graph.
  */
+
+// ============================================
+// Root Routes
+// ============================================
+
+@Serializable
+object Splash
+
+// ============================================
+// Auth Graph Routes
+// ============================================
+
+@Serializable
+object AuthGraph  // Nested graph identifier
 
 @Serializable
 object Welcome
@@ -19,5 +33,15 @@ object SignUpEmail
 @Serializable
 object SignIn
 
+// ============================================
+// Home Graph Routes
+// ============================================
+
+@Serializable
+object HomeGraph  // Nested graph identifier
+
 @Serializable
 object Home
+
+@Serializable
+object Profile

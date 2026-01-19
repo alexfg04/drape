@@ -10,7 +10,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.drape.navigation.DrapeNavHost
+import com.drape.navigation.DrapeNavGraph
 import com.drape.ui.theme.DrapeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
 fun DrapeApp() {
     val navController = rememberNavController()
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        DrapeNavHost(
+        DrapeNavGraph(
             navController = navController,
             modifier = Modifier.padding(innerPadding)
         )
