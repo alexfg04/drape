@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -103,7 +104,7 @@ fun CurvedBottomNavigation(
             ) {
                 Icon(
                     imageVector = items[selectedIndex].icon,
-                    contentDescription = items[selectedIndex].title,
+                    contentDescription = stringResource(id = items[selectedIndex].titleRes),
                     tint = activeColor,
                     modifier = Modifier.size(28.dp)
                 )
@@ -138,13 +139,13 @@ fun CurvedBottomNavigation(
                         if (!isSelected) {
                             Icon(
                                 imageVector = item.icon,
-                                contentDescription = item.title,
+                                contentDescription = stringResource(id = item.titleRes),
                                 tint = inactiveColor,
                                 modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = item.title,
+                                text = stringResource(id = item.titleRes),
                                 color = inactiveColor,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Normal,

@@ -20,7 +20,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.drape.R
 import com.drape.navigation.BottomNavItems
-import com.drape.navigation.Profile
+import com.drape.navigation.navigateToBottomBarItem
 import com.drape.ui.components.CurvedBottomNavigation
 import com.drape.ui.theme.DrapeTheme
 
@@ -58,7 +58,7 @@ fun HomeScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { navController.navigate(Profile) }) {
+                    IconButton(onClick = { navController.navigateToBottomBarItem(3, 0) }) {
                         Icon(
                             Icons.Default.Person, 
                             contentDescription = stringResource(R.string.home_profile_description),
@@ -76,13 +76,7 @@ fun HomeScreen(navController: NavHostController) {
                 items = BottomNavItems,
                 selectedIndex = 0, // Index for "Home"
                 onItemSelected = { index ->
-                    if (index != 0) {
-                        navController.navigate(BottomNavItems[index].route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
+                    navController.navigateToBottomBarItem(index, 0)
                 }
             )
         },
