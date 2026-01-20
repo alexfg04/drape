@@ -54,6 +54,23 @@
     <string name="home_outfit_casual">Casual</string>
     <string name="home_outfit_elegant">Elegante</string>
 
+    <!-- Color Selection Screen -->
+    <string name="color_selection_title">Scegli il tuo colore preferito</string>
+    <string name="color_selection_subtitle">Personalizza la tua esperienza e scopri outfit abbinati al tuo gusto.</string>
+    <string name="continue_button">Continua</string>
+    <string name="outfit_preview_label">Anteprima Outfit</string>
+    <string name="color_selection_personalize">Personalizza il tuo stile</string>
+    <string name="outfit_preview_subtitle">Personalizza il tuo stile</string>
+
+    <!-- Home Sections -->
+    <string name="home_nav_home">Home</string>
+    <string name="home_nav_camerino">Componi</string>
+    <string name="home_nav_add">Aggiungi</string>
+    <string name="home_nav_profile">Profilo</string>
+    <string name="home_page_camerino">Pagina Camerino</string>
+    <string name="home_page_add">Pagina Aggiungi</string>
+    <string name="home_page_profile">Pagina Profilo</string>
+
     <!-- Common -->
     <string name="back_description">Indietro</string>
 </resources>

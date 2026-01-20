@@ -47,14 +47,9 @@ fun DrapeNavGraph(
             }
         )
 
-        // Home Flow: Home, Profile, Settings (future)
+        // Home Flow: Home, Camerino, Add, Profile
         homeNavGraph(
-            navController = navController,
-            onLogout = {
-                navController.navigate(AuthGraph) {
-                    popUpTo<HomeGraph> { inclusive = true }
-                }
-            }
+            navController = navController
         )
     }
 }

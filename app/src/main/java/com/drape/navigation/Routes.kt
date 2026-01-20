@@ -44,4 +44,10 @@ object HomeGraph  // Nested graph identifier
 object Home
 
 @Serializable
+object Camerino
+
+@Serializable
+object Add
+
+@Serializable
 object Profile

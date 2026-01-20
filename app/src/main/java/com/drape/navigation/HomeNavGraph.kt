@@ -1,29 +1,36 @@
 package com.drape.navigation
 
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import com.drape.ui.home.AddScreen
+import com.drape.ui.home.CamerinoScreen
 import com.drape.ui.home.HomeScreen
+import com.drape.ui.home.ProfileScreen
 
 /**
  * Home navigation graph.
- * Contains: Home, Profile (future), Settings (future)
+ * Contains all screens accessible from the bottom navigation bar.
  */
 fun NavGraphBuilder.homeNavGraph(
-    navController: NavController,
-    onLogout: () -> Unit
+    navController: NavHostController
 ) {
     navigation<HomeGraph>(startDestination = Home) {
         composable<Home> {
-            HomeScreen(
-                onNavigateToProfile = { navController.navigate(Profile) }
-            )
+            HomeScreen(navController = navController)
+        }
+
+        composable<Camerino> {
+            CamerinoScreen(navController = navController)
+        }
+
+        composable<Add> {
+            AddScreen(navController = navController)
         }
 
         composable<Profile> {
-            // TODO: ProfileScreen
-            // Per ora placeholder, verrà implementato in futuro
+            ProfileScreen(navController = navController)
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.drape.navigation
 
-import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.drape.ui.login.SceltaLogScreen
@@ -10,11 +10,11 @@ import com.drape.ui.signup.EmailSignUpScreen
 import com.drape.ui.welcome.WelcomeScreen
 
 /**
- * Authentication navigation graph.
- * Contains: Welcome, SceltaLog, SignIn, SignUpEmail
+ * Auth navigation graph.
+ * Contains: Welcome, SignIn, SignUp, SceltaLog
  */
 fun NavGraphBuilder.authNavGraph(
-    navController: NavController,
+    navController: NavHostController,
     onNavigateToHome: () -> Unit
 ) {
     navigation<AuthGraph>(startDestination = Welcome) {
@@ -24,25 +24,22 @@ fun NavGraphBuilder.authNavGraph(
                 onSignInClick = { navController.navigate(SignIn) }
             )
         }
-
         composable<SceltaLog> {
             SceltaLogScreen(
                 onBackClick = { navController.popBackStack() },
                 onEmailSignUpClick = { navController.navigate(SignUpEmail) },
                 onNavigateToHome = onNavigateToHome,
                 onGoogleSignInClick = {
-                    // TODO: Implementare Google Sign-In con ActivityResultLauncher
+                    // TODO: Implement Google Sign-In logic
                 }
             )
         }
-
         composable<SignUpEmail> {
             EmailSignUpScreen(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToHome = onNavigateToHome
             )
         }
-
         composable<SignIn> {
             SignInScreen(
                 onBackClick = { navController.popBackStack() },

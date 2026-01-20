@@ -5,7 +5,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -17,17 +16,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import com.drape.R
+import com.drape.navigation.BottomNavItems
+import com.drape.navigation.navigateToBottomBarItem
+import com.drape.ui.components.CurvedBottomNavigation
 import com.drape.ui.theme.DrapeTheme
 
+/**
+ * Main app screen after login.
+ *
+ * Displays a greeting to the user, suggested outfits, and recent items.
+ * Provides access to the side menu, profile, and bottom navigation.
+ *
+ * @param navController navigation controller for screen transitions
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    modifier: Modifier = Modifier,
-    onNavigateToProfile: () -> Unit = {}
-) {
+fun HomeScreen(navController: NavHostController) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -40,7 +49,7 @@ fun HomeScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = { /* Apri menu */ }) {
+                    IconButton(onClick = { /* Open menu */ }) {
                         Icon(
                             Icons.Default.Menu, 
                             contentDescription = stringResource(R.string.home_menu_description),
@@ -49,7 +58,7 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToProfile) {
+                    IconButton(onClick = { navController.navigateToBottomBarItem(3, 0) }) {
                         Icon(
                             Icons.Default.Person, 
                             contentDescription = stringResource(R.string.home_profile_description),
@@ -62,15 +71,14 @@ fun HomeScreen(
                 )
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* Aggiungi nuovo elemento */ },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_add_description))
-            }
+        bottomBar = {
+            CurvedBottomNavigation(
+                items = BottomNavItems,
+                selectedIndex = 0, // Index for "Home"
+                onItemSelected = { index ->
+                    navController.navigateToBottomBarItem(index, 0)
+                }
+            )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
@@ -101,7 +109,7 @@ fun HomeScreen(
                 HomeSectionTitle(title = stringResource(R.string.home_section_outfits))
             }
 
-            // Placeholder per gli outfit
+            // Outfit placeholders
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -116,7 +124,7 @@ fun HomeScreen(
                 HomeSectionTitle(title = stringResource(R.string.home_section_recent_items))
             }
 
-            // Lista fittizia di capi
+            // Placeholder garment list
             val items = listOf("Giacca di jeans", "T-shirt bianca", "Pantaloni neri", "Sneakers")
             items(items) { garment ->
                 Card(
@@ -135,7 +143,7 @@ fun HomeScreen(
                                 .size(50.dp)
                                 .padding(4.dp)
                         ) {
-                            // Placeholder per immagine capo
+                            // Garment image placeholder
                             Surface(
                                 modifier = Modifier.fillMaxSize(),
                                 color = MaterialTheme.colorScheme.primaryContainer,
@@ -153,7 +161,7 @@ fun HomeScreen(
             }
             
             item {
-                Spacer(modifier = Modifier.height(80.dp)) // Spazio per il FAB
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -175,7 +183,7 @@ fun HomeSectionTitle(title: String) {
                 color = MaterialTheme.colorScheme.onBackground
             )
         )
-        TextButton(onClick = { /* Vedi tutto */ }) {
+        TextButton(onClick = { /* See all */ }) {
             Text(stringResource(R.string.home_see_all), color = MaterialTheme.colorScheme.primary)
         }
     }
@@ -207,6 +215,6 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
 @Composable
 fun HomePreview() {
     DrapeTheme {
-        HomeScreen()
+        HomeScreen(navController = rememberNavController())
     }
 }
