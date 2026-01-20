@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,9 +55,6 @@ private fun SignInScreenContent(
     onBackClick: () -> Unit = {},
     onSignIn: (String, String) -> Unit = { _, _ -> }
 ) {
-    val drapeBlue = Color(0xFF00458D)
-    val customGreen = Color(0xFF0F6D46)
-
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var rememberMe by remember { mutableStateOf(false) }
@@ -79,11 +75,11 @@ private fun SignInScreenContent(
                 Icon(
                     painter = painterResource(id = R.drawable.ic_back),
                     contentDescription = stringResource(R.string.back_description),
-                    tint = Color.Black
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
         },
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -98,7 +94,7 @@ private fun SignInScreenContent(
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     fontSize = 28.sp,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
             Spacer(modifier = Modifier.height(32.dp))
@@ -106,7 +102,7 @@ private fun SignInScreenContent(
             if (errorMessage != null) {
                 Text(
                     text = errorMessage,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
@@ -121,12 +117,12 @@ private fun SignInScreenContent(
                 isError = email.isNotEmpty() && !isEmailValid,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = drapeBlue,
-                    unfocusedBorderColor = drapeBlue.copy(alpha = 0.5f),
-                    focusedLabelColor = drapeBlue,
-                    cursorColor = drapeBlue,
-                    errorBorderColor = Color.Red,
-                    errorLabelColor = Color.Red
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
+                    errorLabelColor = MaterialTheme.colorScheme.error
                 ),
                 singleLine = true,
                 supportingText = {
@@ -145,10 +141,10 @@ private fun SignInScreenContent(
                 enabled = !isLoading,
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = drapeBlue,
-                    unfocusedBorderColor = drapeBlue.copy(alpha = 0.5f),
-                    focusedLabelColor = drapeBlue,
-                    cursorColor = drapeBlue
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 ),
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -158,7 +154,7 @@ private fun SignInScreenContent(
                                 id = if (isPasswordVisible) R.drawable.ic_visibility else R.drawable.ic_visibility_off
                             ),
                             contentDescription = if (isPasswordVisible) stringResource(R.string.auth_hide_password) else stringResource(R.string.auth_show_password),
-                            tint = Color.Gray
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -174,14 +170,14 @@ private fun SignInScreenContent(
                     selected = rememberMe,
                     onClick = { if (!isLoading) rememberMe = !rememberMe },
                     colors = RadioButtonDefaults.colors(
-                        selectedColor = drapeBlue,
-                        unselectedColor = Color.LightGray
+                        selectedColor = MaterialTheme.colorScheme.primary,
+                        unselectedColor = MaterialTheme.colorScheme.outline
                     )
                 )
                 Text(
                     text = stringResource(R.string.auth_remember_me),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(start = 4.dp)
                 )
             }
@@ -195,20 +191,20 @@ private fun SignInScreenContent(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = customGreen,
-                    disabledContainerColor = customGreen.copy(alpha = 0.5f)
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                 ),
                 shape = RoundedCornerShape(28.dp)
             ) {
                 if (isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
                     Text(
                         text = stringResource(R.string.sign_in_button),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color.White
+                            color = MaterialTheme.colorScheme.onPrimary
                         )
                     )
                 }
