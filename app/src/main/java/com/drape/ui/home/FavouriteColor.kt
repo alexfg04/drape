@@ -159,7 +159,10 @@ fun ColorPickerCircular(
             shadowElevation = 8.dp,
             border = BorderStroke(4.dp, Color.White)
         ) {
-            Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = null,
