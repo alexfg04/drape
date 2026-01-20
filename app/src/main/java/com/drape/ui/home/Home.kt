@@ -5,11 +5,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,19 +16,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.drape.R
+import com.drape.navigation.BottomNavItems
+import com.drape.ui.components.CurvedBottomNavigation
 import com.drape.ui.theme.DrapeTheme
 
 private val DrapeBlue = Color(0xFF00458D)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    modifier: Modifier = Modifier,
-    onNavigateToProfile: () -> Unit = {}
-) {
+fun HomeScreen(navController: NavHostController) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -48,21 +46,26 @@ fun HomeScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onNavigateToProfile) {
+                    IconButton(onClick = { navController.navigate(com.drape.navigation.Profilo) }) {
                         Icon(Icons.Default.Person, contentDescription = stringResource(R.string.home_profile_description))
                     }
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* Aggiungi nuovo elemento */ },
-                containerColor = DrapeBlue,
-                contentColor = Color.White,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.home_add_description))
-            }
+        bottomBar = {
+            CurvedBottomNavigation(
+                items = BottomNavItems,
+                selectedIndex = 0, // Indice per "Home"
+                onItemSelected = { index ->
+                    if (index != 0) {
+                        navController.navigate(BottomNavItems[index].route) {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                }
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -137,7 +140,7 @@ fun HomeScreen(
             }
             
             item {
-                Spacer(modifier = Modifier.height(80.dp)) // Spazio per il FAB
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
@@ -180,13 +183,5 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
                 fontSize = 16.sp
             )
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun HomePreview() {
-    DrapeTheme {
-        HomeScreen()
     }
 }
