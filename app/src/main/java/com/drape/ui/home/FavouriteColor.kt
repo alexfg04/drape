@@ -252,7 +252,7 @@ fun OutfitPreviewCard(
                     )
                 )
                 Text(
-                    text = "Personalizza il tuo stile",
+                    text = stringResource(id = R.string.outfit_preview_subtitle),
                     style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray)
                 )
             }

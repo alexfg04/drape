@@ -60,6 +60,7 @@
     <string name="continue_button">Continua</string>
     <string name="outfit_preview_label">Anteprima Outfit</string>
     <string name="color_selection_personalize">Personalizza il tuo stile</string>
+    <string name="outfit_preview_subtitle">Personalizza il tuo stile</string>
 
     <!-- Home Sections -->
     <string name="home_nav_home">Home</string>
