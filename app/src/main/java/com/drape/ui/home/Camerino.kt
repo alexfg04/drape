@@ -19,7 +19,7 @@ fun CamerinoScreen(navController: NavHostController) {
         bottomBar = {
             CurvedBottomNavigation(
                 items = BottomNavItems,
-                selectedIndex = 1, // Indice per "Componi"
+                selectedIndex = 1, // Index for "Camerino"
                 onItemSelected = { index ->
                     if (index != 1) {
                         navController.navigate(BottomNavItems[index].route) {
@@ -39,7 +39,7 @@ fun CamerinoScreen(navController: NavHostController) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Pagina Camerino",
+                text = "Camerino Page",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00458D)

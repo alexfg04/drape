@@ -19,7 +19,7 @@ fun AddScreen(navController: NavHostController) {
         bottomBar = {
             CurvedBottomNavigation(
                 items = BottomNavItems,
-                selectedIndex = 2, // Indice per "Aggiungi"
+                selectedIndex = 2, // Index for "Add"
                 onItemSelected = { index ->
                     if (index != 2) {
                         navController.navigate(BottomNavItems[index].route) {
@@ -39,7 +39,7 @@ fun AddScreen(navController: NavHostController) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Pagina Aggiungi",
+                text = "Add Page",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00458D)

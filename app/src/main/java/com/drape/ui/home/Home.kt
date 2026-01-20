@@ -46,7 +46,7 @@ fun HomeScreen(navController: NavHostController) {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { navController.navigate(com.drape.navigation.Profilo) }) {
+                    IconButton(onClick = { navController.navigate(com.drape.navigation.Profile) }) {
                         Icon(Icons.Default.Person, contentDescription = stringResource(R.string.home_profile_description))
                     }
                 }
@@ -55,7 +55,7 @@ fun HomeScreen(navController: NavHostController) {
         bottomBar = {
             CurvedBottomNavigation(
                 items = BottomNavItems,
-                selectedIndex = 0, // Indice per "Home"
+                selectedIndex = 0, // Index for "Home"
                 onItemSelected = { index ->
                     if (index != 0) {
                         navController.navigate(BottomNavItems[index].route) {

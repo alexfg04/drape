@@ -19,7 +19,7 @@ fun ProfileScreen(navController: NavHostController) {
         bottomBar = {
             CurvedBottomNavigation(
                 items = BottomNavItems,
-                selectedIndex = 3, // Indice per "Profilo"
+                selectedIndex = 3, // Index for "Profile"
                 onItemSelected = { index ->
                     if (index != 3) {
                         navController.navigate(BottomNavItems[index].route) {
@@ -39,7 +39,7 @@ fun ProfileScreen(navController: NavHostController) {
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Pagina Profilo",
+                text = "Profile Page",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xFF00458D)
