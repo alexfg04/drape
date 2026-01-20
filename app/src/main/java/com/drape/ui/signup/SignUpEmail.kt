@@ -23,6 +23,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 
+/**
+ * Email and password registration screen.
+ *
+ * Allows new users to create an account by entering name, email, and password.
+ * Password must meet security requirements (8+ chars, uppercase, number, symbol).
+ * Automatically navigates to Home after successful registration.
+ *
+ * @param modifier optional layout modifier
+ * @param viewModel ViewModel managing registration state and logic
+ * @param onBackClick callback invoked when user taps the back button
+ * @param onNavigateToHome callback invoked after successful registration
+ */
 @Composable
 fun EmailSignUpScreen(
     modifier: Modifier = Modifier,

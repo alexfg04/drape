@@ -20,6 +20,15 @@ import androidx.compose.ui.unit.sp
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 
+/**
+ * Main app screen after login.
+ *
+ * Displays a greeting to the user, suggested outfits, and recent items.
+ * Provides access to the side menu, profile, and new item creation.
+ *
+ * @param modifier optional layout modifier
+ * @param onNavigateToProfile callback invoked to navigate to user profile
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(

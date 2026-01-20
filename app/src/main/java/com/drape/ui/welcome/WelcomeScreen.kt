@@ -32,6 +32,16 @@ import com.drape.ui.theme.DrapeTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Welcome screen shown to unauthenticated users.
+ *
+ * Displays a promotional image carousel, app branding,
+ * and options to start registration or sign in with an existing account.
+ *
+ * @param modifier optional layout modifier
+ * @param onStartClick callback invoked when user taps "Start" to register
+ * @param onSignInClick callback invoked when user wants to sign in with existing account
+ */
 @Composable
 fun WelcomeScreen(
     modifier: Modifier = Modifier,

@@ -23,6 +23,17 @@ import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 import kotlinx.coroutines.delay
 
+/**
+ * Initial splash screen of the app.
+ *
+ * Displays the logo briefly, then checks authentication state
+ * and automatically navigates to the appropriate destination.
+ *
+ * @param modifier optional layout modifier
+ * @param viewModel ViewModel providing authentication state
+ * @param onNavigateToWelcome callback invoked if user is not authenticated
+ * @param onNavigateToHome callback invoked if user is already authenticated
+ */
 @Composable
 fun SplashScreen(
     modifier: Modifier = Modifier,

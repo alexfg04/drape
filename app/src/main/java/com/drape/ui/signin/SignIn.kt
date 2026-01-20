@@ -23,6 +23,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 
+/**
+ * Email and password sign-in screen.
+ *
+ * Allows registered users to log in with their credentials.
+ * Automatically navigates to Home after successful login.
+ *
+ * @param modifier optional layout modifier
+ * @param viewModel ViewModel managing sign-in state and logic
+ * @param onBackClick callback invoked when user taps the back button
+ * @param onNavigateToHome callback invoked after successful login
+ */
 @Composable
 fun SignInScreen(
     modifier: Modifier = Modifier,
