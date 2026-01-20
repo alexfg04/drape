@@ -1,7 +1,6 @@
 package com.drape.navigation
 
 import androidx.navigation.NavGraphBuilder
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.drape.ui.home.AddScreen
@@ -12,25 +11,26 @@ import com.drape.ui.home.ProfileScreen
 /**
  * Home navigation graph.
  * Contains all screens accessible from the bottom navigation bar.
+ * 
+ * Note: Bottom navigation is handled at app level (MainActivity),
+ * so individual screens don't need NavHostController for bottom bar navigation.
  */
-fun NavGraphBuilder.homeNavGraph(
-    navController: NavHostController
-) {
+fun NavGraphBuilder.homeNavGraph() {
     navigation<HomeGraph>(startDestination = Home) {
         composable<Home> {
-            HomeScreen(navController = navController)
+            HomeScreen()
         }
 
         composable<Camerino> {
-            CamerinoScreen(navController = navController)
+            CamerinoScreen()
         }
 
         composable<Add> {
-            AddScreen(navController = navController)
+            AddScreen()
         }
 
         composable<Profile> {
-            ProfileScreen(navController = navController)
+            ProfileScreen()
         }
     }
 }

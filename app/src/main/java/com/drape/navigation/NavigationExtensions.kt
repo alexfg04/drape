@@ -5,11 +5,20 @@ import androidx.navigation.NavHostController
 
 /**
  * Handles bottom bar navigation in a centralized way.
- * Avoids duplication of navigation logic in each screen.
+ * 
+ * @deprecated Use [com.drape.ui.DrapeAppState.navigateToBottomBarDestination] instead.
+ * This function is kept for backwards compatibility.
  * 
  * @param index The index of the selected item.
  * @param currentIndex The index of the current page.
  */
+@Deprecated(
+    message = "Use DrapeAppState.navigateToBottomBarDestination() instead",
+    replaceWith = ReplaceWith(
+        "appState.navigateToBottomBarDestination(index)",
+        "com.drape.ui.DrapeAppState"
+    )
+)
 fun NavHostController.navigateToBottomBarItem(index: Int, currentIndex: Int) {
     if (index != currentIndex) {
         val route = BottomNavItems[index].route

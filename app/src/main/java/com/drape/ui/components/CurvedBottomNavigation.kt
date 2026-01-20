@@ -21,11 +21,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Una barra di navigazione moderna con incavo dinamico e icona fluttuante.
+ * A modern navigation bar with dynamic notch and floating icon.
  *
- * @param items Elementi della navigazione.
- * @param selectedIndex Indice dell'elemento attivo.
- * @param onItemSelected Callback al cambio di selezione.
+ * @param items Navigation items to display.
+ * @param selectedIndex Index of the currently active item.
+ * @param onItemSelected Callback when selection changes.
  */
 @Composable
 fun CurvedBottomNavigation(
@@ -34,19 +34,20 @@ fun CurvedBottomNavigation(
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Tonalità Drape Blue (#00458D)
-    val activeColor = Color(0xFF00458D)
-    val inactiveColor = Color(0xFF9E9E9E)
-    val backgroundColor = Color.White
+    // Drape Blue (#00458D)
+    val activeColor = MaterialTheme.colorScheme.primary
+    val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLowest
+
 
     val density = LocalDensity.current
     var barWidth by remember { mutableFloatStateOf(0f) }
 
-    // Calcolo dimensioni e posizioni
+    // Calculate dimensions and positions
     val itemWidth = if (items.isNotEmpty() && barWidth > 0) barWidth / items.size else 0f
     val targetX = if (itemWidth > 0) (selectedIndex * itemWidth) + (itemWidth / 2f) else 0f
 
-    // Animazione fluida dell'incavo
+    // Smooth animation for the notch
     val animatedX by animateFloatAsState(
         targetValue = targetX,
         animationSpec = spring(
@@ -56,22 +57,22 @@ fun CurvedBottomNavigation(
         label = "CutoutPosition"
     )
 
-    // Parametri dell'incavo (DP -> PX)
+    // Notch parameters (DP -> PX)
     val cutoutWidthPx = with(density) { 80.dp.toPx() }
     val cutoutHeightPx = with(density) { 32.dp.toPx() }
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(95.dp) // Altezza totale per permettere la sporgenza del bubble
+            .height(95.dp)
             .graphicsLayer(clip = false)
     ) {
-        // 1. Sfondo con Incavo (La Barra Bianca)
+        // 1. Background with notch (the white bar)
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(65.dp) // Altezza della barra
+                .height(65.dp)
                 .onGloballyPositioned { barWidth = it.size.width.toFloat() }
                 .shadow(
                     elevation = 15.dp,
@@ -92,7 +93,7 @@ fun CurvedBottomNavigation(
 
             Box(
                 modifier = Modifier
-                    .offset(x = bubbleOffset, y = 12.dp) // Posizionamento sopra l'incavo
+                    .offset(x = bubbleOffset, y = 12.dp)
                     .size(bubbleSize)
                     .shadow(
                         elevation = 12.dp,
@@ -111,7 +112,7 @@ fun CurvedBottomNavigation(
             }
         }
 
-        // 3. Voci di Navigazione
+        // 3. Navigation items
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -152,7 +153,7 @@ fun CurvedBottomNavigation(
                                 style = MaterialTheme.typography.labelSmall
                             )
                         } else {
-                            // Se selezionato, l'icona e la scritta scompaiono dalla barra (sono nel bubble fluttuante)
+                            // If selected, icon and label are hidden (shown in floating bubble)
                             Spacer(modifier = Modifier.height(32.dp))
                         }
                     }

@@ -48,8 +48,7 @@ fun DrapeNavGraph(
         )
 
         // Home Flow: Home, Camerino, Add, Profile
-        homeNavGraph(
-            navController = navController
-        )
+        // Note: Bottom navigation is handled at app level (MainActivity)
+        homeNavGraph()
     }
 }

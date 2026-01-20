@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
 import com.drape.navigation.DrapeNavGraph
+import com.drape.ui.components.CurvedBottomNavigation
+import com.drape.ui.rememberDrapeAppState
 import com.drape.ui.theme.DrapeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -27,12 +28,37 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Main app composable following Google's recommended architecture.
+ * 
+ * The bottom navigation bar is managed at app level, not within individual screens.
+ * This ensures consistent behavior and avoids duplicated Scaffolds.
+ */
 @Composable
 fun DrapeApp() {
-    val navController = rememberNavController()
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+    val appState = rememberDrapeAppState()
+    
+    // Read composable state values before using them
+    val shouldShowBottomBar = appState.shouldShowBottomBar
+    val currentIndex = appState.currentBottomNavIndex
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        bottomBar = {
+            // Only show bottom bar when in HomeGraph destinations
+            if (shouldShowBottomBar) {
+                CurvedBottomNavigation(
+                    items = appState.topLevelDestinations,
+                    selectedIndex = currentIndex,
+                    onItemSelected = { index ->
+                        appState.navigateToBottomBarDestination(index)
+                    }
+                )
+            }
+        }
+    ) { innerPadding ->
         DrapeNavGraph(
-            navController = navController,
+            navController = appState.navController,
             modifier = Modifier.padding(innerPadding)
         )
     }

@@ -16,76 +16,67 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.drape.R
-import com.drape.navigation.BottomNavItems
-import com.drape.navigation.navigateToBottomBarItem
-import com.drape.ui.components.CurvedBottomNavigation
 import com.drape.ui.theme.DrapeTheme
 
 /**
  * Main app screen after login.
  *
  * Displays a greeting to the user, suggested outfits, and recent items.
- * Provides access to the side menu, profile, and bottom navigation.
+ * Provides access to the side menu and profile.
+ * 
+ * Note: Bottom navigation is handled at app level (MainActivity).
  *
- * @param navController navigation controller for screen transitions
+ * @param onNavigateToProfile Callback to navigate to profile screen.
+ * @param onOpenMenu Callback to open the side menu.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavHostController) {
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.headlineMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+fun HomeScreen(
+    onNavigateToProfile: () -> Unit = {},
+    onOpenMenu: () -> Unit = {}
+) {
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // Top App Bar
+        CenterAlignedTopAppBar(
+            title = {
+                Text(
+                    stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { /* Open menu */ }) {
-                        Icon(
-                            Icons.Default.Menu, 
-                            contentDescription = stringResource(R.string.home_menu_description),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { navController.navigateToBottomBarItem(3, 0) }) {
-                        Icon(
-                            Icons.Default.Person, 
-                            contentDescription = stringResource(R.string.home_profile_description),
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
                 )
-            )
-        },
-        bottomBar = {
-            CurvedBottomNavigation(
-                items = BottomNavItems,
-                selectedIndex = 0, // Index for "Home"
-                onItemSelected = { index ->
-                    navController.navigateToBottomBarItem(index, 0)
+            },
+            navigationIcon = {
+                IconButton(onClick = onOpenMenu) {
+                    Icon(
+                        Icons.Default.Menu,
+                        contentDescription = stringResource(R.string.home_menu_description),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
+            },
+            actions = {
+                IconButton(onClick = onNavigateToProfile) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = stringResource(R.string.home_profile_description),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface
             )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { innerPadding ->
+        )
+
+        // Content
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -115,8 +106,14 @@ fun HomeScreen(navController: NavHostController) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    OutfitPlaceholderCard(modifier = Modifier.weight(1f), title = stringResource(R.string.home_outfit_casual))
-                    OutfitPlaceholderCard(modifier = Modifier.weight(1f), title = stringResource(R.string.home_outfit_elegant))
+                    OutfitPlaceholderCard(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(R.string.home_outfit_casual)
+                    )
+                    OutfitPlaceholderCard(
+                        modifier = Modifier.weight(1f),
+                        title = stringResource(R.string.home_outfit_elegant)
+                    )
                 }
             }
 
@@ -130,7 +127,9 @@ fun HomeScreen(navController: NavHostController) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow)
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                    )
                 ) {
                     Row(
                         modifier = Modifier
@@ -152,14 +151,14 @@ fun HomeScreen(navController: NavHostController) {
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = garment, 
+                            text = garment,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
             }
-            
+
             item {
                 Spacer(modifier = Modifier.height(20.dp))
             }
@@ -194,7 +193,9 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
     Card(
         modifier = modifier.height(150.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f))
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        )
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -215,6 +216,6 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
 @Composable
 fun HomePreview() {
     DrapeTheme {
-        HomeScreen(navController = rememberNavController())
+        HomeScreen()
     }
 }
