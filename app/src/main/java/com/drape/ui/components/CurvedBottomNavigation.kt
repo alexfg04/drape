@@ -34,7 +34,7 @@ fun CurvedBottomNavigation(
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Drape Blue (#00458D)
+
     val activeColor = MaterialTheme.colorScheme.primary
     val inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant
     val backgroundColor = MaterialTheme.colorScheme.surfaceContainerLowest
