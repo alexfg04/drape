@@ -61,9 +61,12 @@ fun CurvedBottomNavigation(
     val cutoutWidthPx = with(density) { 80.dp.toPx() }
     val cutoutHeightPx = with(density) { 32.dp.toPx() }
 
+    val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
+    
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .padding(bottom = navigationBarsPadding.calculateBottomPadding())
             .height(95.dp)
             .graphicsLayer(clip = false)
     ) {
