@@ -27,6 +27,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
 
+/**
+ * Login method selection screen.
+ *
+ * Allows user to choose between Google Sign-In or email registration.
+ * Automatically navigates to Home after successful login.
+ *
+ * @param modifier optional layout modifier
+ * @param viewModel ViewModel managing authentication state and logic
+ * @param onBackClick callback invoked when user taps the back button
+ * @param onEmailSignUpClick callback invoked to navigate to email registration
+ * @param onNavigateToHome callback invoked after successful login
+ * @param onGoogleSignInClick callback invoked to start Google Sign-In flow
+ */
 @Composable
 fun SceltaLogScreen(
     modifier: Modifier = Modifier,

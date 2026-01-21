@@ -27,7 +27,7 @@ import com.drape.ui.theme.DrapeTheme
  * 
  * Note: Bottom navigation is handled at app level (MainActivity).
  *
- * @param onNavigateToProfile Callback to navigate to profile screen.
+ * @param onNavigateToProfile Callback invoked to navigate to profile screen.
  * @param onOpenMenu Callback to open the side menu.
  */
 @OptIn(ExperimentalMaterial3Api::class)
