@@ -294,27 +294,27 @@ fun ActionButtonsRow(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ActionButton(icon = Icons.AutoMirrored.Filled.Undo, onClick = onUndo)
+              ActionButton(icon = Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", onClick = onUndo)
         Spacer(modifier = Modifier.width(32.dp))
-        ActionButton(icon = Icons.Default.Crop, onClick = onCrop)
+                ActionButton(icon = Icons.Default.Crop, contentDescription = "Crop", onClick = onCrop)
         Spacer(modifier = Modifier.width(32.dp))
-        ActionButton(icon = Icons.Default.Refresh, onClick = onRotate)
+               ActionButton(icon = Icons.Default.Refresh, contentDescription = "Rotate", onClick = onRotate)
     }
 }
 
 @Composable
-fun ActionButton(icon: ImageVector, onClick: () -> Unit) {
-    Surface(
-        shape = CircleShape,
-        color = Color.White,
-        shadowElevation = 4.dp,
-        modifier = Modifier.size(56.dp)
-    ) {
-        IconButton(onClick = onClick) {
-            Icon(icon, contentDescription = null, tint = TextGray, modifier = Modifier.size(24.dp))
+    fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
+        Surface(
+            shape = CircleShape,
+            color = Color.White,
+            shadowElevation = 4.dp,
+            modifier = Modifier.size(56.dp)
+        ) {
+            IconButton(onClick = onClick) {
+                Icon(icon, contentDescription = contentDescription, tint = TextGray, modifier = Modifier.size(24.dp))
+            }
         }
     }
-}
 
 @Composable
 fun BottomActionButton() {

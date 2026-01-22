@@ -19,25 +19,25 @@ object ImagePickerHandler {
      * Retrieves the file size of a given Uri in bytes.
      */
     fun getFileSize(context: Context, uri: Uri): Long {
-        var size: Long = 0
+           var size: Long = -1
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         cursor?.use {
             val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
-            if (it.moveToFirst() && sizeIndex != -1) {
-                if (!it.isNull(sizeIndex)) {
-                     size = it.getLong(sizeIndex)
-                }
-            }
+                   if (it.moveToFirst() && sizeIndex != -1 && !it.isNull(sizeIndex)) {
+                            size = it.getLong(sizeIndex)
+                        }
         }
+            if (size <= 0L) {
+                    context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+                           if (afd.length > 0L) size = afd.length
+                        }
+                }
         return size
     }
 
-    /**
-     * Checks if the file at the given Uri is within the allowed size limit.
-     */
     fun isFileSizeValid(context: Context, uri: Uri): Boolean {
         val size = getFileSize(context, uri)
-        return size <= MAX_FILE_SIZE_BYTES
+            return size in 1L..MAX_FILE_SIZE_BYTES.toLong()
     }
 
     /**
