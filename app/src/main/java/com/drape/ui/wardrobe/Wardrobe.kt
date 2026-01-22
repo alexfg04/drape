@@ -38,6 +38,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,11 +69,16 @@ fun WardrobeScreen() {
     var selectedShoeResId by remember { mutableStateOf<Int?>(null) }
     var selectedAccResId by remember { mutableStateOf<Int?>(null) }
 
-    // Transformation states for each category
-    var topTransform by remember { mutableStateOf(ItemTransform(offset = Offset(0f, -150f))) }
-    var bottomTransform by remember { mutableStateOf(ItemTransform(offset = Offset(0f, 150f))) }
-    var shoeTransform by remember { mutableStateOf(ItemTransform(offset = Offset(0f, 450f))) }
-    var accTransform by remember { mutableStateOf(ItemTransform(offset = Offset(150f, -150f))) }
+        val density = LocalDensity.current
+        val topInitialOffset = remember(density) { Offset(0f, with(density) { (-150).dp.toPx() }) }
+        val bottomInitialOffset = remember(density) { Offset(0f, with(density) { 150.dp.toPx() }) }
+        val shoeInitialOffset = remember(density) { Offset(0f, with(density) { 450.dp.toPx() }) }
+        val accInitialOffset = remember(density) { Offset(with(density) { 150.dp.toPx() }, with(density) { (-150).dp.toPx() }) }
+
+        var topTransform by remember { mutableStateOf(ItemTransform(offset = topInitialOffset)) }
+        var bottomTransform by remember { mutableStateOf(ItemTransform(offset = bottomInitialOffset)) }
+        var shoeTransform by remember { mutableStateOf(ItemTransform(offset = shoeInitialOffset)) }
+        var accTransform by remember { mutableStateOf(ItemTransform(offset = accInitialOffset)) }
 
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
@@ -398,10 +404,10 @@ fun WardrobeScreen() {
                         TextButton(
                             onClick = {
                                 when (selectedCategoryIndex) {
-                                    0 -> topTransform = ItemTransform(offset = Offset(0f, -150f))
-                                    1 -> bottomTransform = ItemTransform(offset = Offset(0f, 150f))
-                                    2 -> shoeTransform = ItemTransform(offset = Offset(0f, 450f))
-                                    3 -> accTransform = ItemTransform(offset = Offset(150f, -150f))
+                                    0 -> topTransform = ItemTransform(offset = topInitialOffset)
+                                    1 -> bottomTransform = ItemTransform(offset = bottomInitialOffset)
+                                    2 -> shoeTransform = ItemTransform(offset = shoeInitialOffset)
+                                    3 -> accTransform = ItemTransform(offset = accInitialOffset)
                                 }
                             },
                             modifier = Modifier.align(Alignment.End).padding(bottom = 8.dp)
