@@ -1,12 +1,17 @@
 package com.drape.ui.addclothes
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import java.io.File
+import java.io.FileOutputStream
 
 /**
  * Handle logic for picking an image and validating its size.
@@ -19,25 +24,29 @@ object ImagePickerHandler {
      * Retrieves the file size of a given Uri in bytes.
      */
     fun getFileSize(context: Context, uri: Uri): Long {
-           var size: Long = -1
+        var size: Long = -1
         val cursor = context.contentResolver.query(uri, null, null, null, null)
         cursor?.use {
             val sizeIndex = it.getColumnIndex(OpenableColumns.SIZE)
-                   if (it.moveToFirst() && sizeIndex != -1 && !it.isNull(sizeIndex)) {
-                            size = it.getLong(sizeIndex)
-                        }
+            if (it.moveToFirst() && sizeIndex != -1 && !it.isNull(sizeIndex)) {
+                size = it.getLong(sizeIndex)
+            }
         }
-            if (size <= 0L) {
-                    context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
-                           if (afd.length > 0L) size = afd.length
-                        }
+        if (size <= 0L) {
+            try {
+                context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { afd ->
+                    if (afd.length > 0L) size = afd.length
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
         return size
     }
 
     fun isFileSizeValid(context: Context, uri: Uri): Boolean {
         val size = getFileSize(context, uri)
-            return size in 1L..MAX_FILE_SIZE_BYTES.toLong()
+        return size in 1L..MAX_FILE_SIZE_BYTES.toLong()
     }
 
     /**
@@ -46,29 +55,31 @@ object ImagePickerHandler {
     fun rotateImage(context: Context, uri: Uri): Uri? {
         return try {
             val contentResolver = context.contentResolver
-            val inputStream = contentResolver.openInputStream(uri) ?: return null
-            val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-            inputStream.close()
+            val bitmap = contentResolver.openInputStream(uri)?.use { inputStream ->
+                BitmapFactory.decodeStream(inputStream)
+            } ?: return null
 
-            if (bitmap == null) return null
-
-            val matrix = android.graphics.Matrix()
+            val matrix = Matrix()
             matrix.postRotate(90f)
 
-            val rotatedBitmap = android.graphics.Bitmap.createBitmap(
+            val rotatedBitmap = Bitmap.createBitmap(
                 bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
             )
 
-            // Create a temporary file in the cache directory
-            val file = java.io.File(context.cacheDir, "rotated_${System.currentTimeMillis()}.jpg")
-            val out = java.io.FileOutputStream(file)
-            
-            // Compress and save
-            rotatedBitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, out)
-            out.flush()
-            out.close()
+            // Recycle original if rotatedBitmap is a new instance
+            if (rotatedBitmap !== bitmap) {
+                bitmap.recycle()
+            }
 
-            android.net.Uri.fromFile(file)
+            // Create a temporary file in the cache directory
+            val file = File(context.cacheDir, "rotated_${System.currentTimeMillis()}.jpg")
+            FileOutputStream(file).use { out ->
+                rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+            }
+
+            rotatedBitmap.recycle()
+
+            Uri.fromFile(file)
         } catch (e: Exception) {
             e.printStackTrace()
             null

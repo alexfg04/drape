@@ -1,13 +1,9 @@
 package com.drape.ui.addclothes
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-
-import android.widget.Toast
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,6 +20,8 @@ import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.rounded.Checkroom
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,13 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import androidx.compose.runtime.saveable.rememberSaveable
-
-// Colori definiti per lo stile dell'interfaccia
-val BackgroundColor = Color(0xFFF2F4F8)
-val DarkBlueButton = Color(0xFF353A70)
-val TextGray = Color(0xFF888888)
-val TitleBlack = Color(0xFF111111)
+import com.drape.ui.theme.DrapeTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Schermata per il caricamento e la revisione di un nuovo capo d'abbigliamento.
@@ -52,7 +47,13 @@ val TitleBlack = Color(0xFF111111)
 fun UploadItemScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var selectedImageUri by rememberSaveable { mutableStateOf<Uri?>(null) }
+    
+    val uriSaver = Saver<MutableState<Uri?>, String>(
+        save = { it.value?.toString() ?: "" },
+        restore = { mutableStateOf(if (it.isEmpty()) null else Uri.parse(it)) }
+    )
+
+    var selectedImageUri by rememberSaveable(saver = uriSaver) { mutableStateOf<Uri?>(null) }
 
     // Inizializza il selettore di immagini con validazione delle dimensioni
     val imagePickerLauncher = rememberImagePicker(
@@ -61,7 +62,7 @@ fun UploadItemScreen() {
     )
 
     Scaffold(
-        containerColor = BackgroundColor,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = { TopBarSection() },
         bottomBar = { BottomActionButton() }
     ) { paddingValues ->
@@ -134,31 +135,49 @@ fun TopBarSection() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = { /* TODO: Close */ }) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TitleBlack)
+                Icon(
+                    Icons.Default.Close, 
+                    contentDescription = "Close", 
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = "Upload Item",
-                    fontSize = 20.sp,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = TitleBlack
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Row(modifier = Modifier.padding(top = 4.dp)) {
-                    Box(modifier = Modifier.size(width = 20.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(DarkBlueButton))
+                    Box(
+                        modifier = Modifier
+                            .size(width = 20.dp, height = 4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.primary)
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Box(modifier = Modifier.size(width = 20.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(Color.LightGray))
+                    Box(
+                        modifier = Modifier
+                            .size(width = 20.dp, height = 4.dp)
+                            .clip(RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.outlineVariant)
+                    )
                 }
             }
 
             IconButton(onClick = { /* TODO: Help */ }) {
-                Icon(Icons.AutoMirrored.Outlined.HelpOutline, contentDescription = "Help", tint = TextGray)
+                Icon(
+                    Icons.AutoMirrored.Outlined.HelpOutline, 
+                    contentDescription = "Help", 
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
         Text(
             text = "Review your capture",
-            color = TextGray,
-            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(top = 8.dp)
         )
     }
@@ -190,7 +209,7 @@ fun MainImagePreview(
                 )
                 
                 Surface(
-                    color = Color(0xFF333333).copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
@@ -203,24 +222,37 @@ fun MainImagePreview(
                         Icon(
                             imageVector = Icons.Outlined.AutoAwesome,
                             contentDescription = null,
-                            tint = Color.Cyan,
+                            tint = MaterialTheme.colorScheme.tertiary,
                             modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("AI Enhanced", color = Color.White, fontSize = 12.sp)
+                        Text(
+                            "AI Enhanced", 
+                            color = MaterialTheme.colorScheme.onTertiary, 
+                            style = MaterialTheme.typography.labelSmall
+                        )
                     }
                 }
             } else {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFE0E0E0)),
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Add, contentDescription = null, tint = TextGray, modifier = Modifier.size(48.dp))
+                        Icon(
+                            Icons.Default.Add, 
+                            contentDescription = null, 
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant, 
+                            modifier = Modifier.size(48.dp)
+                        )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Tap to add a photo", color = TextGray)
+                        Text(
+                            "Tap to add a photo", 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
@@ -230,11 +262,11 @@ fun MainImagePreview(
 
 @Composable
 fun RemoveBackgroundCard() {
-    var isChecked by remember { mutableStateOf(true) }
+    var isChecked by rememberSaveable { mutableStateOf(true) }
 
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -243,14 +275,14 @@ fun RemoveBackgroundCard() {
         ) {
             Surface(
                 shape = CircleShape,
-                color = BackgroundColor,
+                color = MaterialTheme.colorScheme.background,
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Outlined.AutoAwesome,
                         contentDescription = null,
-                        tint = DarkBlueButton
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -260,14 +292,14 @@ fun RemoveBackgroundCard() {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Remove Background",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = TitleBlack,
-                    fontSize = 16.sp
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "Use magic wand to isolate item.",
-                    color = TextGray,
-                    fontSize = 12.sp
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
@@ -275,8 +307,8 @@ fun RemoveBackgroundCard() {
                 checked = isChecked,
                 onCheckedChange = { isChecked = it },
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = DarkBlueButton
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary
                 )
             )
         }
@@ -294,33 +326,38 @@ fun ActionButtonsRow(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-              ActionButton(icon = Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", onClick = onUndo)
+        ActionButton(icon = Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", onClick = onUndo)
         Spacer(modifier = Modifier.width(32.dp))
-                ActionButton(icon = Icons.Default.Crop, contentDescription = "Crop", onClick = onCrop)
+        ActionButton(icon = Icons.Default.Crop, contentDescription = "Crop", onClick = onCrop)
         Spacer(modifier = Modifier.width(32.dp))
-               ActionButton(icon = Icons.Default.Refresh, contentDescription = "Rotate", onClick = onRotate)
+        ActionButton(icon = Icons.Default.Refresh, contentDescription = "Rotate", onClick = onRotate)
     }
 }
 
 @Composable
-    fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
-        Surface(
-            shape = CircleShape,
-            color = Color.White,
-            shadowElevation = 4.dp,
-            modifier = Modifier.size(56.dp)
-        ) {
-            IconButton(onClick = onClick) {
-                Icon(icon, contentDescription = contentDescription, tint = TextGray, modifier = Modifier.size(24.dp))
-            }
+fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 4.dp,
+        modifier = Modifier.size(56.dp)
+    ) {
+        IconButton(onClick = onClick) {
+            Icon(
+                icon, 
+                contentDescription = contentDescription, 
+                tint = MaterialTheme.colorScheme.onSurfaceVariant, 
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
+}
 
 @Composable
 fun BottomActionButton() {
     Button(
         onClick = { /* TODO: Add to closet */ },
-        colors = ButtonDefaults.buttonColors(containerColor = DarkBlueButton),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -329,7 +366,7 @@ fun BottomActionButton() {
     ) {
         Text(
             text = "Add to Closet",
-            fontSize = 18.sp,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
         Spacer(modifier = Modifier.width(8.dp))
@@ -340,5 +377,7 @@ fun BottomActionButton() {
 @Preview(showBackground = true)
 @Composable
 fun PreviewUploadItem() {
-    UploadItemScreen()
+    DrapeTheme {
+        UploadItemScreen()
+    }
 }
