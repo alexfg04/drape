@@ -116,15 +116,11 @@ fun WardrobeListScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             val filteredItems = wardrobeItems.filter { item ->
-                (selectedFilter == "All" || item.category == "Tops" && selectedFilter == "Tops" || 
-                 item.category == "Bottoms" && selectedFilter == "Bottoms" || 
-                 item.category == "Shoes" && selectedFilter == "Shoes" ||
-                 // Basic mapping for demo purposes since categories in data don't perfectly match filters
-                 selectedFilter == "All" || item.category == selectedFilter) &&
-                (searchQuery.isEmpty() ||
-                 item.name.contains(searchQuery, ignoreCase = true) ||
-                 item.brand.contains(searchQuery, ignoreCase = true) ||
-                 item.color.contains(searchQuery, ignoreCase = true))
+                (selectedFilter == "All" || item.category == selectedFilter) &&
+                        (searchQuery.isEmpty() ||
+                                item.name.contains(searchQuery, ignoreCase = true) ||
+                                item.brand.contains(searchQuery, ignoreCase = true) ||
+                                item.color.contains(searchQuery, ignoreCase = true))
             }
 
             WardrobeGrid(wardrobeItems = filteredItems, onItemClick = { selectedItem = it })
