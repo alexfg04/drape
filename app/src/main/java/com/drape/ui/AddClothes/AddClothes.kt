@@ -4,11 +4,15 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.outlined.HelpOutline
@@ -18,6 +22,8 @@ import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.rounded.Checkroom
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
@@ -54,6 +60,14 @@ fun UploadItemScreen() {
     )
 
     var selectedImageUri by rememberSaveable(saver = uriSaver) { mutableStateOf<Uri?>(null) }
+    
+    // Form State
+    var isFormVisible by rememberSaveable { mutableStateOf(false) }
+    var name by rememberSaveable { mutableStateOf("") }
+    var brand by rememberSaveable { mutableStateOf("") }
+    var category by rememberSaveable { mutableStateOf("") }
+    var color by rememberSaveable { mutableStateOf("") }
+    var season by rememberSaveable { mutableStateOf("") }
 
     // Inizializza il selettore di immagini con validazione delle dimensioni
     val imagePickerLauncher = rememberImagePicker(
@@ -63,66 +77,114 @@ fun UploadItemScreen() {
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { TopBarSection() },
-        bottomBar = { BottomActionButton() }
+        topBar = { 
+            TopBarSection(
+                title = if (isFormVisible) "Item Details" else "Upload Item",
+                onClose = { 
+                    if (isFormVisible) isFormVisible = false 
+                    else { /* TODO: Close App/Screen */ } 
+                }
+            ) 
+        },
+        bottomBar = { 
+            if (!isFormVisible) {
+                BottomActionButton(
+                    onClick = {
+                        if (selectedImageUri != null) {
+                            isFormVisible = true
+                        } else {
+                            Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                )
+            }
+        }
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 1. Anteprima immagine - Cliccando si apre il selettore
-            MainImagePreview(
+        if (isFormVisible) {
+            AddItemForm(
+                modifier = Modifier.padding(paddingValues),
                 imageUri = selectedImageUri,
-                onClick = {
-                    imagePickerLauncher.launch(
-                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                    )
+                name = name,
+                onNameChange = { name = it },
+                brand = brand,
+                onBrandChange = { brand = it },
+                category = category,
+                onCategoryChange = { category = it },
+                color = color,
+                onColorChange = { color = it },
+                season = season,
+                onSeasonChange = { season = it },
+                onSave = {
+                    // TODO: Implement save logic
+                    Toast.makeText(context, "Saved: $name, $brand, $category, $color, $season", Toast.LENGTH_LONG).show()
+                    // Reset or navigation
+                    isFormVisible = false
+                    selectedImageUri = null
+                    name = ""
+                    category = ""
+                    color = ""
+                    season = ""
                 }
             )
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+                // 1. Anteprima immagine - Cliccando si apre il selettore
+                MainImagePreview(
+                    imageUri = selectedImageUri,
+                    onClick = {
+                        imagePickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    }
+                )
 
-            // 2. Card Rimozione Sfondo
-            RemoveBackgroundCard()
+                Spacer(modifier = Modifier.height(24.dp))
 
-            // Spingiamo i pulsanti di azione verso il basso
-            Spacer(modifier = Modifier.weight(1f))
+                // 2. Card Rimozione Sfondo
+                RemoveBackgroundCard()
 
-            // 3. Pulsanti di editing (Undo, Crop, Rotate)
-            ActionButtonsRow(
-                onUndo = { selectedImageUri = null },
-                onCrop = {
-                    Toast.makeText(context, "Crop functionality requires an external library.", Toast.LENGTH_SHORT).show()
-                },
-                onRotate = {
-                    selectedImageUri?.let { uri ->
-                        scope.launch {
-                            val newUri = withContext(Dispatchers.IO) {
-                                ImagePickerHandler.rotateImage(context, uri)
-                            }
-                            if (newUri != null) {
-                                selectedImageUri = newUri
-                            } else {
-                                Toast.makeText(context, "Failed to rotate image", Toast.LENGTH_SHORT).show()
+                // Spingiamo i pulsanti di azione verso il basso
+                Spacer(modifier = Modifier.weight(1f))
+
+                // 3. Pulsanti di editing (Undo, Crop, Rotate)
+                ActionButtonsRow(
+                    onUndo = { selectedImageUri = null },
+                    onCrop = {
+                        Toast.makeText(context, "Crop functionality requires an external library.", Toast.LENGTH_SHORT).show()
+                    },
+                    onRotate = {
+                        selectedImageUri?.let { uri ->
+                            scope.launch {
+                                val newUri = withContext(Dispatchers.IO) {
+                                    ImagePickerHandler.rotateImage(context, uri)
+                                }
+                                if (newUri != null) {
+                                    selectedImageUri = newUri
+                                } else {
+                                    Toast.makeText(context, "Failed to rotate image", Toast.LENGTH_SHORT).show()
+                                }
                             }
                         }
                     }
-                }
-            )
-            
-            // Spazio finale
-            Spacer(modifier = Modifier.height(62.dp))
+                )
+                
+                // Spazio finale
+                Spacer(modifier = Modifier.height(62.dp))
+            }
         }
     }
 }
 
 @Composable
-fun TopBarSection() {
+fun TopBarSection(title: String, onClose: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -134,7 +196,7 @@ fun TopBarSection() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: Close */ }) {
+            IconButton(onClick = onClose) {
                 Icon(
                     Icons.Default.Close, 
                     contentDescription = "Close", 
@@ -144,7 +206,7 @@ fun TopBarSection() {
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = "Upload Item",
+                    text = title,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -174,12 +236,14 @@ fun TopBarSection() {
                 )
             }
         }
-        Text(
-            text = "Review your capture",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        if (title == "Upload Item") {
+            Text(
+                text = "Review your capture",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
     }
 }
 
@@ -353,10 +417,275 @@ fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> U
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomActionButton() {
+fun AddItemForm(
+    modifier: Modifier = Modifier,
+    imageUri: Uri?,
+    name: String,
+    onNameChange: (String) -> Unit,
+    brand: String,
+    onBrandChange: (String) -> Unit,
+    category: String,
+    onCategoryChange: (String) -> Unit,
+    color: String,
+    onColorChange: (String) -> Unit,
+    season: String,
+    onSeasonChange: (String) -> Unit,
+    onSave: () -> Unit
+) {
+    val categories = listOf("Tops", "Bottoms", "Shoes", "Outerwear", "Accessories")
+    val seasons = listOf("Spring", "Summer", "Autumn", "Winter", "All Season")
+    var categoryExpanded by remember { mutableStateOf(false) }
+    var seasonExpanded by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp)
+            .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Validation Image
+        if (imageUri != null) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUri)
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Selected garment",
+                modifier = Modifier
+                    .size(120.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentScale = ContentScale.Crop
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Basic Info Section
+        Text(
+            text = "Basic Info",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = onNameChange,
+            label = { Text("Name") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = brand,
+            onValueChange = onBrandChange,
+            label = { Text("Brand") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        ExposedDropdownMenuBox(
+            expanded = categoryExpanded,
+            onExpandedChange = { categoryExpanded = !categoryExpanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                readOnly = true,
+                value = category,
+                onValueChange = {},
+                label = { Text("Category") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                shape = RoundedCornerShape(12.dp)
+            )
+            ExposedDropdownMenu(
+                expanded = categoryExpanded,
+                onDismissRequest = { categoryExpanded = false }
+            ) {
+                categories.forEach { selectionOption ->
+                    DropdownMenuItem(
+                        text = { Text(selectionOption) },
+                        onClick = {
+                            onCategoryChange(selectionOption)
+                            categoryExpanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    )
+                }
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Details Section
+        Text(
+            text = "Details",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Color Palette
+        ColorSelectionSection(
+            selectedColorName = color,
+            onColorSelected = onColorChange
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = seasonExpanded,
+            onExpandedChange = { seasonExpanded = !seasonExpanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                readOnly = true,
+                value = season,
+                onValueChange = {},
+                label = { Text("Season") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = seasonExpanded) },
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                shape = RoundedCornerShape(12.dp)
+            )
+            ExposedDropdownMenu(
+                expanded = seasonExpanded,
+                onDismissRequest = { seasonExpanded = false }
+            ) {
+                seasons.forEach { selectionOption ->
+                    DropdownMenuItem(
+                        text = { Text(selectionOption) },
+                        onClick = {
+                            onSeasonChange(selectionOption)
+                            seasonExpanded = false
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(48.dp))
+
+        Button(
+            onClick = onSave,
+            enabled = name.isNotEmpty() && category.isNotEmpty(),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text(
+                text = "Save to Closet",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+fun ColorSelectionSection(
+    selectedColorName: String,
+    onColorSelected: (String) -> Unit
+) {
+    val colors = listOf(
+        Pair("Black", Color.Black),
+        Pair("White", Color.White),
+        Pair("Grey", Color.Gray),
+        Pair("Red", Color.Red),
+        Pair("Blue", Color.Blue),
+        Pair("Green", Color.Green),
+        Pair("Yellow", Color.Yellow),
+        Pair("Orange", Color(0xFFFFA500)),
+        Pair("Purple", Color(0xFF800080)),
+        Pair("Pink", Color(0xFFFFC0CB)),
+        Pair("Brown", Color(0xFFA52A2A)),
+        Pair("Beige", Color(0xFFF5F5DC))
+    )
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Color",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        // Simple Grid for colors
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            // First 6 colors
+            colors.take(6).forEach { (name, color) ->
+                ColorCircle(
+                    color = color,
+                    isSelected = name == selectedColorName,
+                    onClick = { onColorSelected(name) }
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+             // Next 6 colors
+            colors.drop(6).take(6).forEach { (name, color) ->
+                ColorCircle(
+                    color = color,
+                    isSelected = name == selectedColorName,
+                    onClick = { onColorSelected(name) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ColorCircle(
+    color: Color,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .background(color)
+            .border(
+                border = if (isSelected) BorderStroke(3.dp, MaterialTheme.colorScheme.primary) else BorderStroke(1.dp, Color.LightGray),
+                shape = CircleShape
+            )
+            .clickable { onClick() }
+    )
+}
+
+@Composable
+fun BottomActionButton(onClick: () -> Unit) {
     Button(
-        onClick = { /* TODO: Add to closet */ },
+        onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
