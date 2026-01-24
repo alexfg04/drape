@@ -291,7 +291,7 @@ fun WardrobeGrid(wardrobeItems: List<WardrobeItem>, onItemClick: (WardrobeItem) 
         verticalArrangement = Arrangement.spacedBy(16.dp),
         contentPadding = PaddingValues(bottom = 80.dp) // Add padding for FAB
     ) {
-        items(wardrobeItems) { item ->
+        items(wardrobeItems, key = { it.id }) { item ->
             WardrobeItemCard(item = item, onClick = { onItemClick(item) })
         }
     }
