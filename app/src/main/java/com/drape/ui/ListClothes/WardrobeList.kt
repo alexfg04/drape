@@ -1,4 +1,4 @@
-package com.drape.ui.ListClothes
+package com.drape.ui.listclothes
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,8 +10,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -25,7 +25,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.drape.R
 import com.drape.ui.theme.*
 
@@ -87,18 +86,7 @@ fun WardrobeListScreen() {
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { /* Logic removed as requested */ },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add Item",
-                    modifier = Modifier.size(32.dp)
-                )
-            }
+            // Hiding the FAB as requested since logic is not yet implemented
         }
     ) { paddingValues ->
         Column(
@@ -161,7 +149,7 @@ fun SearchTopBar(
     ) {
         IconButton(onClick = onClose) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Close Search",
                 tint = MaterialTheme.colorScheme.onBackground
             )
