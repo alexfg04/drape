@@ -173,13 +173,13 @@ fun ProfileScreen() {
                 title = "Outfit Estate",
                 backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = Color.White,
-                backgroundImageRes = R.drawable.autunnobutton
+                backgroundImageRes = R.drawable.estate
             )
             CartinaBanner(
                 title = "Outfit Eventi",
                 backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = Color.White,
-                backgroundImageRes = R.drawable.autunnobutton
+                backgroundImageRes = R.drawable.elegante
             )
         }
 
