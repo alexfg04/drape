@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 import com.drape.data.model.ClothingItem
 import com.drape.ui.theme.*
 
@@ -199,8 +201,14 @@ fun ClothingItemDetailCard(item: ClothingItem) {
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
+            val context = LocalContext.current
             AsyncImage(
-                model = item.imageUrl,
+                model = ImageRequest.Builder(context)
+                    .data(item.imageUrl)
+                    .diskCacheKey(item.id)
+                    .memoryCacheKey(item.id)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = item.name,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
@@ -465,8 +473,14 @@ fun WardrobeItemCard(item: ClothingItem, onClick: () -> Unit, modifier: Modifier
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
+                val context = LocalContext.current
                 AsyncImage(
-                    model = item.imageUrl,
+                    model = ImageRequest.Builder(context)
+                        .data(item.imageUrl)
+                        .diskCacheKey(item.id)
+                        .memoryCacheKey(item.id)
+                        .crossfade(true)
+                        .build(),
                     contentDescription = item.name,
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
