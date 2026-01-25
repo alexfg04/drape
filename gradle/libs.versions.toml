@@ -18,6 +18,7 @@ ksp = "2.3.2"
 navigationCompose = "2.9.6"
 composeIcons = "1.7.7"
 coil = "2.7.0"
+mlkitSubjectSegmentation = "16.0.0-beta1"
 
 
 [libraries]
@@ -49,6 +50,7 @@ androidx-compose-ui-text-google-fonts = { group = "androidx.compose.ui", name = 
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+play-services-mlkit-subject-segmentation = { module = "com.google.android.gms:play-services-mlkit-subject-segmentation", version.ref = "mlkitSubjectSegmentation" }
 
 
 [plugins]

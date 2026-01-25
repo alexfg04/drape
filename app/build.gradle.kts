@@ -73,4 +73,5 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.play.services.mlkit.subject.segmentation)
 }

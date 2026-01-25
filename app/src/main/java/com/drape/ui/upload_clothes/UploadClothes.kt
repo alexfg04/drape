@@ -1,4 +1,4 @@
-package com.drape.ui.addclothes
+package com.drape.ui.upload_clothes
 
 import android.net.Uri
 import android.widget.Toast
@@ -22,8 +22,7 @@ import androidx.compose.material.icons.filled.Crop
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.rounded.Checkroom
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.Saver
@@ -38,28 +37,60 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.ui.theme.DrapeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.core.net.toUri
 
 /**
- * Schermata per il caricamento e la revisione di un nuovo capo d'abbigliamento.
+ * Stateful version of the screen that handles ViewModel integration.
  */
 @Composable
-fun UploadItemScreen() {
+fun UploadItemScreen(
+    viewModel: UploadClothesViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
+    UploadItemContent(
+        uiState = uiState,
+        onUploadClothingItem = viewModel::uploadClothingItem,
+        onProcessImage = viewModel::processImage,
+        onClearError = viewModel::clearError,
+        onClearSuccessState = viewModel::clearSuccessState,
+        onClearProcessedImage = viewModel::clearProcessedImage
+    )
+}
+
+/**
+ * Stateless version of the screen, ideal for Previews and testing.
+ * Refactored to avoid direct ViewModel dependency in UI components.
+ */
+@Composable
+fun UploadItemContent(
+    uiState: UploadClothesUiState,
+    onUploadClothingItem: (Uri, String, String, String, String, String, Boolean) -> Unit,
+    onProcessImage: (Uri, Boolean) -> Unit,
+    onClearError: () -> Unit,
+    onClearSuccessState: () -> Unit,
+    onClearProcessedImage: () -> Unit
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     
     val uriSaver = Saver<MutableState<Uri?>, String>(
         save = { it.value?.toString() ?: "" },
-        restore = { mutableStateOf(if (it.isEmpty()) null else Uri.parse(it)) }
+        restore = { mutableStateOf(if (it.isEmpty()) null else it.toUri()) }
     )
 
-    var selectedImageUri by rememberSaveable(saver = uriSaver) { mutableStateOf<Uri?>(null) }
+    var selectedImageUri by rememberSaveable(saver = uriSaver) { mutableStateOf(null) }
+    
+    // Background removal state
+    var removeBackgroundEnabled by rememberSaveable { mutableStateOf(true) }
     
     // Form State
     var isFormVisible by rememberSaveable { mutableStateOf(false) }
@@ -69,10 +100,41 @@ fun UploadItemScreen() {
     var color by rememberSaveable { mutableStateOf("") }
     var season by rememberSaveable { mutableStateOf("") }
 
+    // Handle successful upload
+    LaunchedEffect(uiState.isUploadSuccessful) {
+        if (uiState.isUploadSuccessful) {
+            Toast.makeText(context, "Capo aggiunto con successo!", Toast.LENGTH_SHORT).show()
+            // Reset form and navigate back
+            isFormVisible = false
+            selectedImageUri = null
+            name = ""
+            brand = ""
+            category = ""
+            color = ""
+            season = ""
+            onClearSuccessState()
+        }
+    }
+
+    // Handle errors
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            onClearError()
+        }
+    }
+
     // Inizializza il selettore di immagini con validazione delle dimensioni
     val imagePickerLauncher = rememberImagePicker(
         context = context,
-        onImageSelected = { uri -> selectedImageUri = uri }
+        onImageSelected = { uri -> 
+            selectedImageUri = uri
+            onClearProcessedImage()
+            // Process image immediately if toggle is enabled
+            if (removeBackgroundEnabled) {
+                onProcessImage(uri, true)
+            }
+        }
     )
 
     Scaffold(
@@ -103,7 +165,7 @@ fun UploadItemScreen() {
         if (isFormVisible) {
             AddItemForm(
                 modifier = Modifier.padding(paddingValues),
-                imageUri = selectedImageUri,
+                imageUri = uiState.processedImageUri ?: selectedImageUri,
                 name = name,
                 onNameChange = { name = it },
                 brand = brand,
@@ -114,16 +176,19 @@ fun UploadItemScreen() {
                 onColorChange = { color = it },
                 season = season,
                 onSeasonChange = { season = it },
+                uiState = uiState,
                 onSave = {
-                    // TODO: Implement save logic
-                    Toast.makeText(context, "Saved: $name, $brand, $category, $color, $season", Toast.LENGTH_LONG).show()
-                    // Reset or navigation
-                    isFormVisible = false
-                    selectedImageUri = null
-                    name = ""
-                    category = ""
-                    color = ""
-                    season = ""
+                    selectedImageUri?.let { uri ->
+                        onUploadClothingItem(
+                            uri,
+                            name,
+                            brand,
+                            category,
+                            color,
+                            season,
+                            removeBackgroundEnabled
+                        )
+                    }
                 }
             )
         } else {
@@ -138,7 +203,8 @@ fun UploadItemScreen() {
 
                 // 1. Anteprima immagine - Cliccando si apre il selettore
                 MainImagePreview(
-                    imageUri = selectedImageUri,
+                    imageUri = if (removeBackgroundEnabled) uiState.processedImageUri ?: selectedImageUri else selectedImageUri,
+                    isProcessing = uiState.isProcessingBackground,
                     onClick = {
                         imagePickerLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -149,7 +215,20 @@ fun UploadItemScreen() {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // 2. Card Rimozione Sfondo
-                RemoveBackgroundCard()
+                RemoveBackgroundCard(
+                    isChecked = removeBackgroundEnabled,
+                    isProcessing = uiState.isProcessingBackground,
+                    onCheckedChange = { enabled ->
+                        removeBackgroundEnabled = enabled
+                        selectedImageUri?.let { uri ->
+                            if (enabled) {
+                                onProcessImage(uri, true)
+                            } else {
+                                onClearProcessedImage()
+                            }
+                        }
+                    }
+                )
 
                 // Spingiamo i pulsanti di azione verso il basso
                 Spacer(modifier = Modifier.weight(1f))
@@ -250,6 +329,7 @@ fun TopBarSection(title: String, onClose: () -> Unit) {
 @Composable
 fun MainImagePreview(
     imageUri: Uri?,
+    isProcessing: Boolean = false,
     onClick: () -> Unit
 ) {
     Card(
@@ -272,29 +352,52 @@ fun MainImagePreview(
                     contentScale = ContentScale.Crop
                 )
                 
-                Surface(
-                    color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                // Processing overlay
+                if (isProcessing) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.7f)),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Outlined.AutoAwesome,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.tertiary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "AI Enhanced", 
-                            color = MaterialTheme.colorScheme.onTertiary, 
-                            style = MaterialTheme.typography.labelSmall
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                "Removing background...",
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                } else {
+                    Surface(
+                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f),
+                        shape = RoundedCornerShape(20.dp),
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.AutoAwesome,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.tertiary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                "AI Enhanced", 
+                                color = MaterialTheme.colorScheme.onTertiary, 
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
                     }
                 }
             } else {
@@ -325,9 +428,11 @@ fun MainImagePreview(
 }
 
 @Composable
-fun RemoveBackgroundCard() {
-    var isChecked by rememberSaveable { mutableStateOf(true) }
-
+fun RemoveBackgroundCard(
+    isChecked: Boolean,
+    isProcessing: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
@@ -343,11 +448,18 @@ fun RemoveBackgroundCard() {
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.AutoAwesome,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
+                    if (isProcessing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.AutoAwesome,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -361,7 +473,7 @@ fun RemoveBackgroundCard() {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Use magic wand to isolate item.",
+                    text = if (isProcessing) "Processing image..." else "Use AI to isolate your item.",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -369,7 +481,8 @@ fun RemoveBackgroundCard() {
 
             Switch(
                 checked = isChecked,
-                onCheckedChange = { isChecked = it },
+                onCheckedChange = onCheckedChange,
+                enabled = !isProcessing,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
                     checkedTrackColor = MaterialTheme.colorScheme.primary
@@ -432,6 +545,7 @@ fun AddItemForm(
     onColorChange: (String) -> Unit,
     season: String,
     onSeasonChange: (String) -> Unit,
+    uiState: UploadClothesUiState,
     onSave: () -> Unit
 ) {
     val categories = listOf("Tops", "Bottoms", "Shoes", "Outerwear", "Accessories")
@@ -443,7 +557,7 @@ fun AddItemForm(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
-            .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Validation Image
@@ -504,7 +618,7 @@ fun AddItemForm(
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                 readOnly = true,
                 value = category,
                 onValueChange = {},
@@ -558,7 +672,7 @@ fun AddItemForm(
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(),
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                 readOnly = true,
                 value = season,
                 onValueChange = {},
@@ -588,18 +702,25 @@ fun AddItemForm(
 
         Button(
             onClick = onSave,
-            enabled = name.isNotEmpty() && category.isNotEmpty(),
+            enabled = name.isNotEmpty() && category.isNotEmpty() && !uiState.isLoading,
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp)
         ) {
-            Text(
-                text = "Save to Closet",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            if (uiState.isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text(
+                    text = "Save to Closet",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
         }
     }
 }
@@ -707,6 +828,13 @@ fun BottomActionButton(onClick: () -> Unit) {
 @Composable
 fun PreviewUploadItem() {
     DrapeTheme {
-        UploadItemScreen()
+        UploadItemContent(
+            uiState = UploadClothesUiState(),
+            onUploadClothingItem = { _, _, _, _, _, _, _ -> },
+            onProcessImage = { _, _ -> },
+            onClearError = {},
+            onClearSuccessState = {},
+            onClearProcessedImage = {}
+        )
     }
 }

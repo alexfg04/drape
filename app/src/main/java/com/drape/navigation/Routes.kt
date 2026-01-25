@@ -50,4 +50,7 @@ object Camerino
 object Add
 
 @Serializable
+object UploadClothes
+
+@Serializable
 object Profile
