@@ -34,14 +34,12 @@ import com.drape.ui.theme.*
 
 @Composable
 fun WardrobeScreen(
-    onAddClick: () -> Unit = {},
     viewModel: WardrobeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     
     WardrobeScreenContent(
         uiState = uiState,
-        onAddClick = onAddClick,
         onItemClick = { viewModel.selectItem(it) },
         onClearSelection = { viewModel.clearSelection() },
         onDeleteItem = { viewModel.deleteClothingItem(it) },
@@ -52,7 +50,6 @@ fun WardrobeScreen(
 @Composable
 fun WardrobeScreenContent(
     uiState: WardrobeUiState,
-    onAddClick: () -> Unit,
     onItemClick: (ClothingItem) -> Unit,
     onClearSelection: () -> Unit,
     onDeleteItem: (String) -> Unit,
@@ -88,19 +85,7 @@ fun WardrobeScreenContent(
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClick,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Aggiungi Vestito"
-                )
-            }
-        }
+
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -127,7 +112,7 @@ fun WardrobeScreenContent(
                     )
                 }
                 uiState.clothingItems.isEmpty() -> {
-                    EmptyState(onAddClick = onAddClick)
+                    EmptyState()
                 }
                 else -> {
                     val filteredItems = uiState.clothingItems.filter { item ->
@@ -329,7 +314,7 @@ fun ErrorState(message: String, onRetry: () -> Unit) {
 }
 
 @Composable
-fun EmptyState(onAddClick: () -> Unit) {
+fun EmptyState() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -359,15 +344,6 @@ fun EmptyState(onAddClick: () -> Unit) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onAddClick) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Aggiungi Vestito")
-            }
         }
     }
 }
@@ -692,7 +668,6 @@ fun WardrobeScreenPreview() {
     DrapeTheme {
         WardrobeScreenContent(
             uiState = uiState,
-            onAddClick = {},
             onItemClick = {},
             onClearSelection = {},
             onDeleteItem = {},

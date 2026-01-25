@@ -4,7 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.drape.ui.home.AddScreen
+import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.CamerinoScreen
 import com.drape.ui.home.HomeScreen
 import com.drape.ui.home.ProfileScreen
@@ -29,14 +29,14 @@ fun NavGraphBuilder.homeNavGraph(
             CamerinoScreen()
         }
 
-        composable<Add> {
-            AddScreen(onNavigateToUploadClothes = {
-                navController.navigate(UploadClothes)
-            })
+        composable<Wardrobe> {
+            WardrobeScreen()
         }
 
         composable<UploadClothes> {
-            UploadItemScreen()
+            UploadItemScreen(
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable<Profile> {

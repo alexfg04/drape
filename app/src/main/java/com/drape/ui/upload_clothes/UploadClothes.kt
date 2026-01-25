@@ -52,12 +52,14 @@ import androidx.core.net.toUri
  */
 @Composable
 fun UploadItemScreen(
+    onBackClick: () -> Unit,
     viewModel: UploadClothesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     
     UploadItemContent(
         uiState = uiState,
+        onBackClick = onBackClick,
         onUploadClothingItem = viewModel::uploadClothingItem,
         onProcessImage = viewModel::processImage,
         onClearError = viewModel::clearError,
@@ -73,6 +75,7 @@ fun UploadItemScreen(
 @Composable
 fun UploadItemContent(
     uiState: UploadClothesUiState,
+    onBackClick: () -> Unit = {},
     onUploadClothingItem: (Uri, String, String, String, String, String, Boolean) -> Unit,
     onProcessImage: (Uri, Boolean) -> Unit,
     onClearError: () -> Unit,
@@ -104,15 +107,9 @@ fun UploadItemContent(
     LaunchedEffect(uiState.isUploadSuccessful) {
         if (uiState.isUploadSuccessful) {
             Toast.makeText(context, "Capo aggiunto con successo!", Toast.LENGTH_SHORT).show()
-            // Reset form and navigate back
-            isFormVisible = false
-            selectedImageUri = null
-            name = ""
-            brand = ""
-            category = ""
-            color = ""
-            season = ""
             onClearSuccessState()
+            // Navigate back to wardrobe
+            onBackClick()
         }
     }
 
@@ -142,9 +139,8 @@ fun UploadItemContent(
         topBar = { 
             TopBarSection(
                 title = if (isFormVisible) "Item Details" else "Upload Item",
-                onClose = { 
-                    if (isFormVisible) isFormVisible = false 
-                    else { /* TODO: Close App/Screen */ } 
+                onClose = {
+                    onBackClick()
                 }
             ) 
         },

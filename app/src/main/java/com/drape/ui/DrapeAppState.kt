@@ -58,6 +58,16 @@ class DrapeAppState(
         }
 
     /**
+     * Whether the Floating Action Button should be visible.
+     * Only visible when the current destination is Wardrobe.
+     */
+    val shouldShowFab: Boolean
+        @Composable get() {
+            val destination = currentDestination
+            return destination?.hasRoute(com.drape.navigation.Wardrobe::class) == true
+        }
+
+    /**
      * Navigate to a bottom bar destination.
      * Handles proper back stack management.
      *

@@ -88,7 +88,13 @@ class ClothesRepository @Inject constructor(
 
             // Delete image from Firebase Storage
             val imagePath = storageDataSource.generateImagePath(currentUserId, clothingId)
-            storageDataSource.deleteImage(imagePath)
+            try {
+                storageDataSource.deleteImage(imagePath)
+            } catch (e: Exception) {
+                // Log error but continue to delete metadata
+                // This handles cases where image might have been already deleted or missing
+                e.printStackTrace()
+            }
 
             // Delete metadata from Firestore
             clothesCollection.document(clothingId).delete().await()
