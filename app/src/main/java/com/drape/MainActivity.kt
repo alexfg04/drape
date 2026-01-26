@@ -11,7 +11,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.drape.navigation.DrapeNavGraph
 import com.drape.ui.components.CurvedBottomNavigation
+
 import com.drape.ui.rememberDrapeAppState
+import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
+import com.drape.navigation.UploadClothes
 import com.drape.ui.theme.DrapeTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -54,6 +61,18 @@ fun DrapeApp() {
                         appState.navigateToBottomBarDestination(index)
                     }
                 )
+            }
+        },
+        floatingActionButton = {
+            if (appState.shouldShowFab) {
+                FloatingActionButton(
+                    onClick = { appState.navController.navigate(UploadClothes) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Aggiungi Vestito")
+                }
             }
         }
     ) { innerPadding ->

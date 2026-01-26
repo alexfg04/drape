@@ -65,7 +65,7 @@
     <!-- Home Sections -->
     <string name="home_nav_home">Home</string>
     <string name="home_nav_camerino">Componi</string>
-    <string name="home_nav_add">Aggiungi</string>
+    <string name="home_nav_wardrobe">Il tuo Armadio</string>
     <string name="home_nav_profile">Profilo</string>
     <string name="home_page_camerino">Pagina Camerino</string>
     <string name="home_page_add">Pagina Aggiungi</string>
@@ -73,4 +73,9 @@
 
     <!-- Common -->
     <string name="back_description">Indietro</string>
+
+    <!-- Add Screen -->
+    <string name="add_title">Aggiungi Vestiti</string>
+    <string name="add_subtitle">Espandi il tuo guardaroba con nuovi capi</string>
+    <string name="add_button">Aggiungi Nuovo Capo</string>
 </resources>
