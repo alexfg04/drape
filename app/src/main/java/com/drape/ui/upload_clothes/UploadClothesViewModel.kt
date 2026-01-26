@@ -7,9 +7,11 @@ import com.drape.data.model.ClothingItem
 import com.drape.data.repository.ClothesRepository
 import com.drape.data.service.BackgroundRemovalService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,6 +39,8 @@ class UploadClothesViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(UploadClothesUiState())
     val uiState: StateFlow<UploadClothesUiState> = _uiState.asStateFlow()
 
+    private var currentProcessingJob: Job? = null
+
     /**
      * Processes the image to remove background if enabled.
      * 
@@ -49,7 +53,8 @@ class UploadClothesViewModel @Inject constructor(
             return
         }
 
-        viewModelScope.launch {
+        currentProcessingJob?.cancel()
+        currentProcessingJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isProcessingBackground = true,
                 errorMessage = null
@@ -57,34 +62,26 @@ class UploadClothesViewModel @Inject constructor(
 
             try {
                 val processedUri = backgroundRemovalService.removeBackground(imageUri)
-                _uiState.value = _uiState.value.copy(
-                    isProcessingBackground = false,
-                    processedImageUri = processedUri,
-                    errorMessage = if (processedUri == null) 
-                        "Impossibile rimuovere lo sfondo. Prova con un'altra immagine." 
-                        else null
-                )
+                if (isActive) {
+                    _uiState.value = _uiState.value.copy(
+                        isProcessingBackground = false,
+                        processedImageUri = processedUri,
+                        errorMessage = if (processedUri == null) 
+                            "Impossibile rimuovere lo sfondo. Prova con un'altra immagine." 
+                            else null
+                    )
+                }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isProcessingBackground = false,
-                    errorMessage = "Errore durante l'elaborazione: ${e.localizedMessage}"
-                )
+                if (isActive) {
+                    _uiState.value = _uiState.value.copy(
+                        isProcessingBackground = false,
+                        errorMessage = "Errore durante l'elaborazione: ${e.localizedMessage}"
+                    )
+                }
             }
         }
     }
 
-    /**
-     * Uploads a new clothing item with image and metadata.
-     * Uses the processed image if background removal was applied.
-     * 
-     * @param originalImageUri The local URI of the original image
-     * @param name The name of the clothing item
-     * @param brand The brand of the clothing item
-     * @param category The category of the clothing item
-     * @param color The color of the clothing item
-     * @param season The season of the clothing item
-     * @param removeBackground Whether background removal is enabled
-     */
     fun uploadClothingItem(
         originalImageUri: Uri,
         name: String,
@@ -110,7 +107,14 @@ class UploadClothesViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isProcessingBackground = true)
                     val processedUri = backgroundRemovalService.removeBackground(originalImageUri)
                     _uiState.value = _uiState.value.copy(isProcessingBackground = false)
-                    processedUri ?: originalImageUri
+                    if (processedUri == null) {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            errorMessage = "Background removal failed"
+                        )
+                        return@launch
+                    }
+                    processedUri
                 } else {
                     originalImageUri
                 }

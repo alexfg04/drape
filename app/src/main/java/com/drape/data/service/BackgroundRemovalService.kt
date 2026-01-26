@@ -19,6 +19,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.google.android.gms.tasks.OnFailureListener
+import com.google.android.gms.tasks.OnSuccessListener
+import com.google.mlkit.vision.segmentation.subject.SubjectSegmentationResult
 import androidx.core.graphics.createBitmap
 
 /**
@@ -98,20 +101,34 @@ class BackgroundRemovalService @Inject constructor(
      */
     private suspend fun processWithSegmenter(inputImage: InputImage): Bitmap? {
         return suspendCancellableCoroutine { continuation ->
-            segmenter.process(inputImage)
-                .addOnSuccessListener { result ->
-                    val foreground = result.foregroundBitmap
-                    if (foreground != null) {
-                        // Create a new bitmap with transparent background
-                        val transparentBitmap = createTransparentBitmap(foreground)
-                        continuation.resume(transparentBitmap)
-                    } else {
-                        continuation.resume(null)
-                    }
+            val task = segmenter.process(inputImage)
+            
+            val successListener = OnSuccessListener<SubjectSegmentationResult> { result ->
+                if (!continuation.isActive) return@OnSuccessListener
+                val foreground = result.foregroundBitmap
+                if (foreground != null) {
+                    // Create a new bitmap with transparent background
+                    val transparentBitmap = createTransparentBitmap(foreground)
+                    continuation.resume(transparentBitmap)
+                    foreground.recycle()
+                } else {
+                    continuation.resume(null)
                 }
-                .addOnFailureListener { exception ->
-                    continuation.resumeWithException(exception)
-                }
+            }
+            
+            val failureListener = OnFailureListener { exception ->
+                if (!continuation.isActive) return@OnFailureListener
+                continuation.resumeWithException(exception)
+            }
+            
+            task.addOnSuccessListener(successListener)
+            task.addOnFailureListener(failureListener)
+            
+            // Clean up listeners when coroutine is cancelled
+            continuation.invokeOnCancellation {
+                // Note: Firebase Tasks don't have removeOnSuccessListener/removeOnFailureListener
+                // The isActive check in the listeners handles cancellation
+            }
         }
     }
 
@@ -121,7 +138,7 @@ class BackgroundRemovalService @Inject constructor(
      * ensure proper transparency.
      */
     private fun createTransparentBitmap(foreground: Bitmap): Bitmap {
-        // Create a new ARGB_8888 bitmap for transparency support
+
         val result = createBitmap(foreground.width, foreground.height)
         
         val canvas = Canvas(result)

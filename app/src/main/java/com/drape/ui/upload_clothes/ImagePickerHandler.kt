@@ -46,7 +46,27 @@ object ImagePickerHandler {
 
     fun isFileSizeValid(context: Context, uri: Uri): Boolean {
         val size = getFileSize(context, uri)
-        return size in 1L..MAX_FILE_SIZE_BYTES.toLong()
+        if (size > 0) {
+            return size <= MAX_FILE_SIZE_BYTES
+        } else {
+            // Unknown size, stream and check
+            return try {
+                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                    val buffer = ByteArray(8192)
+                    var totalBytes = 0L
+                    var bytesRead: Int
+                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                        totalBytes += bytesRead
+                        if (totalBytes > MAX_FILE_SIZE_BYTES) {
+                            return@use false
+                        }
+                    }
+                    true
+                } ?: false
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 
     /**

@@ -73,4 +73,9 @@
 
     <!-- Common -->
     <string name="back_description">Indietro</string>
+
+    <!-- Add Screen -->
+    <string name="add_title">Aggiungi Vestiti</string>
+    <string name="add_subtitle">Espandi il tuo guardaroba con nuovi capi</string>
+    <string name="add_button">Aggiungi Nuovo Capo</string>
 </resources>

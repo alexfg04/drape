@@ -1,7 +1,9 @@
 package com.drape.data.datasource
 
+import android.content.Context
 import android.net.Uri
 import com.google.firebase.storage.FirebaseStorage
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 import javax.inject.Inject
@@ -13,7 +15,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class StorageRemoteDataSource @Inject constructor(
-    private val storage: FirebaseStorage
+    private val storage: FirebaseStorage,
+    @ApplicationContext private val context: Context
 ) {
     /**
      * Uploads an image to Firebase Storage.
@@ -28,7 +31,13 @@ class StorageRemoteDataSource @Inject constructor(
         userId: String,
         clothingId: String
     ): String {
-        val imagePath = generateImagePath(userId, clothingId)
+        val mimeType = context.contentResolver.getType(imageUri) ?: "image/png"
+        val extension = when (mimeType) {
+            "image/jpeg" -> "jpg"
+            "image/png" -> "png"
+            else -> "png"
+        }
+        val imagePath = generateImagePath(userId, clothingId, extension)
         val imageRef = storage.reference.child(imagePath)
         
         imageRef.putFile(imageUri).await()
@@ -56,9 +65,19 @@ class StorageRemoteDataSource @Inject constructor(
      *
      * @param userId User ID
      * @param clothingId Clothing item ID
-     * @return Path in format "users/{userId}/clothes/{clothingId}.jpg"
+     * @param extension File extension (default: png)
+     * @return Path in format "users/{userId}/clothes/{clothingId}.{extension}"
      */
-    fun generateImagePath(userId: String, clothingId: String): String {
-        return "users/$userId/clothes/$clothingId.jpg"
+    fun generateImagePath(userId: String, clothingId: String, extension: String = "png"): String {
+        return "users/$userId/clothes/$clothingId.$extension"
+    }
+    
+    /**
+     * Extracts the storage path from a Firebase Storage download URL.
+     */
+    fun extractPathFromUrl(url: String): String {
+        val start = url.indexOf("/o/") + 3
+        val end = url.indexOf("?", start)
+        return url.substring(start, end).replace("%2F", "/")
     }
 }

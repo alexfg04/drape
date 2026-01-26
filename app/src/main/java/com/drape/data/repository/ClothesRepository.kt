@@ -87,14 +87,7 @@ class ClothesRepository @Inject constructor(
             }
 
             // Delete image from Firebase Storage
-            val imagePath = storageDataSource.generateImagePath(currentUserId, clothingId)
-            try {
-                storageDataSource.deleteImage(imagePath)
-            } catch (e: Exception) {
-                // Log error but continue to delete metadata
-                // This handles cases where image might have been already deleted or missing
-                e.printStackTrace()
-            }
+            storageDataSource.deleteImage(storageDataSource.extractPathFromUrl(clothingItem.imageUrl))
 
             // Delete metadata from Firestore
             clothesCollection.document(clothingId).delete().await()
@@ -140,20 +133,16 @@ class ClothesRepository @Inject constructor(
      * @return ClothingItem if found, null otherwise
      */
     suspend fun getClothingItem(clothingId: String): ClothingItem? {
-        return try {
-            val currentUserId = auth.currentUser?.uid
-                ?: throw Exception("User not authenticated")
+        val currentUserId = auth.currentUser?.uid
+            ?: throw Exception("User not authenticated")
 
-            val document = clothesCollection.document(clothingId).get().await()
-            val clothingItem = document.toObject(ClothingItem::class.java)
+        val document = clothesCollection.document(clothingId).get().await()
+        val clothingItem = document.toObject(ClothingItem::class.java)
 
-            // Verify ownership
-            if (clothingItem?.userId == currentUserId) {
-                clothingItem
-            } else {
-                null
-            }
-        } catch (e: Exception) {
+        // Verify ownership
+        return if (clothingItem?.userId == currentUserId) {
+            clothingItem
+        } else {
             null
         }
     }

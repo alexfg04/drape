@@ -231,7 +231,10 @@ fun UploadItemContent(
 
                 // 3. Pulsanti di editing (Undo, Crop, Rotate)
                 ActionButtonsRow(
-                    onUndo = { selectedImageUri = null },
+                    onUndo = { 
+                        selectedImageUri = null
+                        onClearProcessedImage()
+                    },
                     onCrop = {
                         Toast.makeText(context, "Crop functionality requires an external library.", Toast.LENGTH_SHORT).show()
                     },
@@ -243,6 +246,11 @@ fun UploadItemContent(
                                 }
                                 if (newUri != null) {
                                     selectedImageUri = newUri
+                                    onClearProcessedImage()
+                                    // Re-run background removal if enabled
+                                    if (removeBackgroundEnabled) {
+                                        onProcessImage(newUri, true)
+                                    }
                                 } else {
                                     Toast.makeText(context, "Failed to rotate image", Toast.LENGTH_SHORT).show()
                                 }

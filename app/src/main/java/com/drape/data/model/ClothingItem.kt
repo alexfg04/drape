@@ -12,5 +12,5 @@ data class ClothingItem(
     val category: String = "",
     val color: String = "",
     val season: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = 0L
 )

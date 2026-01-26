@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.drape.data.model.ClothingItem
 import com.drape.data.repository.ClothesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +37,8 @@ class WardrobeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(WardrobeUiState())
     val uiState: StateFlow<WardrobeUiState> = _uiState.asStateFlow()
 
+    private var clothingLoadJob: Job? = null
+
     init {
         loadClothingItems()
     }
@@ -45,7 +48,8 @@ class WardrobeViewModel @Inject constructor(
      * Subscribes to the Flow to receive real-time updates.
      */
     private fun loadClothingItems() {
-        viewModelScope.launch {
+        clothingLoadJob?.cancel()
+        clothingLoadJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             
             clothesRepository.getUserClothingItems()
