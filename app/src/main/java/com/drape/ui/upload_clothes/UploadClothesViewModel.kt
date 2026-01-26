@@ -49,7 +49,12 @@ class UploadClothesViewModel @Inject constructor(
      */
     fun processImage(imageUri: Uri, removeBackground: Boolean) {
         if (!removeBackground) {
-            _uiState.value = _uiState.value.copy(processedImageUri = null)
+            currentProcessingJob?.cancel()
+            currentProcessingJob = null
+            _uiState.value = _uiState.value.copy(
+                processedImageUri = null,
+                isProcessingBackground = false
+            )
             return
         }
 

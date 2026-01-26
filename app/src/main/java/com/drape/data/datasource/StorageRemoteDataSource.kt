@@ -76,8 +76,10 @@ class StorageRemoteDataSource @Inject constructor(
      * Extracts the storage path from a Firebase Storage download URL.
      */
     fun extractPathFromUrl(url: String): String {
-        val start = url.indexOf("/o/") + 3
-        val end = url.indexOf("?", start)
-        return url.substring(start, end).replace("%2F", "/")
+        return try {
+            storage.getReferenceFromUrl(url).path
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Invalid storage URL: $url", e)
+        }
     }
 }

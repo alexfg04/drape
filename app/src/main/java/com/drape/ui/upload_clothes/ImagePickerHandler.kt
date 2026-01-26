@@ -7,6 +7,7 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -47,23 +48,34 @@ object ImagePickerHandler {
     fun isFileSizeValid(context: Context, uri: Uri): Boolean {
         val size = getFileSize(context, uri)
         if (size > 0) {
-            return size <= MAX_FILE_SIZE_BYTES
+            val isValid = size <= MAX_FILE_SIZE_BYTES
+            if (!isValid) {
+                Log.e("ImagePickerHandler", "File size too large: $size bytes (Max: $MAX_FILE_SIZE_BYTES)")
+            }
+            return isValid
         } else {
             // Unknown size, stream and check
             return try {
-                context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                val inputStream = context.contentResolver.openInputStream(uri)
+                if (inputStream == null) {
+                    Log.e("ImagePickerHandler", "Failed to open input stream for URI: $uri")
+                    return false
+                }
+                inputStream.use { stream ->
                     val buffer = ByteArray(8192)
                     var totalBytes = 0L
                     var bytesRead: Int
-                    while (inputStream.read(buffer).also { bytesRead = it } != -1) {
+                    while (stream.read(buffer).also { bytesRead = it } != -1) {
                         totalBytes += bytesRead
                         if (totalBytes > MAX_FILE_SIZE_BYTES) {
+                            Log.e("ImagePickerHandler", "Streamed file size exceeded limit ($totalBytes > $MAX_FILE_SIZE_BYTES)")
                             return@use false
                         }
                     }
                     true
-                } ?: false
+                }
             } catch (e: Exception) {
+                Log.e("ImagePickerHandler", "Error checking file size for URI: $uri", e)
                 false
             }
         }
