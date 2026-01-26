@@ -106,12 +106,25 @@ fun CurvedBottomNavigation(
                     .background(backgroundColor, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = items[selectedIndex].icon,
-                    contentDescription = stringResource(id = items[selectedIndex].titleRes),
-                    tint = activeColor,
-                    modifier = Modifier.size(28.dp)
-                )
+                val icon = items[selectedIndex].icon
+                when (icon) {
+                    is IconSource.Vector -> {
+                        Icon(
+                            imageVector = icon.imageVector,
+                            contentDescription = stringResource(id = items[selectedIndex].titleRes),
+                            tint = activeColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    is IconSource.Drawable -> {
+                        Icon(
+                            painter = androidx.compose.ui.res.painterResource(id = icon.id),
+                            contentDescription = stringResource(id = items[selectedIndex].titleRes),
+                            tint = activeColor,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                }
             }
         }
 
@@ -141,12 +154,25 @@ fun CurvedBottomNavigation(
                         verticalArrangement = Arrangement.Center
                     ) {
                         if (!isSelected) {
-                            Icon(
-                                imageVector = item.icon,
-                                contentDescription = stringResource(id = item.titleRes),
-                                tint = inactiveColor,
-                                modifier = Modifier.size(24.dp)
-                            )
+                            val icon = item.icon
+                            when (icon) {
+                                is IconSource.Vector -> {
+                                    Icon(
+                                        imageVector = icon.imageVector,
+                                        contentDescription = stringResource(id = item.titleRes),
+                                        tint = inactiveColor,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                                is IconSource.Drawable -> {
+                                    Icon(
+                                        painter = androidx.compose.ui.res.painterResource(id = icon.id),
+                                        contentDescription = stringResource(id = item.titleRes),
+                                        tint = inactiveColor,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = stringResource(id = item.titleRes),

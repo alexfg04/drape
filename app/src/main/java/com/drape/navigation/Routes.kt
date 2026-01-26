@@ -47,7 +47,11 @@ object Home
 object Camerino
 
 @Serializable
-object Add
+object Wardrobe
+
+
+@Serializable
+object UploadClothes
 
 @Serializable
 object Profile
