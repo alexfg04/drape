@@ -1,4 +1,4 @@
-package com.drape.ui.wardrobe
+package com.drape.ui.outfit_creator
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
