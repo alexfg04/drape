@@ -159,14 +159,14 @@ fun ProfileScreen() {
             
             CartinaBanner(
                 title = "Outfit Autunno",
-                backgroundColor = Color.Black,
-                contentColor = Color.White,
+                backgroundColor = MaterialTheme.colorScheme.inverseSurface,
+                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
                 backgroundImageRes = R.drawable.autunnobutton
             )
             CartinaBanner(
                 title = "Outfit Inverno",
-                backgroundColor = Color.Black,
-                contentColor = Color.White,
+                backgroundColor = MaterialTheme.colorScheme.inverseSurface,
+                contentColor = MaterialTheme.colorScheme.inverseOnSurface,
                 backgroundImageRes = R.drawable.invernobutton
             )
             CartinaBanner(
@@ -236,7 +236,7 @@ fun StatBox(
     Card(
         modifier = modifier.aspectRatio(1f),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         border = BorderStroke(1.dp, iconColor.copy(alpha = 0.1f))
     ) {
@@ -248,12 +248,7 @@ fun StatBox(
                 modifier = Modifier
                     .size(48.dp)
                     .align(Alignment.BottomEnd)
-                    .offset(x = 12.dp, y = 12.dp)
-                    .drawWithCache {
-                        onDrawWithContent {
-                            drawContent()
-                        }
-                    },
+                    .offset(x = 12.dp, y = 12.dp),
                 tint = iconColor.copy(alpha = 0.05f)
             )
             
@@ -281,12 +276,12 @@ fun StatBox(
                     text = value,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
             }
