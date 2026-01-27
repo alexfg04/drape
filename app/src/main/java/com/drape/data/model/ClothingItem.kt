@@ -1,9 +1,14 @@
 package com.drape.data.model
 
+import com.google.firebase.firestore.DocumentId
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
+
 /**
  * Data model representing a clothing item in the user's wardrobe.
  */
 data class ClothingItem(
+    @DocumentId
     val id: String = "",
     val userId: String = "",
     val imageUrl: String = "",
@@ -12,5 +17,6 @@ data class ClothingItem(
     val category: String = "",
     val color: String = "",
     val season: String = "",
-    val createdAt: Long = 0L
+    @ServerTimestamp
+    val createdAt: Date? = null
 )

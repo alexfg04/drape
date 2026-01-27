@@ -4,7 +4,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import com.drape.ui.outfit_creator.WardrobeScreen
+import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.CamerinoScreen
 import com.drape.ui.home.HomeScreen
 import com.drape.ui.profile.ProfileScreen

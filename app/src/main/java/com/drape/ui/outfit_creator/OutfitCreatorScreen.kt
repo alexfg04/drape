@@ -62,7 +62,7 @@ data class ItemTransform(
  * Main screen for the Wardrobe section where users can customize their look.
  */
 @Composable
-fun WardrobeScreen() {
+fun OutfitCreatorScreen() {
     // Selected item resource IDs for each category
     var selectedTopResId by remember { mutableStateOf<Int?>(null) }
     var selectedBottomResId by remember { mutableStateOf<Int?>(null) }
@@ -534,6 +534,6 @@ fun ClothItem(
 @Composable
 fun WardrobeScreenPreview() {
     DrapeTheme {
-        WardrobeScreen()
+        OutfitCreatorScreen()
     }
 }
