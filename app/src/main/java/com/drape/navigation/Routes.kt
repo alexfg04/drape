@@ -55,3 +55,6 @@ object UploadClothes
 
 @Serializable
 object Profile
+
+@Serializable
+object SelectOutfit

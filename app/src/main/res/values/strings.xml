@@ -78,4 +78,33 @@
     <string name="add_title">Aggiungi Vestiti</string>
     <string name="add_subtitle">Espandi il tuo guardaroba con nuovi capi</string>
     <string name="add_button">Aggiungi Nuovo Capo</string>
+
+    <!-- Planner Screen -->
+    <string name="planner_title">Select Outfit for Day</string>
+    <string name="planner_filter">Filter</string>
+    <string name="planner_tab_all">All Outfits</string>
+    <string name="planner_tab_creator">Creator Saved</string>
+    <string name="planner_tab_photo">Photo Outfits</string>
+    <string name="planner_selection">SELECTION</string>
+    <string name="planner_confirm">Confirm Selection</string>
+    <string name="planner_create_new">CREATE NEW OUTFIT</string>
+    <string name="planner_casual_friday">Casual Friday Look</string>
+    <string name="planner_fall_cafe">Fall Cafe Date</string>
+    <string name="planner_office_smart">Office Smart</string>
+    <string name="planner_weekend_brunch">Weekend Brunch</string>
+    <string name="planner_summer_breeze">Summer Breeze</string>
+
+    <!-- Calendar Screen -->
+    <string name="calendar_month_october">October 2023</string>
+    <string name="calendar_weather">68°F Partly Cloudy</string>
+    <string name="calendar_view_monthly">Monthly</string>
+    <string name="calendar_view_weekly">Weekly</string>
+    <string name="calendar_upcoming_highlights">Upcoming Highlights</string>
+    <string name="calendar_event_date_night">Date Night</string>
+    <string name="calendar_event_dressy_casual">Dressy Casual</string>
+    <string name="calendar_event_presentation">Presentation</string>
+    <string name="calendar_event_formal_business">Formal Business</string>
+    <string name="calendar_add_description">Create New Event</string>
+    <string name="wardrobe_empty_title">il tuo armadio è vuoto</string>
+    <string name="wardrobe_empty_subtitle">tocca il pulsante + per aggiunre il tuo primo capo</string>
 </resources>
