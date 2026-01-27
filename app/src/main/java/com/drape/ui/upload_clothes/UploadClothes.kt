@@ -2,6 +2,7 @@ package com.drape.ui.upload_clothes
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -93,7 +94,8 @@ fun UploadItemContent(
     var selectedImageUri by rememberSaveable(saver = uriSaver) { mutableStateOf(null) }
     
     // Background removal state
-    var removeBackgroundEnabled by rememberSaveable { mutableStateOf(true) }
+    // Default set to false as per user request
+    var removeBackgroundEnabled by rememberSaveable { mutableStateOf(false) }
     
     // Form State
     var isFormVisible by rememberSaveable { mutableStateOf(false) }
@@ -121,13 +123,13 @@ fun UploadItemContent(
         }
     }
 
-    // Inizializza il selettore di immagini con validazione delle dimensioni
+    // Image Picker
     val imagePickerLauncher = rememberImagePicker(
         context = context,
-        onImageSelected = { uri -> 
+        onImageSelected = { uri ->
             selectedImageUri = uri
             onClearProcessedImage()
-            // Process image immediately if toggle is enabled
+            // Process image if toggle is enabled
             if (removeBackgroundEnabled) {
                 onProcessImage(uri, true)
             }
@@ -235,9 +237,7 @@ fun UploadItemContent(
                         selectedImageUri = null
                         onClearProcessedImage()
                     },
-                    onCrop = {
-                        Toast.makeText(context, "Crop functionality requires an external library.", Toast.LENGTH_SHORT).show()
-                    },
+
                     onRotate = {
                         selectedImageUri?.let { uri ->
                             scope.launch {
@@ -499,7 +499,6 @@ fun RemoveBackgroundCard(
 @Composable
 fun ActionButtonsRow(
     onUndo: () -> Unit,
-    onCrop: () -> Unit,
     onRotate: () -> Unit
 ) {
     Row(
@@ -508,8 +507,6 @@ fun ActionButtonsRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         ActionButton(icon = Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", onClick = onUndo)
-        Spacer(modifier = Modifier.width(32.dp))
-        ActionButton(icon = Icons.Default.Crop, contentDescription = "Crop", onClick = onCrop)
         Spacer(modifier = Modifier.width(32.dp))
         ActionButton(icon = Icons.Default.Refresh, contentDescription = "Rotate", onClick = onRotate)
     }

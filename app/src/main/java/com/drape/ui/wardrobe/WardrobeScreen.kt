@@ -3,6 +3,8 @@ package com.drape.ui.wardrobe
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -12,7 +14,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
+import com.drape.R
 import com.drape.data.model.ClothingItem
 import com.drape.ui.theme.*
 
@@ -331,13 +333,15 @@ fun EmptyState() {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(32.dp)
         ) {
-            Text(
-                text = "👕",
-                style = MaterialTheme.typography.displayLarge
+            androidx.compose.foundation.Image(
+                painter = painterResource(id = R.drawable.empty_wardrobe),
+                contentDescription = null,
+                modifier = Modifier.size(380.dp),
+                contentScale = ContentScale.Fit
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Il tuo guardaroba è vuoto",
+                text = "Il tuo armadio è vuoto",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
@@ -346,7 +350,7 @@ fun EmptyState() {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Inizia aggiungendo il tuo primo capo!",
+                text = "Aggiungi il tuo primo capo d'abbigliamento per iniziare.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -485,7 +489,7 @@ fun WardrobeItemCard(item: ClothingItem, onClick: () -> Unit, modifier: Modifier
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(8.dp)
+                        .padding(4.dp)
                 )
             }
             
