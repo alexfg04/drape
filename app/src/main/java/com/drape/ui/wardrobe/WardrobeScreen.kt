@@ -718,7 +718,7 @@ fun WardrobeScreenPreview() {
             id = "3",
             name = "Giacca di Pelle",
             brand = "Zara",
-            category = "Outerwear",
+            category = "Tops",
             color = "Nero",
             season = "Autunno"
         ), ClothingItem(

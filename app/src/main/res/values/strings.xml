@@ -100,7 +100,6 @@
     <string name="upload_clothes_title_details">Dettagli Capo</string>
     <string name="upload_clothes_title_upload">Carica Capo</string>
     <string name="upload_clothes_review_capture">Controlla la tua foto</string>
-    <string name="upload_clothes_category_outerwear">Capispalla</string>
     <string name="upload_clothes_success">Capo aggiunto con successo!</string>
     <string name="upload_clothes_error_no_image">Per favore seleziona prima un\'immagine</string>
     <string name="upload_clothes_removing_background">Rimozione sfondo...</string>
