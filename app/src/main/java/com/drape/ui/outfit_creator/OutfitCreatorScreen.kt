@@ -3,6 +3,7 @@ package com.drape.ui.outfit_creator
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -75,7 +76,6 @@ fun OutfitCreatorScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
-    val snackbarHostState = remember { SnackbarHostState() }
     
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
@@ -102,15 +102,11 @@ fun OutfitCreatorScreen(
         it.category.equals(selectedCategory.name, ignoreCase = true)
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = Color(0xFFF8F9FA)
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF8F9FA))
+    ) {
         // PREVIEW AREA (Interactive Canvas)
         Box(
             modifier = Modifier
@@ -300,9 +296,7 @@ fun OutfitCreatorScreen(
             // Error Feedback
             LaunchedEffect(uiState.errorResId) {
                 uiState.errorResId?.let { resId ->
-                    snackbarHostState.showSnackbar(
-                        message = context.getString(resId)
-                    )
+                    Toast.makeText(context, resId, Toast.LENGTH_LONG).show()
                     viewModel.clearError()
                 }
             }
@@ -433,7 +427,6 @@ fun OutfitCreatorScreen(
             }
         }
     }
-}
 }
 
 /**
