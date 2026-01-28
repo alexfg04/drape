@@ -20,19 +20,17 @@ class OutfitsRemoteDataSource @Inject constructor(
 
     /**
      * Saves an outfit to Firestore.
-     * Uses Firestore's automatic ID generation if the outfit ID is empty.
+     * Updates the outfit's id field with the generated documentRef.id before calling documentRef.set(outfit).
      */
     suspend fun saveOutfit(outfit: Outfit) {
-        val documentRef = if (outfit.id.isEmpty()) {
+        val documentRef = if (outfit.id.isBlank()) {
             outfitsCollection.document()
         } else {
             outfitsCollection.document(outfit.id)
         }
-        documentRef.set(outfit).await()
+        val outfitWithId = outfit.copy(id = documentRef.id)
+        documentRef.set(outfitWithId).await()
     }
-
-
-
 
     /**
      * Deletes an outfit from Firestore.

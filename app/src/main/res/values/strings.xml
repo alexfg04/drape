@@ -94,4 +94,44 @@
     <string name="outfit_creator_menu_title_collapsed">Scegli i tuoi capi</string>
     <string name="outfit_creator_none">Nessuno</string>
     <string name="outfit_creator_reset_position">Reset Posizione</string>
+
+    <!-- Upload Clothes Screen -->
+    <string name="upload_clothes_details">Dettagli</string>
+    <string name="upload_clothes_title_details">Dettagli Capo</string>
+    <string name="upload_clothes_title_upload">Carica Capo</string>
+    <string name="upload_clothes_review_capture">Controlla la tua foto</string>
+    <string name="upload_clothes_category_outerwear">Capispalla</string>
+    <string name="upload_clothes_success">Capo aggiunto con successo!</string>
+    <string name="upload_clothes_error_no_image">Per favore seleziona prima un\'immagine</string>
+    <string name="upload_clothes_removing_background">Rimozione sfondo...</string>
+    <string name="upload_clothes_ai_enhanced">AI Enhanced</string>
+    <string name="upload_clothes_tap_to_add">Tocca per aggiungere una foto</string>
+    <string name="upload_clothes_remove_background">Rimuovi Sfondo</string>
+    <string name="upload_clothes_process_info">Usa l\'AI per isolare il tuo capo.</string>
+    <string name="upload_clothes_processing">Analisi immagine...</string>
+    <string name="upload_clothes_add_to_closet">Salva nell\'Armadio</string>
+    <string name="upload_clothes_base_info">Informazioni Base</string>
+    <string name="upload_clothes_name">Nome</string>
+    <string name="upload_clothes_brand">Marca</string>
+    <string name="upload_clothes_category">Categoria</string>
+    <string name="upload_clothes_color">Colore</string>
+    <string name="upload_clothes_season">Stagione</string>
+
+    <string-array name="seasons">
+        <item>Primavera</item>
+        <item>Estate</item>
+        <item>Autunno</item>
+        <item>Inverno</item>
+        <item>Tutte le stagioni</item>
+    </string-array>
+
+    <string name="ok">OK</string>
+    <string name="outfit_creator_error_empty">Seleziona almeno un capo</string>
+    <string name="wardrobe_filter_all">Tutti</string>
+    <string name="error_image_too_large">L\'immagine è troppo grande. Dimensione massima 5MB.</string>
+    <string name="wardrobe_search_placeholder">Cerca vestiti...</string>
+    <string name="wardrobe_search_close">Chiudi Ricerca</string>
+    <string name="wardrobe_search_clear">Cancella Ricerca</string>
+    <string name="search">Cerca</string>
+    <string name="add_item">Aggiungi Capo</string>
 </resources>

@@ -20,11 +20,11 @@ class OutfitRepository @Inject constructor(
     private val authRepository: AuthRepository
 ) {
     /**
-     * Saves or updates an outfit.
-     * 
-     * @param outfit The outfit to save
-     * @param thumbnailUri The optional local URI for the outfit's thumbnail
-     * @throws Exception If save fails or user is not authenticated
+     * Saves or updates an outfit, including its thumbnail image if provided.
+     *
+     * @param outfit The [Outfit] data to save.
+     * @param thumbnailUri The optional local URI for the outfit's thumbnail image.
+     * @throws Exception If the user is not authenticated or the save operation fails.
      */
     suspend fun saveOutfit(outfit: Outfit, thumbnailUri: Uri? = null) {
         val currentUserId = authRepository.currentUser?.id
@@ -49,7 +49,7 @@ class OutfitRepository @Inject constructor(
 
             val outfitToSave = outfit.copy(
                 id = outfitId,
-                userId = outfit.userId.ifEmpty { currentUserId },
+                userId = currentUserId,
                 thumbnailUrl = thumbnailUrl
             )
 
@@ -96,6 +96,8 @@ class OutfitRepository @Inject constructor(
 
     /**
      * Gets all outfits for the current user.
+     *
+     * @return A [Flow] emitting a list of [Outfit]s belonging to the authenticated user.
      */
     fun getUserOutfits(): Flow<List<Outfit>> {
         val userId = authRepository.currentUser?.id
@@ -105,7 +107,11 @@ class OutfitRepository @Inject constructor(
     }
 
     /**
-     * Gets a specific outfit by ID.
+     * Gets a specific outfit by ID, ensuring it belongs to the current user.
+     *
+     * @param outfitId The ID of the outfit.
+     * @return The [Outfit] if found and authorized, null otherwise.
+     * @throws Exception If the user is not authenticated.
      */
     suspend fun getOutfit(outfitId: String): Outfit? {
         val currentUserId = authRepository.currentUser?.id

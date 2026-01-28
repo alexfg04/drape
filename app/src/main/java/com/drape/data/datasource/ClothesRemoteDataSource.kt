@@ -22,7 +22,13 @@ class ClothesRemoteDataSource @Inject constructor(
      * Saves a clothing item to Firestore.
      */
     suspend fun saveClothingItem(clothingItem: ClothingItem) {
-        clothesCollection.document(clothingItem.id).set(clothingItem).await()
+        val finalItem = if (clothingItem.id.isBlank()) {
+            val newId = clothesCollection.document().id
+            clothingItem.copy(id = newId)
+        } else {
+            clothingItem
+        }
+        clothesCollection.document(finalItem.id).set(finalItem).await()
     }
 
     /**

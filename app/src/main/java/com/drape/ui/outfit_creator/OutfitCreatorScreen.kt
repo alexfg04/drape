@@ -48,6 +48,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -135,7 +136,9 @@ fun OutfitCreatorScreen(
                     }
                     .drawWithContent {
                         // Start recording into graphicsLayer (Excludes UI controls outside this Box)
-                        graphicsLayer.record {
+                        graphicsLayer.record(
+                            size = IntSize(size.width.roundToInt(), size.height.roundToInt())
+                        ) {
                             this@drawWithContent.drawContent()
                         }
                         // Draw the recorded layer to the screen
@@ -274,13 +277,27 @@ fun OutfitCreatorScreen(
             // Success Feedback
             if (uiState.saveSuccess) {
                 AlertDialog(
-                    onDismissRequest = { /* Handle navigation or clear state */ },
+                    onDismissRequest = { 
+                        viewModel.clearSaveSuccess()
+                        onBackClick()
+                    },
                     title = { Text(stringResource(R.string.outfit_creator_success_title)) },
                     text = { Text(stringResource(R.string.outfit_creator_success_message)) },
                     confirmButton = {
-                        TextButton(onClick = { onBackClick() }) { Text("OK") }
+                        TextButton(onClick = { 
+                            viewModel.clearSaveSuccess()
+                            onBackClick() 
+                        }) { Text(stringResource(R.string.ok)) }
                     }
                 )
+            }
+
+            // Error Feedback
+            LaunchedEffect(uiState.errorResId) {
+                uiState.errorResId?.let { resId ->
+                    // You could use a snackbar or toast here
+                    // For now I'll just clear it if we were to show a toast
+                }
             }
         }
 
@@ -396,7 +413,7 @@ fun OutfitCreatorScreen(
                         // Reset Position Button
                         TextButton(
                             onClick = { 
-                                viewModel.updateTransform(selectedCategory, scale = 1f, rotation = 0f, offset = Offset.Zero) 
+                                viewModel.resetTransform(selectedCategory) 
                             },
                             modifier = Modifier.align(Alignment.End).padding(bottom = 8.dp)
                         ) {
@@ -415,6 +432,10 @@ fun OutfitCreatorScreen(
 
 /**
  * Captures the current content of the graphics layer as a bitmap and saves it to a temporary file.
+ *
+ * @param graphicsLayer The layer containing the UI to capture.
+ * @param context The current context.
+ * @return The [Uri] of the saved thumbnail file, or null if an error occurs.
  */
 private suspend fun captureThumbnail(
     graphicsLayer: GraphicsLayer,
@@ -435,7 +456,11 @@ private suspend fun captureThumbnail(
 }
 
 /**
- * Single item in the selection gallery at the bottom.
+ * An item card in the selection gallery at the bottom.
+ *
+ * @param imageUrl The URL of the clothing image. If null, a "None" option is shown.
+ * @param isSelected Flag indicating if this item is the currently selected one in its category.
+ * @param onClick Callback triggered when the item is clicked.
  */
 @Composable
 fun GalleryItem(
@@ -492,6 +517,10 @@ fun GalleryItem(
 
 /**
  * Determines rendering order based on item category.
+ * Used to ensure logical layering (e.g., shoes appear behind pants).
+ *
+ * @param category The [ItemCategory] to evaluate.
+ * @return An integer priority value (lower values are rendered first).
  */
 private fun getRenderPriority(category: ItemCategory): Int {
     return when (category) {
@@ -504,6 +533,15 @@ private fun getRenderPriority(category: ItemCategory): Int {
 
 /**
  * Individual clothing item on the canvas with interactive transformation controls.
+ * Handles dragging, scaling, and rotation.
+ *
+ * @param imageUrl The URL of the image to display.
+ * @param scale The current scale factor.
+ * @param rotation The current rotation in degrees.
+ * @param offset The (x, y) offset on the canvas.
+ * @param isActive Flag indicating if the item is currently active for editing.
+ * @param onSelect Callback to select this item as active.
+ * @param onTransformUpdate Callback for updates to scale, rotation, or offset.
  */
 @Composable
 fun ClothItem(

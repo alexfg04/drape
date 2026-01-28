@@ -91,8 +91,8 @@ class ClothesRepository @Inject constructor(
 
     /**
      * Gets all clothing items for the current user.
-     * 
-     * @return Flow of clothing items list
+     *
+     * @return A [Flow] emitting a list of [ClothingItem]s belonging to the authenticated user.
      */
     fun getUserClothingItems(): Flow<List<ClothingItem>> {
         val currentUserId = authRepository.currentUser?.id
@@ -102,10 +102,11 @@ class ClothesRepository @Inject constructor(
     }
 
     /**
-     * Gets a specific clothing item by ID.
-     * 
-     * @param clothingId The ID of the clothing item
-     * @return ClothingItem if found, null otherwise
+     * Gets a specific clothing item by ID, ensuring it belongs to the current user.
+     *
+     * @param clothingId The ID of the clothing item.
+     * @return The [ClothingItem] if found and authorized, null otherwise.
+     * @throws Exception If the user is not authenticated.
      */
     suspend fun getClothingItem(clothingId: String): ClothingItem? {
         val currentUserId = authRepository.currentUser?.id

@@ -47,6 +47,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.core.net.toUri
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.stringArrayResource
+import android.util.Log
+import com.drape.R
 
 /**
  * Stateful version of the screen that handles ViewModel integration.
@@ -104,10 +108,12 @@ fun UploadItemContent(
     var color by rememberSaveable { mutableStateOf("") }
     var season by rememberSaveable { mutableStateOf("") }
 
+    val successMessage = stringResource(R.string.upload_clothes_success)
+    val noImageErrorMessage = stringResource(R.string.upload_clothes_error_no_image)
     // Handle successful upload
     LaunchedEffect(uiState.isUploadSuccessful) {
         if (uiState.isUploadSuccessful) {
-            Toast.makeText(context, "Capo aggiunto con successo!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, successMessage, Toast.LENGTH_SHORT).show()
             onClearSuccessState()
             // Navigate back to wardrobe
             onBackClick()
@@ -139,7 +145,7 @@ fun UploadItemContent(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { 
             TopBarSection(
-                title = if (isFormVisible) "Item Details" else "Upload Item",
+                title = if (isFormVisible) stringResource(R.string.upload_clothes_title_details) else stringResource(R.string.upload_clothes_title_upload),
                 onClose = {
                     onBackClick()
                 }
@@ -152,7 +158,7 @@ fun UploadItemContent(
                         if (selectedImageUri != null) {
                             isFormVisible = true
                         } else {
-                            Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, noImageErrorMessage, Toast.LENGTH_SHORT).show()
                         }
                     }
                 )
@@ -267,6 +273,13 @@ fun UploadItemContent(
     }
 }
 
+/**
+ * The top bar section of the Upload screen.
+ * Displays the screen title and a progress indicator.
+ *
+ * @param title The title text to display.
+ * @param onClose Callback triggered when the close button is clicked.
+ */
 @Composable
 fun TopBarSection(title: String, onClose: () -> Unit) {
     Column(
@@ -320,9 +333,9 @@ fun TopBarSection(title: String, onClose: () -> Unit) {
                 )
             }
         }
-        if (title == "Upload Item") {
+        if (title == stringResource(R.string.upload_clothes_title_upload)) {
             Text(
-                text = "Review your capture",
+                text = stringResource(R.string.upload_clothes_review_capture),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 8.dp)
@@ -331,6 +344,14 @@ fun TopBarSection(title: String, onClose: () -> Unit) {
     }
 }
 
+/**
+ * A preview card for the selected clothing image.
+ * Shows a loading state during background processing or an "add" icon if no image is selected.
+ *
+ * @param imageUri The URI of the image to display.
+ * @param isProcessing Flag indicating if the background removal process is active.
+ * @param onClick Callback triggered when the card is clicked.
+ */
 @Composable
 fun MainImagePreview(
     imageUri: Uri?,
@@ -372,7 +393,7 @@ fun MainImagePreview(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                "Removing background...",
+                                text = stringResource(R.string.upload_clothes_removing_background),
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -398,7 +419,7 @@ fun MainImagePreview(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                "AI Enhanced", 
+                                text = stringResource(R.string.upload_clothes_ai_enhanced), 
                                 color = MaterialTheme.colorScheme.onTertiary, 
                                 style = MaterialTheme.typography.labelSmall
                             )
@@ -421,7 +442,7 @@ fun MainImagePreview(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Tap to add a photo", 
+                            text = stringResource(R.string.upload_clothes_tap_to_add), 
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -432,6 +453,13 @@ fun MainImagePreview(
     }
 }
 
+/**
+ * A card allowing the user to toggle background removal for the selected image.
+ *
+ * @param isChecked Boolean state of the toggle.
+ * @param isProcessing Boolean flag showing if processing is active.
+ * @param onCheckedChange Callback when the toggle state changes.
+ */
 @Composable
 fun RemoveBackgroundCard(
     isChecked: Boolean,
@@ -472,13 +500,13 @@ fun RemoveBackgroundCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Remove Background",
+                    text = stringResource(R.string.upload_clothes_remove_background),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = if (isProcessing) "Processing image..." else "Use AI to isolate your item.",
+                    text = if (isProcessing) stringResource(R.string.upload_clothes_processing) else stringResource(R.string.upload_clothes_process_info),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -497,6 +525,13 @@ fun RemoveBackgroundCard(
     }
 }
 
+/**
+ * A row of action buttons for common image operations (Undo, Crop, Rotate).
+ *
+ * @param onUndo Callback for the undo action.
+ * @param onCrop Callback for the crop action.
+ * @param onRotate Callback for the rotate action.
+ */
 @Composable
 fun ActionButtonsRow(
     onUndo: () -> Unit,
@@ -516,6 +551,13 @@ fun ActionButtonsRow(
     }
 }
 
+/**
+ * A circular button used for specific image actions.
+ *
+ * @param icon The [ImageVector] to display.
+ * @param contentDescription Accessibility description for the button.
+ * @param onClick Callback triggered on click.
+ */
 @Composable
 fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
     Surface(
@@ -535,6 +577,24 @@ fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> U
     }
 }
 
+/**
+ * A form for entering the metadata details of a new clothing item.
+ *
+ * @param modifier Modifier for layout customization.
+ * @param imageUri The URI of the garment image.
+ * @param name The name of the garment.
+ * @param onNameChange Callback for name updates.
+ * @param brand The brand of the garment.
+ * @param onBrandChange Callback for brand updates.
+ * @param category The selected category (e.g., TOP, BOTTOM).
+ * @param onCategoryChange Callback for category updates.
+ * @param color The selected color.
+ * @param onColorChange Callback for color updates.
+ * @param season The selected season.
+ * @param onSeasonChange Callback for season updates.
+ * @param uiState The state of the upload process.
+ * @param onSave Callback triggered when the "Save" button is clicked.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemForm(
@@ -553,8 +613,9 @@ fun AddItemForm(
     uiState: UploadClothesUiState,
     onSave: () -> Unit
 ) {
+    val context = LocalContext.current
     val categories = ItemCategory.entries.toList()
-    val seasons = listOf("Spring", "Summer", "Autumn", "Winter", "All Season")
+    val seasons = stringArrayResource(R.array.seasons).toList()
     var categoryExpanded by remember { mutableStateOf(false) }
     var seasonExpanded by remember { mutableStateOf(false) }
 
@@ -585,7 +646,7 @@ fun AddItemForm(
         
         // Basic Info Section
         Text(
-            text = "Informazioni Base",
+            text = stringResource(R.string.upload_clothes_base_info),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -596,7 +657,7 @@ fun AddItemForm(
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = { Text("Nome") },
+            label = { Text(stringResource(R.string.upload_clothes_name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -607,7 +668,7 @@ fun AddItemForm(
         OutlinedTextField(
             value = brand,
             onValueChange = onBrandChange,
-            label = { Text("Marca") },
+            label = { Text(stringResource(R.string.upload_clothes_brand)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -627,13 +688,14 @@ fun AddItemForm(
                 readOnly = true,
                 value = if (category.isNotEmpty()) {
                     try {
-                        getDisplayNameForCategory(ItemCategory.valueOf(category))
+                        getDisplayNameForCategory(context, ItemCategory.valueOf(category))
                     } catch (e: Exception) {
+                        Log.e("UploadClothes", "Error parsing category: $category", e)
                         category
                     }
                 } else "",
                 onValueChange = {},
-                label = { Text("Categoria") },
+                label = { Text(stringResource(R.string.upload_clothes_category)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -644,7 +706,7 @@ fun AddItemForm(
             ) {
                 categories.forEach { selectionOption ->
                     DropdownMenuItem(
-                        text = { Text(getDisplayNameForCategory(selectionOption)) },
+                        text = { Text(getDisplayNameForCategory(context, selectionOption)) },
                         onClick = {
                             onCategoryChange(selectionOption.name)
                             categoryExpanded = false
@@ -659,7 +721,7 @@ fun AddItemForm(
         
         // Details Section
         Text(
-            text = "Details",
+            text = stringResource(R.string.upload_clothes_details),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -687,7 +749,7 @@ fun AddItemForm(
                 readOnly = true,
                 value = season,
                 onValueChange = {},
-                label = { Text("Stagione") },
+                label = { Text(stringResource(R.string.upload_clothes_season)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = seasonExpanded) },
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -727,7 +789,7 @@ fun AddItemForm(
                 )
             } else {
                 Text(
-                    text = "Salva nell\'Armadio",
+                    text = stringResource(R.string.upload_clothes_add_to_closet),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -736,6 +798,12 @@ fun AddItemForm(
     }
 }
 
+/**
+ * Section for selecting a color from a predefined palette.
+ *
+ * @param selectedColorName The name of the currently selected color.
+ * @param onColorSelected Callback when a color is chosen.
+ */
 @Composable
 fun ColorSelectionSection(
     selectedColorName: String,
@@ -795,6 +863,13 @@ fun ColorSelectionSection(
     }
 }
 
+/**
+ * A small colored circle representing a selection in the color palette.
+ *
+ * @param color The [Color] value.
+ * @param isSelected Boolean flag for selection state.
+ * @param onClick Callback triggered on selection.
+ */
 @Composable
 fun ColorCircle(
     color: Color,
@@ -814,6 +889,11 @@ fun ColorCircle(
     )
 }
 
+/**
+ * The primary action button at the bottom of the screen to proceed with the upload.
+ *
+ * @param onClick Callback triggered on click.
+ */
 @Composable
 fun BottomActionButton(onClick: () -> Unit) {
     Button(
@@ -849,11 +929,18 @@ fun PreviewUploadItem() {
         )
     }
 }
-fun getDisplayNameForCategory(category: ItemCategory): String {
+/**
+ * Helper function to get the localized display name for a clothing category.
+ *
+ * @param context The current context.
+ * @param category The [ItemCategory] enum value.
+ * @return The Italian display string for the category.
+ */
+fun getDisplayNameForCategory(context: android.content.Context, category: ItemCategory): String {
     return when (category) {
-        ItemCategory.TOP -> "Sopra"
-        ItemCategory.BOTTOM -> "Sotto"
-        ItemCategory.SHOES -> "Scarpe"
-        ItemCategory.ACCESSORIES -> "Accessori"
+        ItemCategory.TOP -> context.getString(R.string.outfit_creator_category_top)
+        ItemCategory.BOTTOM -> context.getString(R.string.outfit_creator_category_bottom)
+        ItemCategory.SHOES -> context.getString(R.string.outfit_creator_category_shoes)
+        ItemCategory.ACCESSORIES -> context.getString(R.string.outfit_creator_category_accessories)
     }
 }
