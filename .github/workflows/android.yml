@@ -1,0 +1,36 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # 1. Fondamentale: Jetpack Compose e i tool moderni richiedono Java 17 o 21
+    - name: set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17' 
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Decode google-services.json
+      run: echo "${{ secrets.GOOGLE_SERVICES_BASE64 }}" | base64 --decode > app/google-services.json
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # 2. Esegui il check del codice (Lint) e i test unitari
+    - name: Run Lint and Unit Tests
+      run: ./gradlew lint test
+
+    # 3. Compila l'APK di debug (per vedere se il codice è integro)
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
