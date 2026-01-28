@@ -54,4 +54,7 @@ object Wardrobe
 object UploadClothes
 
 @Serializable
+object SavedOutfits
+
+@Serializable
 object Profile

@@ -9,6 +9,7 @@ import com.drape.ui.home.HomeScreen
 import com.drape.ui.outfit_creator.OutfitCreatorScreen
 import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
+import com.drape.ui.myOutfit.SavedOutfitsScreen
 
 /**
  * Home navigation graph.
@@ -39,7 +40,11 @@ fun NavGraphBuilder.homeNavGraph(
         }
 
         composable<Wardrobe> {
-            WardrobeScreen()
+            WardrobeScreen(
+                onNavigateToOutfits = {
+                    navController.navigate(SavedOutfits)
+                }
+            )
         }
 
         composable<UploadClothes> {
@@ -55,8 +60,16 @@ fun NavGraphBuilder.homeNavGraph(
             )
         }
 
+        composable<SavedOutfits> {
+            SavedOutfitsScreen()
+        }
+
         composable<Profile> {
-            ProfileScreen()
+            ProfileScreen(
+                onSavedOutfitsClick = {
+                    navController.navigate(SavedOutfits)
+                }
+            )
         }
     }
 }

@@ -1,8 +1,10 @@
 package com.drape.ui.wardrobe
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -15,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -22,39 +25,59 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import com.drape.R
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
+
+import com.drape.ui.myOutfit.OutfitDetailDialog
+import com.drape.ui.myOutfit.SavedOutfitsListContent
+import com.drape.ui.myOutfit.SavedOutfitsScreen
+import com.drape.ui.myOutfit.SavedOutfitsViewModel
 import com.drape.ui.theme.*
 
 /**
- * Main screen for viewing and managing the user's wardrobe.
- * Displays a grid of clothing items with filtering and search capabilities.
- *
- * @param viewModel The ViewModel that manages the screen's state and logic.
+ * Main screen for viewing and managing the user's wardrobe and saved outfits.
+ * Displays a sliding toggle to switch between clothes and outfits.
  */
 @Composable
 fun WardrobeScreen(
-    viewModel: WardrobeViewModel = hiltViewModel()
+    wardrobeViewModel: WardrobeViewModel = hiltViewModel(),
+    savedOutfitsViewModel: SavedOutfitsViewModel = hiltViewModel(),
+    onNavigateToOutfits: () -> Unit = {} // This might be redundant now, but kept for compatibility
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
+    val savedOutfitsUiState by savedOutfitsViewModel.uiState.collectAsState()
+    
+    // Tab State: 0 for Wardrobe, 1 for Saved Outfits
+    var selectedTab by remember { mutableStateOf(0) }
 
     WardrobeScreenContent(
-        uiState = uiState,
-        onItemClick = { viewModel.selectItem(it) },
-        onClearSelection = { viewModel.clearSelection() },
-        onDeleteItem = { viewModel.deleteClothingItem(it) },
-        onRefresh = { viewModel.refresh() }
+        selectedTab = selectedTab,
+        onTabSelected = { selectedTab = it },
+        wardrobeUiState = wardrobeUiState,
+        savedOutfitsUiState = savedOutfitsUiState,
+        onWardrobeItemClick = { wardrobeViewModel.selectItem(it) },
+        onWardrobeClearSelection = { wardrobeViewModel.clearSelection() },
+        onWardrobeDeleteItem = { wardrobeViewModel.deleteClothingItem(it) },
+        onWardrobeRefresh = { wardrobeViewModel.refresh() },
+        onOutfitImageClick = { savedOutfitsViewModel.selectOutfit(it) },
+        onDismissOutfitDetail = { savedOutfitsViewModel.selectOutfit(null) },
+        onDeleteOutfit = { savedOutfitsViewModel.deleteOutfit(it) },
+        onEditOutfit = { /* Navigate to edit */ }, // Implement if needed, or keeping empty as per previous code
+        onToggleFavoriteOutfit = { savedOutfitsViewModel.toggleFavorite(it) },
+        onOutfitRefresh = { savedOutfitsViewModel.refresh() }
     )
 }
 
@@ -70,25 +93,72 @@ fun WardrobeScreen(
  */
 @Composable
 fun WardrobeScreenContent(
-    uiState: WardrobeUiState,
-    onItemClick: (ClothingItem) -> Unit,
-    onClearSelection: () -> Unit,
-    onDeleteItem: (String) -> Unit,
-    onRefresh: () -> Unit
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    wardrobeUiState: WardrobeUiState,
+    savedOutfitsUiState: com.drape.ui.myOutfit.SavedOutfitsUiState,
+    onWardrobeItemClick: (ClothingItem) -> Unit,
+    onWardrobeClearSelection: () -> Unit,
+    onWardrobeDeleteItem: (String) -> Unit,
+    onWardrobeRefresh: () -> Unit,
+    onOutfitImageClick: (com.drape.data.model.Outfit) -> Unit,
+    onDismissOutfitDetail: () -> Unit,
+    onDeleteOutfit: (String) -> Unit,
+    onEditOutfit: (com.drape.data.model.Outfit) -> Unit,
+    onToggleFavoriteOutfit: (com.drape.data.model.Outfit) -> Unit,
+    onOutfitRefresh: () -> Unit
 ) {
-    val allFilterText = stringResource(R.string.wardrobe_filter_all)
-    val filters = listOf(allFilterText) + ItemCategory.entries.map { it.name }
-    var selectedFilter by remember { mutableStateOf(allFilterText) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
+    
+    // State for outfits deletion
+    var outfitToDelete by remember { mutableStateOf<com.drape.data.model.Outfit?>(null) }
+    
+     // Delete Confirmation Outfits Dialog
+    outfitToDelete?.let { outfit ->
+        AlertDialog(
+            onDismissRequest = { outfitToDelete = null },
+            title = { Text("Elimina Outfit") },
+            text = { Text("Sei sicuro di voler eliminare l'outfit \"${outfit.name}\"? Questa azione non può essere annullata.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteOutfit(outfit.id)
+                        outfitToDelete = null
+                        onDismissOutfitDetail() // Close detail if open
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Elimina")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { outfitToDelete = null }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
 
-    // Handle selected item dialog
-    uiState.selectedItem?.let { selectedItem ->
+
+    // Handle selected item dialog (wardrobe)
+    wardrobeUiState.selectedItem?.let { selectedItem ->
         ItemDetailDialog(
             item = selectedItem,
-            isDeleting = uiState.isDeleting,
-            onDismiss = onClearSelection,
-            onDelete = { onDeleteItem(selectedItem.id) }
+            isDeleting = wardrobeUiState.isDeleting,
+            onDismiss = onWardrobeClearSelection,
+            onDelete = { onWardrobeDeleteItem(selectedItem.id) }
+        )
+    }
+    
+     // Zoomed/Centered Detail Dialog (outfits)
+    savedOutfitsUiState.selectedOutfit?.let { outfit ->
+        OutfitDetailDialog(
+            outfit = outfit,
+            isFavorite = savedOutfitsUiState.favoriteOutfitIds.contains(outfit.id),
+            onDismiss = onDismissOutfitDetail,
+            onToggleFavorite = { onToggleFavoriteOutfit(outfit) },
+            onDelete = { outfitToDelete = outfit }
         )
     }
 
@@ -103,59 +173,97 @@ fun WardrobeScreenContent(
                 onSearchClosed = {
                     isSearchActive = false
                     searchQuery = ""
-                })
+                },
+                selectedTab = selectedTab,
+                onTabSelected = { 
+                    onTabSelected(it)
+                    // Clear search when switching tabs? Optional.
+                    // searchQuery = "" 
+                }
+            )
         },
 
         ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-                .padding(horizontal = 16.dp)
-        ) {
-            FilterSection(
-                filters = filters,
-                selectedFilter = selectedFilter,
-                onFilterSelected = { selectedFilter = it })
+        Box(modifier = Modifier.padding(paddingValues)) {
+            if (selectedTab == 0) {
+                WardrobeListContent(
+                    uiState = wardrobeUiState,
+                    searchQuery = searchQuery,
+                    onItemClick = onWardrobeItemClick,
+                    onRefresh = onWardrobeRefresh
+                )
+            } else {
+                 SavedOutfitsListContent(
+                    uiState = savedOutfitsUiState,
+                    searchQuery = searchQuery,
+                    onOutfitImageClick = onOutfitImageClick,
+                    onDeleteOutfit = { outfitToDelete = it },
+                    onEditOutfit = onEditOutfit,
+                    onToggleFavorite = onToggleFavoriteOutfit,
+                    onRefresh = onOutfitRefresh
+                )
+            }
+        }
+    }
+}
 
-            Spacer(modifier = Modifier.height(16.dp))
+@Composable
+fun WardrobeListContent(
+    uiState: WardrobeUiState,
+    searchQuery: String,
+    onItemClick: (ClothingItem) -> Unit,
+    onRefresh: () -> Unit
+) {
+    val allFilterText = stringResource(R.string.wardrobe_filter_all)
+    val filters = listOf(allFilterText) + ItemCategory.entries.map { it.name }
+    var selectedFilter by remember { mutableStateOf(allFilterText) }
 
-            when {
-                uiState.isLoading -> {
-                    LoadingState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        FilterSection(
+            filters = filters,
+            selectedFilter = selectedFilter,
+            onFilterSelected = { selectedFilter = it })
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when {
+            uiState.isLoading -> {
+                LoadingState()
+            }
+
+            uiState.errorMessage != null && uiState.clothingItems.isEmpty() -> {
+                ErrorState(
+                    message = uiState.errorMessage, onRetry = onRefresh
+                )
+            }
+
+            uiState.clothingItems.isEmpty() -> {
+                EmptyState()
+            }
+
+            else -> {
+                val filteredItems = uiState.clothingItems.filter { item ->
+                    (selectedFilter == allFilterText || item.category.equals(
+                        selectedFilter, ignoreCase = true
+                    )) && (searchQuery.isEmpty() || item.name.contains(
+                        searchQuery,
+                        ignoreCase = true
+                    ) || item.brand.contains(
+                        searchQuery,
+                        ignoreCase = true
+                    ) || item.color.contains(searchQuery, ignoreCase = true))
                 }
 
-                uiState.errorMessage != null && uiState.clothingItems.isEmpty() -> {
-                    ErrorState(
-                        message = uiState.errorMessage, onRetry = onRefresh
+                if (filteredItems.isEmpty()) {
+                    NoResultsState(searchQuery = searchQuery, filter = selectedFilter)
+                } else {
+                    WardrobeGrid(
+                        clothingItems = filteredItems, onItemClick = onItemClick
                     )
-                }
-
-                uiState.clothingItems.isEmpty() -> {
-                    EmptyState()
-                }
-
-                else -> {
-                    val allFilterText = stringResource(R.string.wardrobe_filter_all)
-                    val filteredItems = uiState.clothingItems.filter { item ->
-                        (selectedFilter == allFilterText || item.category.equals(
-                            selectedFilter, ignoreCase = true
-                        )) && (searchQuery.isEmpty() || item.name.contains(
-                            searchQuery,
-                            ignoreCase = true
-                        ) || item.brand.contains(
-                            searchQuery,
-                            ignoreCase = true
-                        ) || item.color.contains(searchQuery, ignoreCase = true))
-                    }
-
-                    if (filteredItems.isEmpty()) {
-                        NoResultsState(searchQuery = searchQuery, filter = selectedFilter)
-                    } else {
-                        WardrobeGrid(
-                            clothingItems = filteredItems, onItemClick = onItemClick
-                        )
-                    }
                 }
             }
         }
@@ -582,14 +690,37 @@ fun TopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onSearchTriggered: () -> Unit,
-    onSearchClosed: () -> Unit
+    onSearchClosed: () -> Unit,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
 ) {
-    if (isSearchActive) {
-        SearchTopBar(
-            query = searchQuery, onQueryChange = onSearchQueryChange, onClose = onSearchClosed
-        )
-    } else {
-        DefaultTopBar(onSearchTriggered = onSearchTriggered)
+    Column(
+        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)
+    ) {
+        if (isSearchActive) {
+            SearchTopBar(
+                query = searchQuery, 
+                onQueryChange = onSearchQueryChange, 
+                onClose = onSearchClosed,
+                placeholderText = if (selectedTab == 0) "Cerca vestiti" else "Cerca outfit"
+            )
+        } else {
+            DefaultTopBar(
+                onSearchTriggered = onSearchTriggered
+            )
+        }
+        
+        // Sliding Toggle centered at the top, always visible
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            SlidingToggle(
+                options = listOf("Vestiti", "Outfit"),
+                selectedIndex = selectedTab,
+                onOptionSelected = onTabSelected
+            )
+        }
     }
 }
 
@@ -602,7 +733,7 @@ fun TopBar(
  */
 @Composable
 fun SearchTopBar(
-    query: String, onQueryChange: (String) -> Unit, onClose: () -> Unit
+    query: String, onQueryChange: (String) -> Unit, onClose: () -> Unit, placeholderText: String
 ) {
     Row(
         modifier = Modifier
@@ -622,7 +753,7 @@ fun SearchTopBar(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
-            placeholder = { Text(stringResource(R.string.wardrobe_search_placeholder)) },
+            placeholder = { Text(placeholderText) },
             singleLine = true,
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -651,16 +782,19 @@ fun SearchTopBar(
  * @param onSearchTriggered Callback to start a search.
  */
 @Composable
-fun DefaultTopBar(onSearchTriggered: () -> Unit) {
+fun DefaultTopBar(
+    onSearchTriggered: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp, horizontal = 16.dp),
+            .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(R.string.home_nav_wardrobe), style = MaterialTheme.typography.headlineMedium.copy(
+            text = "Guardaroba",
+            style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground
             )
         )
@@ -678,19 +812,54 @@ fun DefaultTopBar(onSearchTriggered: () -> Unit) {
                 )
             }
 
-            // Profile Placeholder
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile",
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+        }
+    }
+}
+
+/**
+ * A custom sliding toggle component.
+ */
+@Composable
+fun SlidingToggle(
+    options: List<String>,
+    selectedIndex: Int,
+    onOptionSelected: (Int) -> Unit
+) {
+    val cornerRadius = 24.dp
+    
+    Box(
+        modifier = Modifier
+            .background(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(cornerRadius)
+            )
+            .padding(4.dp)
+    ) {
+        Row(
+           verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEachIndexed { index, text ->
+                 val isSelected = index == selectedIndex
+                 val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                 val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                 
+                 Box(
+                     modifier = Modifier
+                         .clip(RoundedCornerShape(cornerRadius))
+                         .background(backgroundColor)
+                         .clickable(
+                             interactionSource = remember { MutableInteractionSource() },
+                             indication = null
+                         ) { onOptionSelected(index) }
+                         .padding(vertical = 8.dp, horizontal = 24.dp),
+                     contentAlignment = Alignment.Center
+                 ) {
+                     Text(
+                         text = text,
+                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                         color = textColor
+                     )
+                 }
             }
         }
     }
@@ -737,11 +906,20 @@ fun WardrobeScreenPreview() {
 
     DrapeTheme {
         WardrobeScreenContent(
-            uiState = uiState,
-            onItemClick = {},
-            onClearSelection = {},
-            onDeleteItem = {},
-            onRefresh = {}
+            selectedTab = 0,
+            onTabSelected = {},
+            wardrobeUiState = uiState,
+            savedOutfitsUiState = com.drape.ui.myOutfit.SavedOutfitsUiState(),
+            onWardrobeItemClick = {},
+            onWardrobeClearSelection = {},
+            onWardrobeDeleteItem = {},
+            onWardrobeRefresh = {},
+            onOutfitImageClick = {},
+            onDismissOutfitDetail = {},
+            onDeleteOutfit = {},
+            onEditOutfit = {},
+            onToggleFavoriteOutfit = {},
+            onOutfitRefresh = {}
         )
     }
 }
