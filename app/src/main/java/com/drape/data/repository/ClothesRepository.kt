@@ -36,7 +36,7 @@ class ClothesRepository @Inject constructor(
 
         return try {
             // Generate unique ID
-            val clothingId = storageDataSource.generateClothingId()
+            val clothingId = storageDataSource.generateId()
             
             // Upload image to Storage
             val imageUrl = storageDataSource.uploadImage(imageUri, currentUserId, clothingId)

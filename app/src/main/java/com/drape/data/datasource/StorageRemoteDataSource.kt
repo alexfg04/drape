@@ -29,7 +29,8 @@ class StorageRemoteDataSource @Inject constructor(
     suspend fun uploadImage(
         imageUri: Uri,
         userId: String,
-        clothingId: String
+        id: String,
+        folder: String = "clothes"
     ): String {
         val mimeType = context.contentResolver.getType(imageUri) ?: "image/png"
         val extension = when (mimeType) {
@@ -37,12 +38,13 @@ class StorageRemoteDataSource @Inject constructor(
             "image/png" -> "png"
             else -> "png"
         }
-        val imagePath = generateImagePath(userId, clothingId, extension)
+        val imagePath = generateImagePath(userId, id, extension, folder)
         val imageRef = storage.reference.child(imagePath)
         
         imageRef.putFile(imageUri).await()
         return imageRef.downloadUrl.await().toString()
     }
+
     
     /**
      * Deletes an image from Firebase Storage.
@@ -54,11 +56,12 @@ class StorageRemoteDataSource @Inject constructor(
     }
     
     /**
-     * Generates a unique ID for a clothing item.
+     * Generates a unique ID.
      */
-    fun generateClothingId(): String {
+    fun generateId(): String {
         return UUID.randomUUID().toString()
     }
+
     
     /**
      * Generates the storage path for a clothing image.
@@ -68,9 +71,10 @@ class StorageRemoteDataSource @Inject constructor(
      * @param extension File extension (default: png)
      * @return Path in format "users/{userId}/clothes/{clothingId}.{extension}"
      */
-    fun generateImagePath(userId: String, clothingId: String, extension: String = "png"): String {
-        return "users/$userId/clothes/$clothingId.$extension"
+    fun generateImagePath(userId: String, id: String, extension: String = "png", folder: String): String {
+        return "users/$userId/$folder/$id.$extension"
     }
+
     
     /**
      * Extracts the storage path from a Firebase Storage download URL.

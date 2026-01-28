@@ -78,4 +78,20 @@
     <string name="add_title">Aggiungi Vestiti</string>
     <string name="add_subtitle">Espandi il tuo guardaroba con nuovi capi</string>
     <string name="add_button">Aggiungi Nuovo Capo</string>
+
+    <!-- Outfit Creator Screen -->
+    <string name="outfit_creator_category_top">Sopra</string>
+    <string name="outfit_creator_category_bottom">Sotto</string>
+    <string name="outfit_creator_category_shoes">Scarpe</string>
+    <string name="outfit_creator_category_accessories">Accessori</string>
+    <string name="outfit_creator_save_button">Salva Outfit</string>
+    <string name="outfit_creator_back_description">Torna indietro</string>
+    <string name="outfit_creator_schedule_description">Programma outfit</string>
+    <string name="outfit_creator_suggestions_description">Suggerimenti</string>
+    <string name="outfit_creator_success_title">Successo</string>
+    <string name="outfit_creator_success_message">Outfit salvato correttamente!</string>
+    <string name="outfit_creator_menu_title_expanded">Personalizza Look</string>
+    <string name="outfit_creator_menu_title_collapsed">Scegli i tuoi capi</string>
+    <string name="outfit_creator_none">Nessuno</string>
+    <string name="outfit_creator_reset_position">Reset Posizione</string>
 </resources>

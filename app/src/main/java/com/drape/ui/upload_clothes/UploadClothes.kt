@@ -41,6 +41,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.DrapeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -552,7 +553,7 @@ fun AddItemForm(
     uiState: UploadClothesUiState,
     onSave: () -> Unit
 ) {
-    val categories = listOf("Tops", "Bottoms", "Shoes", "Outerwear", "Accessories")
+    val categories = ItemCategory.entries.toList()
     val seasons = listOf("Spring", "Summer", "Autumn", "Winter", "All Season")
     var categoryExpanded by remember { mutableStateOf(false) }
     var seasonExpanded by remember { mutableStateOf(false) }
@@ -584,7 +585,7 @@ fun AddItemForm(
         
         // Basic Info Section
         Text(
-            text = "Basic Info",
+            text = "Informazioni Base",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.fillMaxWidth(),
@@ -595,7 +596,7 @@ fun AddItemForm(
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
-            label = { Text("Name") },
+            label = { Text("Nome") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -606,7 +607,7 @@ fun AddItemForm(
         OutlinedTextField(
             value = brand,
             onValueChange = onBrandChange,
-            label = { Text("Brand") },
+            label = { Text("Marca") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
@@ -624,9 +625,15 @@ fun AddItemForm(
                     .fillMaxWidth()
                     .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                 readOnly = true,
-                value = category,
+                value = if (category.isNotEmpty()) {
+                    try {
+                        getDisplayNameForCategory(ItemCategory.valueOf(category))
+                    } catch (e: Exception) {
+                        category
+                    }
+                } else "",
                 onValueChange = {},
-                label = { Text("Category") },
+                label = { Text("Categoria") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -637,9 +644,9 @@ fun AddItemForm(
             ) {
                 categories.forEach { selectionOption ->
                     DropdownMenuItem(
-                        text = { Text(selectionOption) },
+                        text = { Text(getDisplayNameForCategory(selectionOption)) },
                         onClick = {
-                            onCategoryChange(selectionOption)
+                            onCategoryChange(selectionOption.name)
                             categoryExpanded = false
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
@@ -680,7 +687,7 @@ fun AddItemForm(
                 readOnly = true,
                 value = season,
                 onValueChange = {},
-                label = { Text("Season") },
+                label = { Text("Stagione") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = seasonExpanded) },
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                 shape = RoundedCornerShape(12.dp)
@@ -720,7 +727,7 @@ fun AddItemForm(
                 )
             } else {
                 Text(
-                    text = "Save to Closet",
+                    text = "Salva nell\'Armadio",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -751,7 +758,7 @@ fun ColorSelectionSection(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Color",
+            text = "Colore",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -840,5 +847,13 @@ fun PreviewUploadItem() {
             onClearSuccessState = {},
             onClearProcessedImage = {}
         )
+    }
+}
+fun getDisplayNameForCategory(category: ItemCategory): String {
+    return when (category) {
+        ItemCategory.TOP -> "Sopra"
+        ItemCategory.BOTTOM -> "Sotto"
+        ItemCategory.SHOES -> "Scarpe"
+        ItemCategory.ACCESSORIES -> "Accessori"
     }
 }

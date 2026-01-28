@@ -32,6 +32,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import androidx.compose.ui.platform.LocalContext
 import com.drape.data.model.ClothingItem
+import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
 
 @Composable
@@ -57,7 +58,7 @@ fun WardrobeScreenContent(
     onDeleteItem: (String) -> Unit,
     onRefresh: () -> Unit
 ) {
-    val filters = listOf("All", "Tops", "Bottoms", "Shoes", "Outerwear", "Accessories")
+    val filters = listOf("All") + ItemCategory.entries.map { it.name }
     var selectedFilter by remember { mutableStateOf("All") }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
@@ -74,7 +75,6 @@ fun WardrobeScreenContent(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
-        contentWindowInsets = WindowInsets(0),
         topBar = {
             TopBar(
                 isSearchActive = isSearchActive,
@@ -426,7 +426,7 @@ fun FilterSection(
                     modifier = Modifier.padding(horizontal = 20.dp)
                 ) {
                     Text(
-                        text = filter,
+                        text = if (filter == "All") filter else getDisplayNameForCategory(ItemCategory.valueOf(filter)),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Medium
                         ),
@@ -687,5 +687,14 @@ fun WardrobeScreenPreview() {
             onDeleteItem = {},
             onRefresh = {}
         )
+    }
+}
+
+fun getDisplayNameForCategory(category: ItemCategory): String {
+    return when (category) {
+        ItemCategory.TOP -> "Sopra"
+        ItemCategory.BOTTOM -> "Sotto"
+        ItemCategory.SHOES -> "Scarpe"
+        ItemCategory.ACCESSORIES -> "Accessori"
     }
 }
