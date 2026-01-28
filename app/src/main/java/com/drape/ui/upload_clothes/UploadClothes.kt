@@ -1,7 +1,6 @@
 package com.drape.ui.upload_clothes
 
 import android.net.Uri
-import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -42,7 +41,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.data.model.ItemCategory
+import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.getDisplayNameForCategory
 import com.drape.ui.theme.DrapeTheme
+import com.drape.ui.upload_clothes.ImagePickerHandler.rotateImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -89,6 +91,7 @@ fun UploadItemContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     val uriSaver = Saver<MutableState<Uri?>, String>(
         save = { it.value?.toString() ?: "" },
@@ -110,10 +113,12 @@ fun UploadItemContent(
 
     val successMessage = stringResource(R.string.upload_clothes_success)
     val noImageErrorMessage = stringResource(R.string.upload_clothes_error_no_image)
+    val errorMessage = uiState.errorMessage // errorMessage is already a String from ViewModel
+    
     // Handle successful upload
     LaunchedEffect(uiState.isUploadSuccessful) {
         if (uiState.isUploadSuccessful) {
-            Toast.makeText(context, successMessage, Toast.LENGTH_SHORT).show()
+            snackbarHostState.showSnackbar(successMessage)
             onClearSuccessState()
             // Navigate back to wardrobe
             onBackClick()
@@ -121,9 +126,12 @@ fun UploadItemContent(
     }
 
     // Handle errors
-    LaunchedEffect(uiState.errorMessage) {
-        uiState.errorMessage?.let { error ->
-            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+    LaunchedEffect(errorMessage) {
+        errorMessage?.let { error ->
+            snackbarHostState.showSnackbar(
+                message = error,
+                duration = SnackbarDuration.Long
+            )
             onClearError()
         }
     }
@@ -137,6 +145,11 @@ fun UploadItemContent(
             // Process image immediately if toggle is enabled
             if (removeBackgroundEnabled) {
                 onProcessImage(uri, true)
+            }
+        },
+        onSizeExceeded = { msg ->
+            scope.launch {
+                snackbarHostState.showSnackbar(msg)
             }
         }
     )
@@ -158,10 +171,17 @@ fun UploadItemContent(
                         if (selectedImageUri != null) {
                             isFormVisible = true
                         } else {
-                            Toast.makeText(context, noImageErrorMessage, Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                snackbarHostState.showSnackbar(noImageErrorMessage)
+                            }
                         }
                     }
                 )
+            }
+        },
+        snackbarHost = { 
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
             }
         }
     ) { paddingValues ->
@@ -243,13 +263,15 @@ fun UploadItemContent(
                         onClearProcessedImage()
                     },
                     onCrop = {
-                        Toast.makeText(context, "Crop functionality requires an external library.", Toast.LENGTH_SHORT).show()
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Crop functionality requires an external library.")
+                        }
                     },
                     onRotate = {
                         selectedImageUri?.let { uri ->
                             scope.launch {
                                 val newUri = withContext(Dispatchers.IO) {
-                                    ImagePickerHandler.rotateImage(context, uri)
+                                    rotateImage(context, uri)
                                 }
                                 if (newUri != null) {
                                     selectedImageUri = newUri
@@ -259,7 +281,7 @@ fun UploadItemContent(
                                         onProcessImage(newUri, true)
                                     }
                                 } else {
-                                    Toast.makeText(context, "Failed to rotate image", Toast.LENGTH_SHORT).show()
+                                    snackbarHostState.showSnackbar("Failed to rotate image")
                                 }
                             }
                         }
@@ -619,6 +641,19 @@ fun AddItemForm(
     var categoryExpanded by remember { mutableStateOf(false) }
     var seasonExpanded by remember { mutableStateOf(false) }
 
+    val categoryEnum = remember(category) {
+        try {
+            ItemCategory.valueOf(category)
+        } catch (e: Exception) {
+            null
+        }
+    }
+    val displayCategory = if (categoryEnum != null) {
+        getDisplayNameForCategory(categoryEnum)
+    } else {
+        category
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -686,14 +721,7 @@ fun AddItemForm(
                     .fillMaxWidth()
                     .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                 readOnly = true,
-                value = if (category.isNotEmpty()) {
-                    try {
-                        getDisplayNameForCategory(context, ItemCategory.valueOf(category))
-                    } catch (e: Exception) {
-                        Log.e("UploadClothes", "Error parsing category: $category", e)
-                        category
-                    }
-                } else "",
+                value = displayCategory,
                 onValueChange = {},
                 label = { Text(stringResource(R.string.upload_clothes_category)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
@@ -706,7 +734,7 @@ fun AddItemForm(
             ) {
                 categories.forEach { selectionOption ->
                     DropdownMenuItem(
-                        text = { Text(getDisplayNameForCategory(context, selectionOption)) },
+                        text = { Text(getDisplayNameForCategory(category = selectionOption)) },
                         onClick = {
                             onCategoryChange(selectionOption.name)
                             categoryExpanded = false
@@ -927,20 +955,5 @@ fun PreviewUploadItem() {
             onClearSuccessState = {},
             onClearProcessedImage = {}
         )
-    }
-}
-/**
- * Helper function to get the localized display name for a clothing category.
- *
- * @param context The current context.
- * @param category The [ItemCategory] enum value.
- * @return The Italian display string for the category.
- */
-fun getDisplayNameForCategory(context: android.content.Context, category: ItemCategory): String {
-    return when (category) {
-        ItemCategory.TOP -> context.getString(R.string.outfit_creator_category_top)
-        ItemCategory.BOTTOM -> context.getString(R.string.outfit_creator_category_bottom)
-        ItemCategory.SHOES -> context.getString(R.string.outfit_creator_category_shoes)
-        ItemCategory.ACCESSORIES -> context.getString(R.string.outfit_creator_category_accessories)
     }
 }

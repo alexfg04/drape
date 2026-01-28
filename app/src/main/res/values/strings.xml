@@ -133,4 +133,5 @@
     <string name="wardrobe_search_clear">Cancella Ricerca</string>
     <string name="search">Cerca</string>
     <string name="add_item">Aggiungi Capo</string>
+    <string name="wardrobe_delete_success">Rimozione effettuata!</string>
 </resources>
