@@ -47,12 +47,14 @@ class DrapeAppState(
 
     /**
      * Whether the bottom navigation bar should be visible.
-     * Only visible when within the HomeGraph.
+     * Only visible when within the HomeGraph, except for specific screens.
      */
     val shouldShowBottomBar: Boolean
         @Composable get() {
             val destination = currentDestination
-            return topLevelDestinations.any { item ->
+            val isCamerino = destination?.hasRoute(com.drape.navigation.Camerino::class) == true
+            
+            return !isCamerino && topLevelDestinations.any { item ->
                 destination?.hasRoute(item.route::class) == true
             }
         }

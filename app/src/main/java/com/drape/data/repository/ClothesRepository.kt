@@ -1,29 +1,24 @@
 package com.drape.data.repository
 
 import android.net.Uri
+import com.drape.data.datasource.ClothesRemoteDataSource
 import com.drape.data.datasource.StorageRemoteDataSource
 import com.drape.data.model.ClothingItem
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.flow.emptyFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Repository for managing clothing items.
- * Coordinates between Firebase Storage (for images) and Firestore (for metadata).
+ * Coordinates between image storage and metadata storage.
  */
 @Singleton
 class ClothesRepository @Inject constructor(
     private val storageDataSource: StorageRemoteDataSource,
-    private val firestore: FirebaseFirestore,
-    private val auth: FirebaseAuth
+    private val clothesRemoteDataSource: ClothesRemoteDataSource,
+    private val authRepository: AuthRepository
 ) {
-    private val clothesCollection = firestore.collection("clothes")
-
     /**
      * Uploads a new clothing item with image and metadata.
      * 
@@ -36,26 +31,25 @@ class ClothesRepository @Inject constructor(
         imageUri: Uri,
         clothingData: ClothingItem
     ): ClothingItem {
-        val currentUserId = auth.currentUser?.uid
+        val currentUserId = authRepository.currentUser?.id
             ?: throw Exception("User not authenticated")
 
         return try {
             // Generate unique ID
-            val clothingId = storageDataSource.generateClothingId()
+            val clothingId = storageDataSource.generateId()
             
-            // Upload image to Firebase Storage
+            // Upload image to Storage
             val imageUrl = storageDataSource.uploadImage(imageUri, currentUserId, clothingId)
             
             // Create complete clothing item
             val completeItem = clothingData.copy(
                 id = clothingId,
                 userId = currentUserId,
-                imageUrl = imageUrl,
-                createdAt = System.currentTimeMillis()
+                imageUrl = imageUrl
             )
             
-            // Save metadata to Firestore
-            clothesCollection.document(clothingId).set(completeItem).await()
+            // Save metadata to Firestore via DataSource
+            clothesRemoteDataSource.saveClothingItem(completeItem)
             
             completeItem
         } catch (e: Exception) {
@@ -71,14 +65,11 @@ class ClothesRepository @Inject constructor(
      */
     suspend fun deleteClothingItem(clothingId: String): Boolean {
         return try {
-            val currentUserId = auth.currentUser?.uid
+            val currentUserId = authRepository.currentUser?.id
                 ?: throw Exception("User not authenticated")
 
             // Get clothing item data
-            val document = clothesCollection.document(clothingId).get().await()
-            if (!document.exists()) return false
-
-            val clothingItem = document.toObject(ClothingItem::class.java)
+            val clothingItem = clothesRemoteDataSource.getClothingItem(clothingId)
                 ?: return false
 
             // Verify ownership
@@ -86,11 +77,11 @@ class ClothesRepository @Inject constructor(
                 throw Exception("Unauthorized to delete this item")
             }
 
-            // Delete image from Firebase Storage
+            // Delete image from Storage
             storageDataSource.deleteImage(storageDataSource.extractPathFromUrl(clothingItem.imageUrl))
 
-            // Delete metadata from Firestore
-            clothesCollection.document(clothingId).delete().await()
+            // Delete metadata from Firestore via DataSource
+            clothesRemoteDataSource.deleteClothingItem(clothingId)
 
             true
         } catch (e: Exception) {
@@ -100,44 +91,28 @@ class ClothesRepository @Inject constructor(
 
     /**
      * Gets all clothing items for the current user.
-     * 
-     * @return Flow of clothing items list
+     *
+     * @return A [Flow] emitting a list of [ClothingItem]s belonging to the authenticated user.
      */
-    fun getUserClothingItems(): Flow<List<ClothingItem>> = callbackFlow {
-        val currentUserId = auth.currentUser?.uid
-            ?: throw Exception("User not authenticated")
+    fun getUserClothingItems(): Flow<List<ClothingItem>> {
+        val currentUserId = authRepository.currentUser?.id
+            ?: return emptyFlow()
 
-        val listener = clothesCollection
-            .whereEqualTo("userId", currentUserId)
-            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-
-                val items = snapshot?.documents?.mapNotNull { document ->
-                    document.toObject(ClothingItem::class.java)
-                } ?: emptyList()
-
-                trySend(items)
-            }
-
-        awaitClose { listener.remove() }
+        return clothesRemoteDataSource.getUserClothingItems(currentUserId)
     }
 
     /**
-     * Gets a specific clothing item by ID.
-     * 
-     * @param clothingId The ID of the clothing item
-     * @return ClothingItem if found, null otherwise
+     * Gets a specific clothing item by ID, ensuring it belongs to the current user.
+     *
+     * @param clothingId The ID of the clothing item.
+     * @return The [ClothingItem] if found and authorized, null otherwise.
+     * @throws Exception If the user is not authenticated.
      */
     suspend fun getClothingItem(clothingId: String): ClothingItem? {
-        val currentUserId = auth.currentUser?.uid
+        val currentUserId = authRepository.currentUser?.id
             ?: throw Exception("User not authenticated")
 
-        val document = clothesCollection.document(clothingId).get().await()
-        val clothingItem = document.toObject(ClothingItem::class.java)
+        val clothingItem = clothesRemoteDataSource.getClothingItem(clothingId)
 
         // Verify ownership
         return if (clothingItem?.userId == currentUserId) {

@@ -61,13 +61,12 @@ fun CurvedBottomNavigation(
     val cutoutWidthPx = with(density) { 80.dp.toPx() }
     val cutoutHeightPx = with(density) { 32.dp.toPx() }
 
-    val navigationBarsPadding = WindowInsets.navigationBars.asPaddingValues()
+    val navBarPadding = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(bottom = navigationBarsPadding.calculateBottomPadding())
-            .height(95.dp)
+            .height(95.dp + navBarPadding)
             .graphicsLayer(clip = false)
     ) {
         // 1. Background with notch (the white bar)
@@ -75,7 +74,7 @@ fun CurvedBottomNavigation(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .height(65.dp)
+                .height(65.dp + navBarPadding)
                 .onGloballyPositioned { barWidth = it.size.width.toFloat() }
                 .shadow(
                     elevation = 15.dp,
@@ -133,6 +132,7 @@ fun CurvedBottomNavigation(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .height(65.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

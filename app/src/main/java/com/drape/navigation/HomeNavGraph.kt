@@ -5,9 +5,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import com.drape.ui.wardrobe.WardrobeScreen
-import com.drape.ui.home.CamerinoScreen
 import com.drape.ui.home.HomeScreen
-import com.drape.ui.home.ProfileScreen
+import com.drape.ui.outfit_creator.OutfitCreatorScreen
+import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
 
 /**
@@ -26,7 +26,16 @@ fun NavGraphBuilder.homeNavGraph(
         }
 
         composable<Camerino> {
-            CamerinoScreen()
+            OutfitCreatorScreen(
+                onBackClick = { 
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Home) {
+                            popUpTo(HomeGraph) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+            )
         }
 
         composable<Wardrobe> {
@@ -35,7 +44,14 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<UploadClothes> {
             UploadItemScreen(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { 
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Home) {
+                            popUpTo(HomeGraph) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
+                }
             )
         }
 

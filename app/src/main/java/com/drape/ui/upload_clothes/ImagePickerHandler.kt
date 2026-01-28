@@ -8,9 +8,13 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.widget.Toast
 import android.util.Log
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.drape.R
 import java.io.File
 import java.io.FileOutputStream
 
@@ -45,6 +49,14 @@ object ImagePickerHandler {
         return size
     }
 
+    /**
+     * Validates if the file size of a given Uri is within the 5MB limit.
+     * Starts by querying metadata and falls back to streaming if the size is unknown.
+     *
+     * @param context The current context.
+     * @param uri The URI of the file to check.
+     * @return true if the size is valid, false otherwise.
+     */
     fun isFileSizeValid(context: Context, uri: Uri): Boolean {
         val size = getFileSize(context, uri)
         if (size > 0) {
@@ -130,17 +142,20 @@ object ImagePickerHandler {
 fun rememberImagePicker(
     context: Context,
     onImageSelected: (Uri) -> Unit,
-    onSizeExceeded: () -> Unit = {
-        Toast.makeText(context, "Image is too large. Maximum size is 5MB.", Toast.LENGTH_SHORT).show()
+    onSizeExceeded: (String) -> Unit = { msg ->
+        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
     }
-) = rememberLauncherForActivityResult(
-    contract = ActivityResultContracts.PickVisualMedia()
-) { uri ->
-    uri?.let {
-        if (ImagePickerHandler.isFileSizeValid(context, it)) {
-            onImageSelected(it)
-        } else {
-            onSizeExceeded()
+): ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> {
+    val errorMessage = stringResource(R.string.error_image_too_large)
+    return rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let {
+            if (ImagePickerHandler.isFileSizeValid(context, it)) {
+                onImageSelected(it)
+            } else {
+                onSizeExceeded(errorMessage)
+            }
         }
     }
 }

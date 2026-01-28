@@ -82,7 +82,10 @@ class BackgroundRemovalService @Inject constructor(
     }
 
     /**
-     * Loads a Bitmap from a URI.
+     * Loads a Bitmap from a URI using the content resolver.
+     *
+     * @param uri The URI of the image to load.
+     * @return The decoded [Bitmap], or null if loading fails.
      */
     private fun loadBitmapFromUri(uri: Uri): Bitmap? {
         return try {
@@ -97,7 +100,10 @@ class BackgroundRemovalService @Inject constructor(
 
     /**
      * Processes the image with ML Kit Subject Segmentation.
-     * Uses suspendCancellableCoroutine to convert the Task-based API to coroutines.
+     * Uses [suspendCancellableCoroutine] to convert the Task-based API to coroutines.
+     *
+     * @param inputImage The [InputImage] to segment.
+     * @return The foreground [Bitmap] isolated by ML Kit, or null if segmentation fails.
      */
     private suspend fun processWithSegmenter(inputImage: InputImage): Bitmap? {
         return suspendCancellableCoroutine { continuation ->
@@ -135,7 +141,10 @@ class BackgroundRemovalService @Inject constructor(
     /**
      * Creates a bitmap with transparent background from the foreground bitmap.
      * The foreground bitmap from ML Kit may have a black background, so we
-     * ensure proper transparency.
+     * ensure proper transparency by drawing onto a transparent canvas.
+     *
+     * @param foreground The source [Bitmap] (foreground subject).
+     * @return A new [Bitmap] with the subject on a transparent background.
      */
     private fun createTransparentBitmap(foreground: Bitmap): Bitmap {
 
@@ -151,10 +160,10 @@ class BackgroundRemovalService @Inject constructor(
     }
 
     /**
-     * Saves a bitmap as a PNG file with transparency to the cache directory.
-     * 
-     * @param bitmap The bitmap to save
-     * @return The URI of the saved file, or null if saving fails
+     * Saves a bitmap as a PNG file with transparency to the application's cache directory.
+     *
+     * @param bitmap The [Bitmap] to save.
+     * @return The [Uri] of the saved file, or null if saving fails.
      */
     private fun saveBitmapAsPng(bitmap: Bitmap): Uri? {
         return try {
