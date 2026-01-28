@@ -75,6 +75,7 @@ fun OutfitCreatorScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
@@ -101,11 +102,15 @@ fun OutfitCreatorScreen(
         it.category.equals(selectedCategory.name, ignoreCase = true)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA))
-    ) {
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = Color(0xFFF8F9FA)
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
         // PREVIEW AREA (Interactive Canvas)
         Box(
             modifier = Modifier
@@ -295,14 +300,14 @@ fun OutfitCreatorScreen(
             // Error Feedback
             LaunchedEffect(uiState.errorResId) {
                 uiState.errorResId?.let { resId ->
-                    // You could use a snackbar or toast here
-                    // For now I'll just clear it if we were to show a toast
+                    snackbarHostState.showSnackbar(
+                        message = context.getString(resId)
+                    )
+                    viewModel.clearError()
                 }
             }
         }
 
-
-        // BOTTOM MENU
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
@@ -428,6 +433,7 @@ fun OutfitCreatorScreen(
             }
         }
     }
+}
 }
 
 /**

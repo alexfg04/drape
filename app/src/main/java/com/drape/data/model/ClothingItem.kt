@@ -19,7 +19,7 @@ import com.google.firebase.firestore.ServerTimestamp
  */
 data class ClothingItem(
     @DocumentId
-    val id: String = "",
+    var id: String = "",
     val userId: String = "",
     val imageUrl: String = "",
     val name: String = "",
