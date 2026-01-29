@@ -20,6 +20,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.drape.navigation.UploadClothes
 import com.drape.ui.theme.DrapeTheme
+import android.app.Activity
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavDestination.Companion.hasRoute
+import com.drape.navigation.Home
+import com.drape.navigation.HomeGraph
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -48,6 +56,39 @@ fun DrapeApp() {
     // Read composable state values before using them
     val shouldShowBottomBar = appState.shouldShowBottomBar
     val currentIndex = appState.currentBottomNavIndex
+
+    // Custom Back Handling
+    val context = LocalContext.current
+    var backPressedTime by remember { mutableLongStateOf(0L) }
+    
+    // Check if we are on a top-level destination
+    val currentDestination = appState.currentDestination
+    val isTopLevel = appState.topLevelDestinations.any { 
+        currentDestination?.hasRoute(it.route::class) == true 
+    }
+
+    // Only intercept back press if we are at a Top-Level destination.
+    // Otherwise (e.g. SelectOutfit), let default navigation pop the stack.
+    BackHandler(enabled = isTopLevel) {
+        val isHome = currentDestination?.hasRoute(Home::class) == true
+        
+        if (isHome) {
+            if (System.currentTimeMillis() - backPressedTime < 2000) {
+                (context as? Activity)?.finish()
+            } else {
+                Toast.makeText(context, "Premi ancora per uscire", Toast.LENGTH_SHORT).show()
+                backPressedTime = System.currentTimeMillis()
+            }
+        } else {
+            // Navigate to Home
+            appState.navController.navigate(Home) {
+                 popUpTo(HomeGraph) {
+                     inclusive = false 
+                 }
+                 launchSingleTop = true
+            }
+        }
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
