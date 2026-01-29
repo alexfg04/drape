@@ -172,5 +172,9 @@
     <string name="wardrobe_item_detail_brand">Brand</string>
     <string name="wardrobe_item_detail_category">Categoria</string>
     <string name="wardrobe_item_detail_color">Colore</string>
-    <string name="wardrobe_item_detail_season">Stagione</string>
+    <string name="create_outfit">Crea Outfit</string>
+    <string name="outfit_creator_name_placeholder">Nome Outfit</string>
+    <string name="outfit_creator_default_name">Mio Outfit</string>
+    <string name="outfit_creator_error_not_found">Outfit non trovato</string>
+    <string name="wardrobe_item_detail_season">Season</string>
 </resources>

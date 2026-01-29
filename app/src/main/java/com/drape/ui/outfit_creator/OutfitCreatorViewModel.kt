@@ -10,6 +10,7 @@ import com.drape.data.model.Outfit
 import com.drape.data.model.PlacedItem
 import com.drape.data.repository.ClothesRepository
 import com.drape.data.repository.OutfitRepository
+import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -129,10 +130,34 @@ class OutfitCreatorViewModel @Inject constructor(
                             outfitName = outfit.name
                         ) 
                     }
+                } else {
+                    // Outfit not found, reset to new state
+                    currentOutfitId = null
+                    _uiState.update { 
+                        it.copy(
+                            placedItems = emptyMap(),
+                            outfitName = "",
+                            currentOutfitId = null,
+                            errorResId = com.drape.R.string.outfit_creator_error_not_found
+                        ) 
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to load outfit: ${e.message}") }
             }
+        }
+    }
+
+    fun resetOutfit() {
+        currentOutfitId = null
+        _uiState.update { 
+            it.copy(
+                placedItems = emptyMap(),
+                outfitName = "",
+                currentOutfitId = null,
+                errorResId = null,
+                errorMessage = null
+            ) 
         }
     }
 
@@ -254,9 +279,10 @@ class OutfitCreatorViewModel @Inject constructor(
     /**
      * Saves the current outfit to the remote repository.
      *
+     * @param defaultName The default name to use if the user hasn't entered one.
      * @param thumbnailUri The URI of the captured outfit thumbnail image.
      */
-    fun saveOutfit(thumbnailUri: Uri? = null) {
+    fun saveOutfit(defaultName: String, thumbnailUri: Uri? = null) {
         val currentState = _uiState.value
         if (currentState.placedItems.isEmpty()) {
             _uiState.update { it.copy(errorResId = com.drape.R.string.outfit_creator_error_empty) }
@@ -288,16 +314,18 @@ class OutfitCreatorViewModel @Inject constructor(
                 }
 
                 val outfitName = currentState.outfitName.ifBlank {
-                    "Mio Outfit ${System.currentTimeMillis()}"
+                    "$defaultName ${System.currentTimeMillis()}"
                 }
 
                 val outfit = Outfit(
+                    id = currentOutfitId ?: "",
                     name = outfitName,
                     items = outfitItems,
-                    id = currentOutfitId ?: "" // Preserve ID if editing, otherwise empty for new
+                    thumbnailUrl = thumbnailUri?.toString() ?: "",
+                    createdAt = Timestamp.now(),
                 )
 
-                outfitRepository.saveOutfit(outfit, thumbnailUri)
+                outfitRepository.saveOutfit(outfit)
                 _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, errorMessage = e.message) }

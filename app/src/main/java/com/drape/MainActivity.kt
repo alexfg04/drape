@@ -85,7 +85,7 @@ fun DrapeApp() {
                 }
                 
                 val icon = if (isWardrobe) Icons.Default.Add else Icons.Default.Add // Can be different if needed
-                val contentDescription = if (isWardrobe) stringResource(R.string.add_item) else "Crea Outfit"
+                val contentDescription = if (isWardrobe) stringResource(R.string.add_item) else stringResource(R.string.create_outfit)
 
                 FloatingActionButton(
                     onClick = onClick,

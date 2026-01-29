@@ -77,6 +77,8 @@ fun OutfitCreatorScreen(
     LaunchedEffect(outfitId) {
         if (outfitId != null) {
             viewModel.loadOutfit(outfitId)
+        } else {
+            viewModel.resetOutfit()
         }
     }
     val uiState by viewModel.uiState.collectAsState()
@@ -166,7 +168,7 @@ fun OutfitCreatorScreen(
                             isActive = uiState.isSelectionVisible && (selectedCategory == category),
                             onSelect = { viewModel.selectCategory(category) },
                             onTransformUpdate = { s, r, o ->
-                                viewModel.updateTransform(category, s, r, o)
+                                 viewModel.updateTransform(category, s, r, o)
                             }
                         )
                     }
@@ -205,7 +207,7 @@ fun OutfitCreatorScreen(
                         onValueChange = { viewModel.updateOutfitName(it) },
                         placeholder = { 
                             Text(
-                                text = "Nome Outfit", 
+                                text = stringResource(R.string.outfit_creator_name_placeholder), 
                                 style = MaterialTheme.typography.titleLarge.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -288,7 +290,8 @@ fun OutfitCreatorScreen(
                             viewModel.toggleSelectionVisibility(false)
                             // A small delay might be needed for state to propagate, but usually record { } records the next draw
                             val thumbnailUri = captureThumbnail(graphicsLayer, context)
-                            viewModel.saveOutfit(thumbnailUri)
+                            val defaultName = context.getString(R.string.outfit_creator_default_name)
+                            viewModel.saveOutfit(defaultName, thumbnailUri)
                         }
                     },
                     enabled = !uiState.isSaving,
