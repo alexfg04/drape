@@ -3,6 +3,7 @@ package com.drape.ui.profile
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -23,9 +24,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.drape.R
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.drape.ui.upload_clothes.rememberImagePicker
+import com.drape.ui.myOutfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
+import android.net.Uri
 
 /**
  * Profile screen.
@@ -33,13 +48,34 @@ import com.drape.ui.theme.DrapeTheme
  * Uses only Core Material Icons to ensure maximum compatibility.
  */
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    onSavedOutfitsClick: () -> Unit = {},
+    viewModel: SavedOutfitsViewModel = hiltViewModel(),
+    wardrobeViewModel: com.drape.ui.wardrobe.WardrobeViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    var coverImageUri by remember { mutableStateOf<Uri?>(null) }
+    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val coverImageLauncher = rememberImagePicker(
+        context = context,
+        onImageSelected = { uri -> coverImageUri = uri }
+    )
+
+    val profileImageLauncher = rememberImagePicker(
+        context = context,
+        onImageSelected = { uri -> profileImageUri = uri }
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
     ) {
-        // Header Section: Cover + Profile Picture
+        // ... (Header Section remains the same) ...
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -49,32 +85,67 @@ fun ProfileScreen() {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
+                    .height(180.dp)
+                    .clickable {
+                        coverImageLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.outfitblu),
-                    contentDescription = "Cover Image",
-                    contentScale = ContentScale.Crop,
-                    alpha = 0.8f
-                )
+                if (coverImageUri != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(coverImageUri)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Cover Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize(),
+                        alpha = 0.8f
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.outfitblu),
+                        contentDescription = "Cover Image",
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.8f
+                    )
+                }
             }
 
             // Circular Profile Picture
             Surface(
                 modifier = Modifier
                     .size(120.dp)
-                    .align(Alignment.BottomCenter),
+                    .align(Alignment.BottomCenter)
+                    .clickable {
+                        profileImageLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                 shape = CircleShape,
                 border = BorderStroke(4.dp, MaterialTheme.colorScheme.surface),
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.clip(CircleShape),
-                    contentScale = ContentScale.Fit
-                )
+                if (profileImageUri != null) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data(profileImageUri)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier.clip(CircleShape),
+                        contentScale = ContentScale.Fit
+                    )
+                }
             }
         }
 
@@ -118,14 +189,16 @@ fun ProfileScreen() {
         ) {
             StatBox(
                 label = "Outfit",
-                value = "12",
+                value = uiState.outfits.size.toString(),
                 icon = Icons.Default.Favorite,
                 iconColor = Color(0xFF1976D2),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onSavedOutfitsClick() }
             )
             StatBox(
                 label = "Capi",
-                value = "45",
+                value = wardrobeUiState.clothingItems.size.toString(),
                 icon = Icons.Default.Star,
                 iconColor = Color(0xFF7B1FA2),
                 modifier = Modifier.weight(1f)

@@ -3,12 +3,14 @@ package com.drape.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import androidx.navigation.navigation
 import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.HomeScreen
 import com.drape.ui.outfit_creator.OutfitCreatorScreen
 import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
+import com.drape.ui.myOutfit.SavedOutfitsScreen
 
 /**
  * Home navigation graph.
@@ -25,8 +27,11 @@ fun NavGraphBuilder.homeNavGraph(
             HomeScreen()
         }
 
-        composable<Camerino> {
+        composable<Camerino> { backStackEntry ->
+            // Standard Camerino entry (Bottom Bar) - usually new outfit
+            val camerinoRoute = backStackEntry.toRoute<Camerino>()
             OutfitCreatorScreen(
+                outfitId = camerinoRoute.outfitId,
                 onBackClick = { 
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
@@ -38,8 +43,23 @@ fun NavGraphBuilder.homeNavGraph(
             )
         }
 
+        composable<EditOutfit> { backStackEntry ->
+            val route = backStackEntry.toRoute<EditOutfit>()
+            OutfitCreatorScreen(
+                outfitId = route.outfitId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable<Wardrobe> {
-            WardrobeScreen()
+            WardrobeScreen(
+                onNavigateToOutfits = {
+                    navController.navigate(SavedOutfits)
+                },
+                onEditOutfit = { outfit ->
+                    navController.navigate(EditOutfit(outfitId = outfit.id))
+                }
+            )
         }
 
         composable<UploadClothes> {
@@ -55,8 +75,20 @@ fun NavGraphBuilder.homeNavGraph(
             )
         }
 
+        composable<SavedOutfits> {
+            SavedOutfitsScreen(
+                onEditOutfit = { outfit ->
+                    navController.navigate(EditOutfit(outfitId = outfit.id))
+                }
+            )
+        }
+
         composable<Profile> {
-            ProfileScreen()
+            ProfileScreen(
+                onSavedOutfitsClick = {
+                    navController.navigate(SavedOutfits)
+                }
+            )
         }
     }
 }

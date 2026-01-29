@@ -69,9 +69,15 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun OutfitCreatorScreen(
+    outfitId: String? = null,
     onBackClick: () -> Unit = {},
     viewModel: OutfitCreatorViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(outfitId) {
+        if (outfitId != null) {
+            viewModel.loadOutfit(outfitId)
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -577,8 +583,10 @@ fun ClothItem(
                     onDragStart = { currentOnSelect() },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        // Add drag delta to current offset from state
-                        currentOnTransformUpdate(null, null, currentOffset + dragAmount)
+                        // Rotate the drag delta to match the screen coordinate system
+                        val rotatedDrag = rotateVector(dragAmount, currentRotation)
+                        // Add rotated drag delta to current offset from state
+                        currentOnTransformUpdate(null, null, currentOffset + rotatedDrag)
                     }
                 )
             },
@@ -648,3 +656,16 @@ fun ClothItem(
     }
 }
 
+
+/**
+ * Rotates a vector by a given angle in degrees.
+ */
+private fun rotateVector(vector: Offset, angleDegrees: Float): Offset {
+    val angleRadians = Math.toRadians(angleDegrees.toDouble())
+    val cos = kotlin.math.cos(angleRadians)
+    val sin = kotlin.math.sin(angleRadians)
+    return Offset(
+        x = (vector.x * cos - vector.y * sin).toFloat(),
+        y = (vector.x * sin + vector.y * cos).toFloat()
+    )
+}

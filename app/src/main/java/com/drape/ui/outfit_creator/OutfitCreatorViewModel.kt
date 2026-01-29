@@ -57,7 +57,8 @@ data class OutfitCreatorUiState(
     val saveSuccess: Boolean = false,
     val errorResId: Int? = null,
     val errorMessage: String? = null,
-    val canvasOffset: Offset = Offset.Zero
+    val canvasOffset: Offset = Offset.Zero,
+    val currentOutfitId: String? = null
 )
 
 /**
@@ -73,6 +74,8 @@ class OutfitCreatorViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(OutfitCreatorUiState())
     val uiState: StateFlow<OutfitCreatorUiState> = _uiState.asStateFlow()
 
+    private var currentOutfitId: String? = null
+
     init {
         loadClothes()
     }
@@ -84,6 +87,47 @@ class OutfitCreatorViewModel @Inject constructor(
         viewModelScope.launch {
             clothesRepository.getUserClothingItems().collect { items ->
                 _uiState.update { it.copy(availableClothes = items) }
+            }
+        }
+    }
+
+    /**
+     * Loads an existing outfit for editing.
+     *
+     * @param outfitId The ID of the outfit to load.
+     */
+    fun loadOutfit(outfitId: String) {
+        viewModelScope.launch {
+            try {
+                // If we are already editing this outfit, don't reload to avoid overwriting changes
+                if (currentOutfitId == outfitId) return@launch
+
+                currentOutfitId = outfitId
+                _uiState.update { it.copy(currentOutfitId = outfitId) }
+
+                val outfit = outfitRepository.getOutfit(outfitId)
+                if (outfit != null) {
+                    val newPlacedItems = mutableMapOf<ItemCategory, PlacedItemState?>()
+                    
+                    outfit.items.forEach { placedItem ->
+                        val clothingItem = clothesRepository.getClothingItem(placedItem.itemId)
+                        if (clothingItem != null) {
+                            newPlacedItems[placedItem.category] = PlacedItemState(
+                                clothingItem = clothingItem,
+                                scale = placedItem.scale,
+                                rotation = placedItem.rotation,
+                                offset = Offset(placedItem.posX, placedItem.posY),
+                                zIndex = placedItem.zIndex ?: getZIndexForCategory(placedItem.category)
+                            )
+                        }
+                    }
+                    
+                    _uiState.update { 
+                        it.copy(placedItems = newPlacedItems) 
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to load outfit: ${e.message}") }
             }
         }
     }
@@ -225,7 +269,8 @@ class OutfitCreatorViewModel @Inject constructor(
 
                 val outfit = Outfit(
                     name = "Mio Outfit ${System.currentTimeMillis()}", // TODO: Allow user to set name
-                    items = outfitItems
+                    items = outfitItems,
+                    id = currentOutfitId ?: "" // Preserve ID if editing, otherwise empty for new
                 )
 
                 outfitRepository.saveOutfit(outfit, thumbnailUri)

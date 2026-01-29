@@ -22,7 +22,7 @@ val BottomNavItems = listOf(
     DrapeNavigationItem(
         titleRes = R.string.home_nav_camerino,
         icon = IconSource.Vector(Icons.Default.Face),
-        route = Camerino
+        route = Camerino()
     ),
     DrapeNavigationItem(
         titleRes = R.string.home_nav_wardrobe,
