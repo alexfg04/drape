@@ -10,6 +10,7 @@ import com.drape.data.model.Outfit
 import com.drape.data.model.PlacedItem
 import com.drape.data.repository.ClothesRepository
 import com.drape.data.repository.OutfitRepository
+import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -57,7 +58,10 @@ data class OutfitCreatorUiState(
     val saveSuccess: Boolean = false,
     val errorResId: Int? = null,
     val errorMessage: String? = null,
-    val canvasOffset: Offset = Offset.Zero
+    val canvasOffset: Offset = Offset.Zero,
+    val currentOutfitId: String? = null,
+    val outfitName: String = "",
+    val originalCreatedAt: Timestamp? = null
 )
 
 /**
@@ -73,6 +77,8 @@ class OutfitCreatorViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(OutfitCreatorUiState())
     val uiState: StateFlow<OutfitCreatorUiState> = _uiState.asStateFlow()
 
+    private var currentOutfitId: String? = null
+
     init {
         loadClothes()
     }
@@ -86,6 +92,85 @@ class OutfitCreatorViewModel @Inject constructor(
                 _uiState.update { it.copy(availableClothes = items) }
             }
         }
+    }
+
+    /**
+     * Loads an existing outfit for editing.
+     *
+     * @param outfitId The ID of the outfit to load.
+     */
+    fun loadOutfit(outfitId: String) {
+        viewModelScope.launch {
+            try {
+                // If we are already editing this outfit, don't reload to avoid overwriting changes
+                if (currentOutfitId == outfitId) return@launch
+
+                currentOutfitId = outfitId
+                _uiState.update { it.copy(currentOutfitId = outfitId) }
+
+                val outfit = outfitRepository.getOutfit(outfitId)
+                if (outfit != null) {
+                    val newPlacedItems = mutableMapOf<ItemCategory, PlacedItemState?>()
+                    
+                    outfit.items.forEach { placedItem ->
+                        val clothingItem = clothesRepository.getClothingItem(placedItem.itemId)
+                        if (clothingItem != null) {
+                            newPlacedItems[placedItem.category] = PlacedItemState(
+                                clothingItem = clothingItem,
+                                scale = placedItem.scale,
+                                rotation = placedItem.rotation,
+                                offset = Offset(placedItem.posX, placedItem.posY),
+                                zIndex = placedItem.zIndex ?: getZIndexForCategory(placedItem.category)
+                            )
+                        }
+                    }
+                    
+                    _uiState.update { 
+                        it.copy(
+                            placedItems = newPlacedItems,
+                            outfitName = outfit.name,
+                            originalCreatedAt = outfit.createdAt
+                        ) 
+                    }
+                } else {
+                    // Outfit not found, reset to new state
+                    currentOutfitId = null
+                    _uiState.update { 
+                        it.copy(
+                            placedItems = emptyMap(),
+                            outfitName = "",
+                            currentOutfitId = null,
+                            errorResId = com.drape.R.string.outfit_creator_error_not_found
+                        ) 
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(errorMessage = "Failed to load outfit: ${e.message}") }
+            }
+        }
+    }
+
+    fun resetOutfit() {
+        currentOutfitId = null
+        _uiState.update { 
+            it.copy(
+                placedItems = emptyMap(),
+                outfitName = "",
+                currentOutfitId = null,
+                errorResId = null,
+                errorMessage = null,
+                originalCreatedAt = null
+            ) 
+        }
+    }
+
+    /**
+     * Updates the name of the outfit.
+     *
+     * @param name The new name.
+     */
+    fun updateOutfitName(name: String) {
+        _uiState.update { it.copy(outfitName = name) }
     }
 
     /**
@@ -197,9 +282,10 @@ class OutfitCreatorViewModel @Inject constructor(
     /**
      * Saves the current outfit to the remote repository.
      *
+     * @param defaultName The default name to use if the user hasn't entered one.
      * @param thumbnailUri The URI of the captured outfit thumbnail image.
      */
-    fun saveOutfit(thumbnailUri: Uri? = null) {
+    fun saveOutfit(defaultName: String, thumbnailUri: Uri? = null) {
         val currentState = _uiState.value
         if (currentState.placedItems.isEmpty()) {
             _uiState.update { it.copy(errorResId = com.drape.R.string.outfit_creator_error_empty) }
@@ -207,7 +293,14 @@ class OutfitCreatorViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorResId = null, errorMessage = null, saveSuccess = false) }
+            _uiState.update {
+                it.copy(
+                    isSaving = true,
+                    errorResId = null,
+                    errorMessage = null,
+                    saveSuccess = false
+                )
+            }
             try {
                 val outfitItems = currentState.placedItems.mapNotNull { (category, itemState) ->
                     itemState?.let {
@@ -223,12 +316,19 @@ class OutfitCreatorViewModel @Inject constructor(
                     }
                 }
 
+                val outfitName = currentState.outfitName.ifBlank {
+                    "$defaultName ${System.currentTimeMillis()}"
+                }
+
                 val outfit = Outfit(
-                    name = "Mio Outfit ${System.currentTimeMillis()}", // TODO: Allow user to set name
-                    items = outfitItems
+                    id = currentOutfitId ?: "",
+                    name = outfitName,
+                    items = outfitItems,
+                    thumbnailUrl = thumbnailUri?.toString() ?: "",
+                    createdAt = currentState.originalCreatedAt ?: Timestamp.now(),
                 )
 
-                outfitRepository.saveOutfit(outfit, thumbnailUri)
+                outfitRepository.saveOutfit(outfit)
                 _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, errorMessage = e.message) }
@@ -260,10 +360,10 @@ class OutfitCreatorViewModel @Inject constructor(
     private fun getDefaultOffsetForCategory(category: ItemCategory): Offset {
         // These values should ideally come from screen density or be normalized
         return when (category) {
-            ItemCategory.TOP -> Offset(0f, -300f)
-            ItemCategory.BOTTOM -> Offset(0f, 300f)
-            ItemCategory.SHOES -> Offset(0f, 800f)
-            ItemCategory.ACCESSORIES -> Offset(300f, -300f)
+            ItemCategory.TOP -> Offset(0f, -100f) 
+            ItemCategory.BOTTOM -> Offset(0f, 500f)
+            ItemCategory.SHOES -> Offset(0f, 1000f)
+            ItemCategory.ACCESSORIES -> Offset(300f, -100f)
         }
     }
 }

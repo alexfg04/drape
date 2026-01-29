@@ -48,6 +48,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -70,15 +71,23 @@ import kotlin.math.roundToInt
  */
 @Composable
 fun OutfitCreatorScreen(
+    outfitId: String? = null,
     onBackClick: () -> Unit = {},
     viewModel: OutfitCreatorViewModel = hiltViewModel()
 ) {
+    LaunchedEffect(outfitId) {
+        if (outfitId != null) {
+            viewModel.loadOutfit(outfitId)
+        } else {
+            viewModel.resetOutfit()
+        }
+    }
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
     val snackbarHostState = remember { SnackbarHostState() }
-    
+
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
 
@@ -90,7 +99,7 @@ fun OutfitCreatorScreen(
         ItemCategory.ACCESSORIES
     )
     val categories = categoryMapping.map { getDisplayNameForCategory(it) }
-    
+
     val selectedCategory = uiState.selectedCategory
     val selectedCategoryIndex = categoryMapping.indexOf(selectedCategory)
 
@@ -100,7 +109,7 @@ fun OutfitCreatorScreen(
     }
 
     Scaffold(
-        snackbarHost = { 
+        snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 DrapeSnackbar(snackbarData = data)
             }
@@ -173,13 +182,18 @@ fun OutfitCreatorScreen(
                     }
                 }
 
-                // BACK ARROW BUTTON
+                // TOP BAR (Back Button + Outfit Name)
+                    Row(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(
                     onClick = onBackClick,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(16.dp)
-                        .statusBarsPadding()
+                    modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -189,11 +203,51 @@ fun OutfitCreatorScreen(
                     )
                 }
 
-                // CATEGORY INDICATOR
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextField(
+                        value = uiState.outfitName,
+                        onValueChange = { viewModel.updateOutfitName(it) },
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.outfit_creator_name_placeholder),
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        },
+                        textStyle = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                // Spacer to balance the back button visually if needed, or an action button
+                Spacer(modifier = Modifier.width(48.dp))
+            }// CATEGORY INDICATOR
                 Surface(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = 16.dp)
+                        .padding(top = 80.dp) // Push down below the top bar
                         .statusBarsPadding(),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
                     shape = CircleShape
@@ -241,7 +295,8 @@ fun OutfitCreatorScreen(
                                 viewModel.toggleSelectionVisibility(false)
                                 // A small delay might be needed for state to propagate, but usually record { } records the next draw
                                 val thumbnailUri = captureThumbnail(graphicsLayer, context)
-                                viewModel.saveOutfit(thumbnailUri)
+                                val defaultName = context.getString(R.string.outfit_creator_default_name)
+                            viewModel.saveOutfit(defaultName,thumbnailUri)
                             }
                         },
                         enabled = !uiState.isSaving,
@@ -281,20 +336,20 @@ fun OutfitCreatorScreen(
                         }
                     }
                 }
-            
+
                 // Success Feedback
                 if (uiState.saveSuccess) {
                     AlertDialog(
-                        onDismissRequest = { 
+                        onDismissRequest = {
                             viewModel.clearSaveSuccess()
                             onBackClick()
                         },
                         title = { Text(stringResource(R.string.outfit_creator_success_title)) },
                         text = { Text(stringResource(R.string.outfit_creator_success_message)) },
                         confirmButton = {
-                            TextButton(onClick = { 
+                            TextButton(onClick = {
                                 viewModel.clearSaveSuccess()
-                                onBackClick() 
+                                onBackClick()
                             }) { Text(stringResource(R.string.ok)) }
                         }
                     )
@@ -339,7 +394,7 @@ fun OutfitCreatorScreen(
                                 .background(MaterialTheme.colorScheme.outlineVariant)
                                 .align(Alignment.TopCenter)
                         )
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -409,7 +464,7 @@ fun OutfitCreatorScreen(
                                         onClick = { viewModel.selectItem(selectedCategory, null) }
                                     )
                                 }
-                                
+
                                 itemsIndexed(currentItems) { _, item ->
                                     val isSelected = uiState.placedItems[selectedCategory]?.clothingItem?.id == item.id
                                     GalleryItem(
@@ -419,11 +474,11 @@ fun OutfitCreatorScreen(
                                     )
                                 }
                             }
-                            
+
                             // Reset Position Button
                             TextButton(
-                                onClick = { 
-                                    viewModel.resetTransform(selectedCategory) 
+                                onClick = {
+                                    viewModel.resetTransform(selectedCategory)
                                 },
                                 modifier = Modifier.align(Alignment.End).padding(bottom = 8.dp)
                             ) {
@@ -589,7 +644,7 @@ fun ClothItem(
                     onDragStart = { currentOnSelect() },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        // Add drag delta to current offset from state
+                        // Drag amount is already in screen coordinates, so we add it directly to offset
                         currentOnTransformUpdate(null, null, currentOffset + dragAmount)
                     }
                 )
@@ -659,4 +714,3 @@ fun ClothItem(
         }
     }
 }
-
