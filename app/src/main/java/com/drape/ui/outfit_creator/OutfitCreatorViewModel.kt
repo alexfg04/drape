@@ -60,7 +60,8 @@ data class OutfitCreatorUiState(
     val errorMessage: String? = null,
     val canvasOffset: Offset = Offset.Zero,
     val currentOutfitId: String? = null,
-    val outfitName: String = ""
+    val outfitName: String = "",
+    val originalCreatedAt: Timestamp? = null
 )
 
 /**
@@ -127,7 +128,8 @@ class OutfitCreatorViewModel @Inject constructor(
                     _uiState.update { 
                         it.copy(
                             placedItems = newPlacedItems,
-                            outfitName = outfit.name
+                            outfitName = outfit.name,
+                            originalCreatedAt = outfit.createdAt
                         ) 
                     }
                 } else {
@@ -156,7 +158,8 @@ class OutfitCreatorViewModel @Inject constructor(
                 outfitName = "",
                 currentOutfitId = null,
                 errorResId = null,
-                errorMessage = null
+                errorMessage = null,
+                originalCreatedAt = null
             ) 
         }
     }
@@ -322,7 +325,7 @@ class OutfitCreatorViewModel @Inject constructor(
                     name = outfitName,
                     items = outfitItems,
                     thumbnailUrl = thumbnailUri?.toString() ?: "",
-                    createdAt = Timestamp.now(),
+                    createdAt = currentState.originalCreatedAt ?: Timestamp.now(),
                 )
 
                 outfitRepository.saveOutfit(outfit)
