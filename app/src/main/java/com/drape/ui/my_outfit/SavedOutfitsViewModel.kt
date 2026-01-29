@@ -126,4 +126,11 @@ class SavedOutfitsViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
+
+    /**
+     * Clears the delete success state.
+     */
+    fun clearDeleteSuccess() {
+        _uiState.value = _uiState.value.copy(deleteSuccess = false)
+    }
 }

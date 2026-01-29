@@ -38,6 +38,7 @@ import coil.request.ImageRequest
 import com.drape.R
 import com.drape.data.model.Outfit
 import com.drape.ui.theme.DrapeTheme
+import com.drape.ui.components.DrapeSnackbar
 
 /**
  * Screen for viewing and managing saved outfits.
@@ -56,7 +57,9 @@ fun SavedOutfitsScreen(
         onDeleteOutfit = { viewModel.deleteOutfit(it) },
         onEditOutfit = onEditOutfit,
         onToggleFavorite = { viewModel.toggleFavorite(it) },
-        onRefresh = { viewModel.refresh() }
+        onRefresh = { viewModel.refresh() },
+        onClearError = { viewModel.clearError() },
+        onClearDeleteSuccess = { viewModel.clearDeleteSuccess() }
     )
 }
 
@@ -68,11 +71,36 @@ fun SavedOutfitsScreenContent(
     onDeleteOutfit: (String) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
     onToggleFavorite: (Outfit) -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onClearError: () -> Unit,
+    onClearDeleteSuccess: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
     var outfitToDelete by remember { mutableStateOf<Outfit?>(null) }
+    
+    // Handle deletion success
+    LaunchedEffect(uiState.deleteSuccess) {
+        if (uiState.deleteSuccess) {
+            snackbarHostState.showSnackbar(
+                message = "Outfit eliminato con successo",
+                duration = SnackbarDuration.Short
+            )
+            onClearDeleteSuccess()
+        }
+    }
+
+    // Handle errors (only if not a full screen error) by showing transient message
+    LaunchedEffect(uiState.errorMessage) {
+        if (uiState.errorMessage != null && uiState.outfits.isNotEmpty()) {
+            snackbarHostState.showSnackbar(
+                message = uiState.errorMessage ?: "Errore sconosciuto",
+                duration = SnackbarDuration.Long
+            )
+            onClearError()
+        }
+    }
 
     // Delete Confirmation Dialog
     outfitToDelete?.let { outfit ->
@@ -114,6 +142,11 @@ fun SavedOutfitsScreenContent(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = {
+             SnackbarHost(hostState = snackbarHostState) { data ->
+                 DrapeSnackbar(snackbarData = data)
+             }
+        },
         topBar = {
             SavedOutfitsTopBar(
                 isSearchActive = isSearchActive,
@@ -676,7 +709,9 @@ fun SavedOutfitsScreenPreview() {
             onDeleteOutfit = {},
             onEditOutfit = {},
             onToggleFavorite = {},
-            onRefresh = {}
+            onRefresh = {},
+            onClearError = {},
+            onClearDeleteSuccess = {}
         )
     }
 }

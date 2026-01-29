@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
+import com.drape.ui.components.DrapeSnackbar
 
 /**
  * Main screen for viewing and managing the user's wardrobe.
@@ -51,6 +52,8 @@ fun WardrobeScreen(
         onWardrobeClearSelection = { wardrobeViewModel.clearSelection() },
         onWardrobeDeleteItem = { wardrobeViewModel.deleteClothingItem(it) },
         onWardrobeRefresh = { wardrobeViewModel.refresh() },
+        onClearError = { wardrobeViewModel.clearError() },
+        onClearDeleteSuccess = { wardrobeViewModel.clearDeleteSuccess() }
     )
 }
 
@@ -71,14 +74,16 @@ fun WardrobeScreenContent(
     onWardrobeClearSelection: () -> Unit,
     onWardrobeDeleteItem: (String) -> Unit,
     onWardrobeRefresh: () -> Unit,
+    onClearError: () -> Unit,
+    onClearDeleteSuccess: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val deleteSuccessMessage = "Capo eliminato con successo"
-    val errorMessage = uiState.errorMessage
+    val errorMessage = wardrobeUiState.errorMessage
 
     // Handle deletion success
-    LaunchedEffect(uiState.deleteSuccess) {
-        if (uiState.deleteSuccess) {
+    LaunchedEffect(wardrobeUiState.deleteSuccess) {
+        if (wardrobeUiState.deleteSuccess) {
             snackbarHostState.showSnackbar(
                 message = deleteSuccessMessage,
                 duration = SnackbarDuration.Short
@@ -89,7 +94,7 @@ fun WardrobeScreenContent(
 
     // Handle errors (only if not a full screen error)
     LaunchedEffect(errorMessage) {
-        if (errorMessage != null && uiState.clothingItems.isNotEmpty()) {
+        if (errorMessage != null && wardrobeUiState.clothingItems.isNotEmpty()) {
             snackbarHostState.showSnackbar(
                 message = errorMessage,
                 duration = SnackbarDuration.Long
@@ -128,7 +133,9 @@ fun WardrobeScreenContent(
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
+            }
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
@@ -787,6 +794,7 @@ fun WardrobeScreenPreview() {
             onWardrobeDeleteItem = {},
             onWardrobeRefresh = {},
             onClearError = {},
-            onClearDeleteSuccess = {})
+            onClearDeleteSuccess = {}
+        )
     }
 }

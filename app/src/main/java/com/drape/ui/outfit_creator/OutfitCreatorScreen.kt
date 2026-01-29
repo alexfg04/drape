@@ -286,7 +286,7 @@ fun OutfitCreatorScreen(
                     }
 
                     Spacer(Modifier.width(16.dp))
-
+                    val defaultName = stringResource(R.string.outfit_creator_default_name)
                     // Save Button
                     Button(
                         onClick = {
@@ -295,7 +295,6 @@ fun OutfitCreatorScreen(
                                 viewModel.toggleSelectionVisibility(false)
                                 // A small delay might be needed for state to propagate, but usually record { } records the next draw
                                 val thumbnailUri = captureThumbnail(graphicsLayer, context)
-                                val defaultName = context.getString(R.string.outfit_creator_default_name)
                             viewModel.saveOutfit(defaultName,thumbnailUri)
                             }
                         },
