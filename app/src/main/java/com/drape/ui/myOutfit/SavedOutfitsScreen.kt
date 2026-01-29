@@ -403,24 +403,24 @@ fun SavedOutfitItemCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = onEdit,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = "Modifica",
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(24.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     IconButton(
                         onClick = onDelete,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
                             Icons.Default.Delete,
                             contentDescription = "Elimina",
-                            modifier = Modifier.size(16.dp),
+                            modifier = Modifier.size(24.dp),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }

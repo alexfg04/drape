@@ -3,6 +3,7 @@ package com.drape.navigation
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import androidx.navigation.navigation
 import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.HomeScreen
@@ -26,8 +27,11 @@ fun NavGraphBuilder.homeNavGraph(
             HomeScreen()
         }
 
-        composable<Camerino> {
+        composable<Camerino> { backStackEntry ->
+            // Standard Camerino entry (Bottom Bar) - usually new outfit
+            val camerinoRoute = backStackEntry.toRoute<Camerino>()
             OutfitCreatorScreen(
+                outfitId = camerinoRoute.outfitId,
                 onBackClick = { 
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
@@ -39,10 +43,21 @@ fun NavGraphBuilder.homeNavGraph(
             )
         }
 
+        composable<EditOutfit> { backStackEntry ->
+            val route = backStackEntry.toRoute<EditOutfit>()
+            OutfitCreatorScreen(
+                outfitId = route.outfitId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable<Wardrobe> {
             WardrobeScreen(
                 onNavigateToOutfits = {
                     navController.navigate(SavedOutfits)
+                },
+                onEditOutfit = { outfit ->
+                    navController.navigate(EditOutfit(outfitId = outfit.id))
                 }
             )
         }
@@ -61,7 +76,11 @@ fun NavGraphBuilder.homeNavGraph(
         }
 
         composable<SavedOutfits> {
-            SavedOutfitsScreen()
+            SavedOutfitsScreen(
+                onEditOutfit = { outfit ->
+                    navController.navigate(EditOutfit(outfitId = outfit.id))
+                }
+            )
         }
 
         composable<Profile> {

@@ -55,7 +55,8 @@ import com.drape.ui.theme.*
 fun WardrobeScreen(
     wardrobeViewModel: WardrobeViewModel = hiltViewModel(),
     savedOutfitsViewModel: SavedOutfitsViewModel = hiltViewModel(),
-    onNavigateToOutfits: () -> Unit = {} // This might be redundant now, but kept for compatibility
+    onNavigateToOutfits: () -> Unit = {},
+    onEditOutfit: (com.drape.data.model.Outfit) -> Unit = {}
 ) {
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
     val savedOutfitsUiState by savedOutfitsViewModel.uiState.collectAsState()
@@ -75,7 +76,7 @@ fun WardrobeScreen(
         onOutfitImageClick = { savedOutfitsViewModel.selectOutfit(it) },
         onDismissOutfitDetail = { savedOutfitsViewModel.selectOutfit(null) },
         onDeleteOutfit = { savedOutfitsViewModel.deleteOutfit(it) },
-        onEditOutfit = { /* Navigate to edit */ }, // Implement if needed, or keeping empty as per previous code
+        onEditOutfit = onEditOutfit,
         onToggleFavoriteOutfit = { savedOutfitsViewModel.toggleFavorite(it) },
         onOutfitRefresh = { savedOutfitsViewModel.refresh() }
     )

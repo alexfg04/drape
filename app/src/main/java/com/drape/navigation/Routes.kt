@@ -44,7 +44,10 @@ object HomeGraph  // Nested graph identifier
 object Home
 
 @Serializable
-object Camerino
+data class Camerino(val outfitId: String? = null)
+
+@Serializable
+data class EditOutfit(val outfitId: String)
 
 @Serializable
 object Wardrobe
