@@ -9,6 +9,8 @@ import com.drape.ui.home.HomeScreen
 import com.drape.ui.outfit_creator.OutfitCreatorScreen
 import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
+import com.drape.ui.planner.PlannerScreen
+import com.drape.ui.planner.SelectOutfitScreen
 
 /**
  * Home navigation graph.
@@ -27,7 +29,7 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<Camerino> {
             OutfitCreatorScreen(
-                onBackClick = { 
+                onBackClick = {
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
                             popUpTo(HomeGraph) { inclusive = false }
@@ -44,7 +46,7 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<UploadClothes> {
             UploadItemScreen(
-                onBackClick = { 
+                onBackClick = {
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
                             popUpTo(HomeGraph) { inclusive = false }
