@@ -1,4 +1,4 @@
-package com.drape.ui.myOutfit
+package com.drape.ui.my_outfit
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -58,7 +58,8 @@ data class OutfitCreatorUiState(
     val errorResId: Int? = null,
     val errorMessage: String? = null,
     val canvasOffset: Offset = Offset.Zero,
-    val currentOutfitId: String? = null
+    val currentOutfitId: String? = null,
+    val outfitName: String = ""
 )
 
 /**
@@ -123,13 +124,25 @@ class OutfitCreatorViewModel @Inject constructor(
                     }
                     
                     _uiState.update { 
-                        it.copy(placedItems = newPlacedItems) 
+                        it.copy(
+                            placedItems = newPlacedItems,
+                            outfitName = outfit.name
+                        ) 
                     }
                 }
             } catch (e: Exception) {
                 _uiState.update { it.copy(errorMessage = "Failed to load outfit: ${e.message}") }
             }
         }
+    }
+
+    /**
+     * Updates the name of the outfit.
+     *
+     * @param name The new name.
+     */
+    fun updateOutfitName(name: String) {
+        _uiState.update { it.copy(outfitName = name) }
     }
 
     /**
@@ -251,7 +264,14 @@ class OutfitCreatorViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSaving = true, errorResId = null, errorMessage = null, saveSuccess = false) }
+            _uiState.update {
+                it.copy(
+                    isSaving = true,
+                    errorResId = null,
+                    errorMessage = null,
+                    saveSuccess = false
+                )
+            }
             try {
                 val outfitItems = currentState.placedItems.mapNotNull { (category, itemState) ->
                     itemState?.let {
@@ -267,8 +287,12 @@ class OutfitCreatorViewModel @Inject constructor(
                     }
                 }
 
+                val outfitName = currentState.outfitName.ifBlank {
+                    "Mio Outfit ${System.currentTimeMillis()}"
+                }
+
                 val outfit = Outfit(
-                    name = "Mio Outfit ${System.currentTimeMillis()}", // TODO: Allow user to set name
+                    name = outfitName,
                     items = outfitItems,
                     id = currentOutfitId ?: "" // Preserve ID if editing, otherwise empty for new
                 )
@@ -305,10 +329,10 @@ class OutfitCreatorViewModel @Inject constructor(
     private fun getDefaultOffsetForCategory(category: ItemCategory): Offset {
         // These values should ideally come from screen density or be normalized
         return when (category) {
-            ItemCategory.TOP -> Offset(0f, -300f)
-            ItemCategory.BOTTOM -> Offset(0f, 300f)
-            ItemCategory.SHOES -> Offset(0f, 800f)
-            ItemCategory.ACCESSORIES -> Offset(300f, -300f)
+            ItemCategory.TOP -> Offset(0f, -100f) 
+            ItemCategory.BOTTOM -> Offset(0f, 500f)
+            ItemCategory.SHOES -> Offset(0f, 1000f)
+            ItemCategory.ACCESSORIES -> Offset(300f, -100f)
         }
     }
 }

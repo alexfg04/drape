@@ -64,7 +64,7 @@
 
     <!-- Home Sections -->
     <string name="home_nav_home">Home</string>
-    <string name="home_nav_camerino">Componi</string>
+    <string name="home_nav_camerino">I tuoi Outfit</string>
     <string name="home_nav_wardrobe">Il tuo Armadio</string>
     <string name="home_nav_profile">Profilo</string>
     <string name="home_page_camerino">Pagina Camerino</string>
@@ -133,4 +133,44 @@
     <string name="wardrobe_search_clear">Cancella Ricerca</string>
     <string name="search">Cerca</string>
     <string name="add_item">Aggiungi Capo</string>
+
+    <!-- Saved Outfits Screen -->
+    <string name="saved_outfits_delete_title">Elimina Outfit</string>
+    <string name="saved_outfits_delete_message">Sei sicuro di voler eliminare l\'outfit "%1$s"? Questa azione non può essere annullata.</string>
+    <string name="saved_outfits_delete_confirm">Elimina</string>
+    <string name="saved_outfits_delete_cancel">Annulla</string>
+    <string name="saved_outfits_icon_desc_favorite">Preferiti</string>
+    <string name="saved_outfits_no_image">No Image</string>
+    <string name="saved_outfits_topbar_title">I miei outfit</string>
+    <string name="saved_outfits_empty_message">Nessun outfit salvato</string>
+    <string name="saved_outfits_empty_subtitle">Crea il tuo primo outfit nel planner!</string>
+    <string name="saved_outfits_error_title">Ops! Qualcosa è andato storto</string>
+    <string name="saved_outfits_retry_button">Riprova</string>
+    <string name="saved_outfits_loading_message">Caricamento outfit...</string>
+    <string name="saved_outfits_items_count">%1$d capi</string>
+    <string name="saved_outfits_items_count_detail">%1$d capi nell\'outfit</string>
+    <string name="saved_outfits_edit_button">Modifica Outfit</string>
+    <string name="saved_outfits_delete_button">Elimina Outfit</string>
+    <string name="saved_outfits_search_no_results_title">Nessun risultato</string>
+    <string name="saved_outfits_search_no_results_message">Nessun outfit trovato per "%1$s"</string>
+
+    <!-- Wardrobe Screen -->
+    <string name="wardrobe_delete_title">Elimina Capo</string>
+    <string name="wardrobe_delete_message">Sei sicuro di voler eliminare "%1$s"? Questa azione non può essere annullata.</string>
+    <string name="wardrobe_delete_confirm">Elimina</string>
+    <string name="wardrobe_delete_cancel">Chiudi</string>
+    <string name="wardrobe_loading_message">Caricamento vestiti...</string>
+    <string name="wardrobe_error_title">Ops! Qualcosa è andato storto</string>
+    <string name="wardrobe_retry_button">Riprova</string>
+    <string name="wardrobe_empty_title">Il tuo guardaroba è vuoto</string>
+    <string name="wardrobe_empty_subtitle">Inizia aggiungendo il tuo primo capo!</string>
+    <string name="wardrobe_no_results_title">Nessun risultato</string>
+    <string name="wardrobe_no_results_search">Nessun capo trovato per "%1$s"</string>
+    <string name="wardrobe_no_results_filter">Nessun capo nella categoria "%1$s"</string>
+    <string name="wardrobe_screen_title">Guardaroba</string>
+    <string name="wardrobe_search_hint">Cerca vestiti</string>
+    <string name="wardrobe_item_detail_brand">Brand</string>
+    <string name="wardrobe_item_detail_category">Categoria</string>
+    <string name="wardrobe_item_detail_color">Colore</string>
+    <string name="wardrobe_item_detail_season">Stagione</string>
 </resources>

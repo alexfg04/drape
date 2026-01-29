@@ -1,4 +1,4 @@
-package com.drape.ui.myOutfit
+package com.drape.ui.my_outfit
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -28,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -74,8 +78,8 @@ fun SavedOutfitsScreenContent(
     outfitToDelete?.let { outfit ->
         AlertDialog(
             onDismissRequest = { outfitToDelete = null },
-            title = { Text("Elimina Outfit") },
-            text = { Text("Sei sicuro di voler eliminare l'outfit \"${outfit.name}\"? Questa azione non può essere annullata.") },
+            title = { Text(stringResource(R.string.saved_outfits_delete_title)) },
+            text = { Text(stringResource(R.string.saved_outfits_delete_message, outfit.name)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -85,12 +89,12 @@ fun SavedOutfitsScreenContent(
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Elimina")
+                    Text(stringResource(R.string.saved_outfits_delete_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { outfitToDelete = null }) {
-                    Text("Annulla")
+                    Text(stringResource(R.string.saved_outfits_delete_cancel))
                 }
             }
         )
@@ -103,7 +107,8 @@ fun SavedOutfitsScreenContent(
             isFavorite = uiState.favoriteOutfitIds.contains(outfit.id),
             onDismiss = onDismissDetail,
             onToggleFavorite = { onToggleFavorite(outfit) },
-            onDelete = { outfitToDelete = outfit }
+            onDelete = { outfitToDelete = outfit },
+            onEdit = { onEditOutfit(outfit) }
         )
     }
 
@@ -192,7 +197,7 @@ fun SavedOutfitsListContent(
 }
 
 /**
- * Dialog displaying a "zoomed" version of the outfit.
+ * Dialog displaying a "zoomed" version of the outfit in full screen with actions.
  */
 @Composable
 fun OutfitDetailDialog(
@@ -200,84 +205,147 @@ fun OutfitDetailDialog(
     isFavorite: Boolean,
     onDismiss: () -> Unit,
     onToggleFavorite: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onEdit: () -> Unit // Added callback for edit
 ) {
-    androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss) {
-        Card(
-            shape = RoundedCornerShape(0.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+   Dialog(
+       onDismissRequest = onDismiss,
+       properties = DialogProperties(usePlatformDefaultWidth = false) // Full screen
+   ) {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
+                // Top Bar
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = onToggleFavorite) {
-                            Icon(
-                                imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                                contentDescription = "Preferiti",
-                                tint = if (isFavorite) Color(0xFFFFD700) else MaterialTheme.colorScheme.outline
-                            )
-                        }
-                        IconButton(onClick = onDelete) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Elimina",
-                                tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
-                            )
-                        }
-                    }
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Clear, contentDescription = "Chiudi")
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = stringResource(R.string.wardrobe_search_close),
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
+                    
+                    IconButton(onClick = onToggleFavorite) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = stringResource(R.string.saved_outfits_icon_desc_favorite),
+                            tint = if (isFavorite) Color(0xFFFFD700) else MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.size(28.dp)
+                        )
                     }
                 }
 
-                Box(
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    // Main Image Area
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(0.8f)
+                            .shadow(16.dp, RoundedCornerShape(24.dp))
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (outfit.thumbnailUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(outfit.thumbnailUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = outfit.name,
+                                contentScale = ContentScale.Fit, // Contain within box
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Text(
+                                text = stringResource(R.string.saved_outfits_no_image),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Text(
+                        text = outfit.name,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    
+                    Text(
+                        text = stringResource(R.string.saved_outfits_items_count_detail, outfit.items.size),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+
+                // Action Buttons Section
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(0.85f)
-                        .clip(RoundedCornerShape(0.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                    contentAlignment = Alignment.Center
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    if (outfit.thumbnailUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(outfit.thumbnailUrl)
-                                .crossfade(true)
-                                .build(),
-                            contentDescription = outfit.name,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
+                    // Edit Button (Primary)
+                    Button(
+                        onClick = onEdit,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "No Image",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = stringResource(R.string.saved_outfits_edit_button),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+
+                    // Delete Button (Error)
+                    Button(
+                        onClick = onDelete,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.saved_outfits_delete_button),
+                            style = MaterialTheme.typography.titleMedium
                         )
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = outfit.name,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
             }
         }
     }
@@ -322,7 +390,7 @@ fun SavedOutfitItemCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(0.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier.fillMaxWidth()
@@ -335,7 +403,7 @@ fun SavedOutfitItemCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.85f)
-                    .clip(RoundedCornerShape(0.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .clickable { onImageClick() },
                 contentAlignment = Alignment.Center
@@ -352,7 +420,7 @@ fun SavedOutfitItemCard(
                     )
                 } else {
                     Text(
-                        text = "No Image",
+                        text = stringResource(R.string.saved_outfits_no_image),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -369,7 +437,7 @@ fun SavedOutfitItemCard(
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                            contentDescription = "Preferiti",
+                            contentDescription = stringResource(R.string.saved_outfits_icon_desc_favorite),
                             tint = if (isFavorite) Color(0xFFFFD700) else Color.Gray,
                             modifier = Modifier.size(20.dp)
                         )
@@ -395,36 +463,10 @@ fun SavedOutfitItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${outfit.items.size} capi",
+                    text = stringResource(R.string.saved_outfits_items_count, outfit.items.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = onEdit,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Modifica",
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(4.dp))
-                    IconButton(
-                        onClick = onDelete,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Elimina",
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
             }
         }
     }
@@ -507,7 +549,7 @@ fun SavedOutfitsDefaultTopBar(onSearchTriggered: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "I miei outfit",
+            text = stringResource(R.string.saved_outfits_topbar_title),
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -521,7 +563,7 @@ fun SavedOutfitsDefaultTopBar(onSearchTriggered: () -> Unit) {
             IconButton(onClick = onSearchTriggered) {
                 Icon(
                     imageVector = Icons.Default.Search,
-                    contentDescription = "Cerca",
+                    contentDescription = stringResource(R.string.search),
                     tint = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.size(28.dp)
                 )
@@ -538,7 +580,7 @@ fun SavedOutfitsLoadingState() {
             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Caricamento outfit...",
+                text = stringResource(R.string.saved_outfits_loading_message),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -553,7 +595,7 @@ fun SavedOutfitsErrorState(message: String, onRetry: () -> Unit) {
             Text(text = "😕", style = MaterialTheme.typography.displayMedium)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Ops! Qualcosa è andato storto",
+                text = stringResource(R.string.saved_outfits_error_title),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
@@ -566,7 +608,7 @@ fun SavedOutfitsErrorState(message: String, onRetry: () -> Unit) {
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onRetry) { Text("Riprova") }
+            Button(onClick = onRetry) { Text(stringResource(R.string.saved_outfits_retry_button)) }
         }
     }
 }
@@ -578,14 +620,14 @@ fun SavedOutfitsEmptyState() {
             Text(text = "👗", style = MaterialTheme.typography.displayLarge)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Nessun outfit salvato",
+                text = stringResource(R.string.saved_outfits_empty_message),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Crea il tuo primo outfit nel planner!",
+                text = stringResource(R.string.saved_outfits_empty_subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -601,14 +643,14 @@ fun SavedOutfitsNoResultsState(searchQuery: String) {
             Text(text = "🔍", style = MaterialTheme.typography.displayMedium)
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Nessun risultato",
+                text = stringResource(R.string.saved_outfits_search_no_results_title),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Nessun outfit trovato per \"$searchQuery\"",
+                text = stringResource(R.string.saved_outfits_search_no_results_message, searchQuery),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center

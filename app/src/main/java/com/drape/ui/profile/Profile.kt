@@ -38,7 +38,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.ui.upload_clothes.rememberImagePicker
-import com.drape.ui.myOutfit.SavedOutfitsViewModel
+import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
 import android.net.Uri
 

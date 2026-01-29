@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -172,27 +173,74 @@ fun OutfitCreatorScreen(
                 }
             }
 
-            // BACK ARROW BUTTON
-            IconButton(
-                onClick = onBackClick,
+            // TOP BAR (Back Button + Outfit Name)
+            Row(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
                     .statusBarsPadding()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.outfit_creator_back_description),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(28.dp)
-                )
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.padding(start = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.outfit_creator_back_description),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    TextField(
+                        value = uiState.outfitName,
+                        onValueChange = { viewModel.updateOutfitName(it) },
+                        placeholder = { 
+                            Text(
+                                text = "Nome Outfit", 
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                ),
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            ) 
+                        },
+                        textStyle = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onBackground
+                        ),
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            disabledContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
+                // Spacer to balance the back button visually if needed, or an action button
+                Spacer(modifier = Modifier.width(48.dp))
             }
 
             // CATEGORY INDICATOR
             Surface(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
+                    .padding(top = 80.dp) // Push down below the top bar
                     .statusBarsPadding(),
                 color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
                 shape = CircleShape
@@ -583,10 +631,8 @@ fun ClothItem(
                     onDragStart = { currentOnSelect() },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        // Rotate the drag delta to match the screen coordinate system
-                        val rotatedDrag = rotateVector(dragAmount, currentRotation)
-                        // Add rotated drag delta to current offset from state
-                        currentOnTransformUpdate(null, null, currentOffset + rotatedDrag)
+                        // Drag amount is already in screen coordinates, so we add it directly to offset
+                        currentOnTransformUpdate(null, null, currentOffset + dragAmount)
                     }
                 )
             },
@@ -654,18 +700,4 @@ fun ClothItem(
             }
         }
     }
-}
-
-
-/**
- * Rotates a vector by a given angle in degrees.
- */
-private fun rotateVector(vector: Offset, angleDegrees: Float): Offset {
-    val angleRadians = Math.toRadians(angleDegrees.toDouble())
-    val cos = kotlin.math.cos(angleRadians)
-    val sin = kotlin.math.sin(angleRadians)
-    return Offset(
-        x = (vector.x * cos - vector.y * sin).toFloat(),
-        y = (vector.x * sin + vector.y * cos).toFloat()
-    )
 }

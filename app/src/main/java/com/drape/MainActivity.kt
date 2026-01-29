@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.drape.navigation.Camerino
 import com.drape.navigation.UploadClothes
 import com.drape.ui.theme.DrapeTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -31,9 +32,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         // Let the app draw behind system bars
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         
-        // Hide System Status Bar (True Immersive Mode)
+        // Hide the status bar (Note: Navigation bar remains visible)
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         windowInsetsController.hide(WindowInsetsCompat.Type.statusBars())
@@ -77,13 +77,23 @@ fun DrapeApp() {
         },
         floatingActionButton = {
             if (appState.shouldShowFab) {
+                val isWardrobe = appState.isWardrobeDestination
+                val onClick = if (isWardrobe) {
+                    { appState.navController.navigate(UploadClothes) }
+                } else {
+                    { appState.navController.navigate(Camerino()) }
+                }
+                
+                val icon = if (isWardrobe) Icons.Default.Add else Icons.Default.Add // Can be different if needed
+                val contentDescription = if (isWardrobe) stringResource(R.string.add_item) else "Crea Outfit"
+
                 FloatingActionButton(
-                    onClick = { appState.navController.navigate(UploadClothes) },
+                    onClick = onClick,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = stringResource(R.string.add_item))
+                    Icon(imageVector = icon, contentDescription = contentDescription)
                 }
             }
         },
