@@ -3,7 +3,6 @@ package com.drape.ui.outfit_creator
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -57,6 +56,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.drape.R
 import com.drape.data.model.ItemCategory
+import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.getDisplayNameForCategory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -76,23 +77,19 @@ fun OutfitCreatorScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
+    val snackbarHostState = remember { SnackbarHostState() }
     
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
 
     // Category labels and mapping
-    val categories = listOf(
-        stringResource(R.string.outfit_creator_category_top),
-        stringResource(R.string.outfit_creator_category_bottom),
-        stringResource(R.string.outfit_creator_category_shoes),
-        stringResource(R.string.outfit_creator_category_accessories)
-    )
     val categoryMapping = listOf(
         ItemCategory.TOP,
         ItemCategory.BOTTOM,
         ItemCategory.SHOES,
         ItemCategory.ACCESSORIES
     )
+    val categories = categoryMapping.map { getDisplayNameForCategory(it) }
     
     val selectedCategory = uiState.selectedCategory
     val selectedCategoryIndex = categoryMapping.indexOf(selectedCategory)
@@ -102,325 +99,340 @@ fun OutfitCreatorScreen(
         it.category.equals(selectedCategory.name, ignoreCase = true)
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF8F9FA))
-    ) {
-        // PREVIEW AREA (Interactive Canvas)
-        Box(
+    Scaffold(
+        snackbarHost = { 
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
+            }
+        },
+        containerColor = Color.Transparent, // Preserve background color from Column
+        contentWindowInsets = WindowInsets(0)
+    ) { paddingValues ->
+        Column(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .clipToBounds()
-                .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
-                        change.consume()
-                        viewModel.updateCanvasOffset(dragAmount)
-                    }
-                }
-                .pointerInput(Unit) {
-                    // Tap on background to hide selection
-                    detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
-                },
-            contentAlignment = Alignment.Center
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(Color(0xFFF8F9FA))
         ) {
-            // SCROLLABLE CONTAINER
+            // PREVIEW AREA (Interactive Canvas)
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .offset {
-                        IntOffset(
-                            uiState.canvasOffset.x.roundToInt(),
-                            uiState.canvasOffset.y.roundToInt()
-                        )
-                    }
-                    .drawWithContent {
-                        // Start recording into graphicsLayer (Excludes UI controls outside this Box)
-                        graphicsLayer.record(
-                            size = IntSize(size.width.roundToInt(), size.height.roundToInt())
-                        ) {
-                            this@drawWithContent.drawContent()
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clipToBounds()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            viewModel.updateCanvasOffset(dragAmount)
                         }
-                        // Draw the recorded layer to the screen
-                        drawLayer(graphicsLayer)
+                    }
+                    .pointerInput(Unit) {
+                        // Tap on background to hide selection
+                        detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Render items in depth order (Shoes -> Bottom -> Top -> Accessories)
-                categoryMapping.sortedBy { cat: ItemCategory -> getRenderPriority(cat) }.forEach { category ->
-                    val itemState = uiState.placedItems[category]
-                    if (itemState != null) {
-                        ClothItem(
-                            imageUrl = itemState.clothingItem.imageUrl,
-                            scale = itemState.scale,
-                            rotation = itemState.rotation,
-                            offset = itemState.offset,
-                            isActive = uiState.isSelectionVisible && (selectedCategory == category),
-                            onSelect = { viewModel.selectCategory(category) },
-                            onTransformUpdate = { s, r, o ->
-                                viewModel.updateTransform(category, s, r, o)
-                            }
-                        )
-                    }
-                }
-            }
-
-            // BACK ARROW BUTTON
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(16.dp)
-                    .statusBarsPadding()
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.outfit_creator_back_description),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
-            // CATEGORY INDICATOR
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 16.dp)
-                    .statusBarsPadding(),
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
-                shape = CircleShape
-            ) {
-                Text(
-                    text = categories[selectedCategoryIndex],
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
-            // ACTION BAR
-            Row(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Calendar Button
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
-                    tonalElevation = 4.dp
-                ) {
-                    IconButton(onClick = { /* TODO: Open Calendar logic */ }) {
-                        Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = stringResource(R.string.outfit_creator_schedule_description),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Spacer(Modifier.width(16.dp))
-
-                // Save Button
-                Button(
-                    onClick = {
-                        scope.launch {
-                            // Hide selection before capture to ensure clean thumbnail
-                            viewModel.toggleSelectionVisibility(false)
-                            // A small delay might be needed for state to propagate, but usually record { } records the next draw
-                            val thumbnailUri = captureThumbnail(graphicsLayer, context)
-                            viewModel.saveOutfit(thumbnailUri)
-                        }
-                    },
-                    enabled = !uiState.isSaving,
-                    modifier = Modifier.height(48.dp).shadow(12.dp, RoundedCornerShape(24.dp)),
-                    shape = RoundedCornerShape(24.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                    contentPadding = PaddingValues(horizontal = 32.dp)
-                ) {
-                    if (uiState.isSaving) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.outfit_creator_save_button),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 16.sp
-                        )
-                    }
-                }
-
-                Spacer(Modifier.width(16.dp))
-
-                // Suggestions Button
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
-                    tonalElevation = 4.dp
-                ) {
-                    IconButton(onClick = { /* TODO: Suggestions */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = stringResource(R.string.outfit_creator_suggestions_description),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-            }
-        
-            // Success Feedback
-            if (uiState.saveSuccess) {
-                AlertDialog(
-                    onDismissRequest = { 
-                        viewModel.clearSaveSuccess()
-                        onBackClick()
-                    },
-                    title = { Text(stringResource(R.string.outfit_creator_success_title)) },
-                    text = { Text(stringResource(R.string.outfit_creator_success_message)) },
-                    confirmButton = {
-                        TextButton(onClick = { 
-                            viewModel.clearSaveSuccess()
-                            onBackClick() 
-                        }) { Text(stringResource(R.string.ok)) }
-                    }
-                )
-            }
-
-            // Error Feedback
-            LaunchedEffect(uiState.errorResId) {
-                uiState.errorResId?.let { resId ->
-                    Toast.makeText(context, resId, Toast.LENGTH_LONG).show()
-                    viewModel.clearError()
-                }
-            }
-        }
-
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(24.dp, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)),
-            color = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .animateContentSize()
-            ) {
-
-                // Menu Header
+                // SCROLLABLE CONTAINER
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { isMenuExpanded = !isMenuExpanded }
-                        .padding(vertical = 12.dp, horizontal = 24.dp)
+                        .fillMaxSize()
+                        .offset {
+                            IntOffset(
+                                uiState.canvasOffset.x.roundToInt(),
+                                uiState.canvasOffset.y.roundToInt()
+                            )
+                        }
+                        .drawWithContent {
+                            // Start recording into graphicsLayer (Excludes UI controls outside this Box)
+                            graphicsLayer.record(
+                                size = IntSize(size.width.roundToInt(), size.height.roundToInt())
+                            ) {
+                                this@drawWithContent.drawContent()
+                            }
+                            // Draw the recorded layer to the screen
+                            drawLayer(graphicsLayer)
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier.width(40.dp).height(4.dp).clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.outlineVariant)
-                            .align(Alignment.TopCenter)
-                    )
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = if (isMenuExpanded) {
-                                stringResource(R.string.outfit_creator_menu_title_expanded)
-                            } else {
-                                stringResource(R.string.outfit_creator_menu_title_collapsed)
-                            },
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                        Icon(
-                            imageVector = if (isMenuExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                    // Render items in depth order (Shoes -> Bottom -> Top -> Accessories)
+                    categoryMapping.sortedBy { cat: ItemCategory -> getRenderPriority(cat) }.forEach { category ->
+                        val itemState = uiState.placedItems[category]
+                        if (itemState != null) {
+                            ClothItem(
+                                imageUrl = itemState.clothingItem.imageUrl,
+                                scale = itemState.scale,
+                                rotation = itemState.rotation,
+                                offset = itemState.offset,
+                                isActive = uiState.isSelectionVisible && (selectedCategory == category),
+                                onSelect = { viewModel.selectCategory(category) },
+                                onTransformUpdate = { s, r, o ->
+                                    viewModel.updateTransform(category, s, r, o)
+                                }
+                            )
+                        }
                     }
                 }
 
-                if (isMenuExpanded) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+                // BACK ARROW BUTTON
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(16.dp)
+                        .statusBarsPadding()
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = stringResource(R.string.outfit_creator_back_description),
+                        tint = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                // CATEGORY INDICATOR
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 16.dp)
+                        .statusBarsPadding(),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                    shape = CircleShape
+                ) {
+                    Text(
+                        text = categories[selectedCategoryIndex],
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+
+                // ACTION BAR
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 24.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Calendar Button
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
+                        tonalElevation = 4.dp
                     ) {
-                        // Category Selector Tabs
+                        IconButton(onClick = { /* TODO: Open Calendar logic */ }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = stringResource(R.string.outfit_creator_schedule_description),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(16.dp))
+
+                    // Save Button
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                // Hide selection before capture to ensure clean thumbnail
+                                viewModel.toggleSelectionVisibility(false)
+                                // A small delay might be needed for state to propagate, but usually record { } records the next draw
+                                val thumbnailUri = captureThumbnail(graphicsLayer, context)
+                                viewModel.saveOutfit(thumbnailUri)
+                            }
+                        },
+                        enabled = !uiState.isSaving,
+                        modifier = Modifier.height(48.dp).shadow(12.dp, RoundedCornerShape(24.dp)),
+                        shape = RoundedCornerShape(24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        contentPadding = PaddingValues(horizontal = 32.dp)
+                    ) {
+                        if (uiState.isSaving) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.outfit_creator_save_button),
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.width(16.dp))
+
+                    // Suggestions Button
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surface,
+                        modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
+                        tonalElevation = 4.dp
+                    ) {
+                        IconButton(onClick = { /* TODO: Suggestions */ }) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = stringResource(R.string.outfit_creator_suggestions_description),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            
+                // Success Feedback
+                if (uiState.saveSuccess) {
+                    AlertDialog(
+                        onDismissRequest = { 
+                            viewModel.clearSaveSuccess()
+                            onBackClick()
+                        },
+                        title = { Text(stringResource(R.string.outfit_creator_success_title)) },
+                        text = { Text(stringResource(R.string.outfit_creator_success_message)) },
+                        confirmButton = {
+                            TextButton(onClick = { 
+                                viewModel.clearSaveSuccess()
+                                onBackClick() 
+                            }) { Text(stringResource(R.string.ok)) }
+                        }
+                    )
+                }
+
+                val errorMessage = uiState.errorResId?.let { stringResource(it) }
+                // Error Feedback
+                LaunchedEffect(errorMessage) {
+                    errorMessage?.let { resId ->
+                        snackbarHostState.showSnackbar(
+                            message = resId,
+                            duration = SnackbarDuration.Long
+                        )
+                        viewModel.clearError()
+                    }
+                }
+            }
+
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(24.dp, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)),
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .animateContentSize()
+                ) {
+
+                    // Menu Header
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { isMenuExpanded = !isMenuExpanded }
+                            .padding(vertical = 12.dp, horizontal = 24.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier.width(40.dp).height(4.dp).clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                                .align(Alignment.TopCenter)
+                        )
+                        
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            categories.forEachIndexed { index, title ->
-                                val category = categoryMapping[index]
-                                val isSelected = selectedCategory == category
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(36.dp)
-                                        .clip(RoundedCornerShape(20.dp))
-                                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                        .clickable { viewModel.selectCategory(category) },
-                                    contentAlignment = Alignment.Center
-                               ) {
-                                    Text(
-                                        text = title,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                        color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                            Text(
+                                text = if (isMenuExpanded) {
+                                    stringResource(R.string.outfit_creator_menu_title_expanded)
+                                } else {
+                                    stringResource(R.string.outfit_creator_menu_title_collapsed)
+                                },
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Icon(
+                                imageVector = if (isMenuExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowUp,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    if (isMenuExpanded) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+                        ) {
+                            // Category Selector Tabs
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                categories.forEachIndexed { index, title ->
+                                    val category = categoryMapping[index]
+                                    val isSelected = selectedCategory == category
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(36.dp)
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                            .clickable { viewModel.selectCategory(category) },
+                                        contentAlignment = Alignment.Center
+                                   ) {
+                                        Text(
+                                            text = title,
+                                            style = MaterialTheme.typography.labelLarge,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            // Gallery of Items
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                contentPadding = PaddingValues(bottom = 12.dp, end = 20.dp)
+                            ) {
+                                // "None" item for clearing selection
+                                item {
+                                    GalleryItem(
+                                        imageUrl = null,
+                                        isSelected = uiState.placedItems[selectedCategory] == null,
+                                        onClick = { viewModel.selectItem(selectedCategory, null) }
+                                    )
+                                }
+                                
+                                itemsIndexed(currentItems) { _, item ->
+                                    val isSelected = uiState.placedItems[selectedCategory]?.clothingItem?.id == item.id
+                                    GalleryItem(
+                                        imageUrl = item.imageUrl,
+                                        isSelected = isSelected,
+                                        onClick = { viewModel.selectItem(selectedCategory, item) }
                                     )
                                 }
                             }
-                        }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        // Gallery of Items
-                        LazyRow(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            contentPadding = PaddingValues(bottom = 12.dp, end = 20.dp)
-                        ) {
-                            // "None" item for clearing selection
-                            item {
-                                GalleryItem(
-                                    imageUrl = null,
-                                    isSelected = uiState.placedItems[selectedCategory] == null,
-                                    onClick = { viewModel.selectItem(selectedCategory, null) }
-                                )
-                            }
                             
-                            itemsIndexed(currentItems) { _, item ->
-                                val isSelected = uiState.placedItems[selectedCategory]?.clothingItem?.id == item.id
-                                GalleryItem(
-                                    imageUrl = item.imageUrl,
-                                    isSelected = isSelected,
-                                    onClick = { viewModel.selectItem(selectedCategory, item) }
+                            // Reset Position Button
+                            TextButton(
+                                onClick = { 
+                                    viewModel.resetTransform(selectedCategory) 
+                                },
+                                modifier = Modifier.align(Alignment.End).padding(bottom = 8.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.outfit_creator_reset_position),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
-                        }
-                        
-                        // Reset Position Button
-                        TextButton(
-                            onClick = { 
-                                viewModel.resetTransform(selectedCategory) 
-                            },
-                            modifier = Modifier.align(Alignment.End).padding(bottom = 8.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.outfit_creator_reset_position),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold
-                            )
                         }
                     }
                 }

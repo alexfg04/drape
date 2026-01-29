@@ -1,5 +1,6 @@
 package com.drape.ui.wardrobe
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -35,6 +36,8 @@ import androidx.compose.ui.res.stringResource
 import com.drape.R
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
+import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.getDisplayNameForCategory
 import com.drape.ui.theme.*
 
 /**
@@ -54,7 +57,9 @@ fun WardrobeScreen(
         onItemClick = { viewModel.selectItem(it) },
         onClearSelection = { viewModel.clearSelection() },
         onDeleteItem = { viewModel.deleteClothingItem(it) },
-        onRefresh = { viewModel.refresh() }
+        onRefresh = { viewModel.refresh() },
+        onClearError = { viewModel.clearError() },
+        onClearDeleteSuccess = { viewModel.clearDeleteSuccess() }
     )
 }
 
@@ -74,8 +79,36 @@ fun WardrobeScreenContent(
     onItemClick: (ClothingItem) -> Unit,
     onClearSelection: () -> Unit,
     onDeleteItem: (String) -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onClearError: () -> Unit,
+    onClearDeleteSuccess: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val deleteSuccessMessage = stringResource(R.string.wardrobe_delete_success)
+    val errorMessage = uiState.errorMessage
+
+    // Handle deletion success
+    LaunchedEffect(uiState.deleteSuccess) {
+        if (uiState.deleteSuccess) {
+            snackbarHostState.showSnackbar(
+                message = deleteSuccessMessage,
+                duration = SnackbarDuration.Short
+            )
+            onClearDeleteSuccess()
+        }
+    }
+
+    // Handle errors (only if not a full screen error)
+    LaunchedEffect(errorMessage) {
+        if (errorMessage != null && uiState.clothingItems.isNotEmpty()) {
+            snackbarHostState.showSnackbar(
+                message = errorMessage,
+                duration = SnackbarDuration.Long
+            )
+            onClearError()
+        }
+    }
+
     val allFilterText = stringResource(R.string.wardrobe_filter_all)
     val filters = listOf(allFilterText) + ItemCategory.entries.map { it.name }
     var selectedFilter by remember { mutableStateOf(allFilterText) }
@@ -91,7 +124,6 @@ fun WardrobeScreenContent(
             onDelete = { onDeleteItem(selectedItem.id) }
         )
     }
-
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -105,8 +137,12 @@ fun WardrobeScreenContent(
                     searchQuery = ""
                 })
         },
-
-        ) { paddingValues ->
+        snackbarHost = { 
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
+            }
+        }
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -455,7 +491,7 @@ fun FilterSection(
                 onClick = { onFilterSelected(filter) },
                 shape = RoundedCornerShape(percent = 50),
                 color = backgroundColor,
-                border = if (!isSelected) androidx.compose.foundation.BorderStroke(
+                border = if (!isSelected) BorderStroke(
                     1.dp, borderColor
                 ) else null,
                 modifier = Modifier.height(36.dp)
@@ -465,11 +501,9 @@ fun FilterSection(
                     modifier = Modifier.padding(horizontal = 20.dp)
                 ) {
                     val allFilterText = stringResource(R.string.wardrobe_filter_all)
-                    val context = LocalContext.current
                     Text(
-                        text = if (filter == allFilterText) filter else getDisplayNameForCategory(
-                            context, ItemCategory.valueOf(filter)
-                        ), style = MaterialTheme.typography.bodyMedium.copy(
+                        text = if (filter == allFilterText) filter else getDisplayNameForCategory(ItemCategory.valueOf(filter)),
+                        style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Medium
                         ), color = contentColor
                     )
@@ -738,26 +772,12 @@ fun WardrobeScreenPreview() {
     DrapeTheme {
         WardrobeScreenContent(
             uiState = uiState,
-            onItemClick = {},
-            onClearSelection = {},
             onDeleteItem = {},
-            onRefresh = {}
+            onRefresh = {},
+            onClearError = {},
+            onClearDeleteSuccess = {},
+            onItemClick = {},
+            onClearSelection = {}
         )
-    }
-}
-
-/**
- * Helper function to get the localized display name for a clothing category.
- *
- * @param context The current context.
- * @param category The [ItemCategory] enum value.
- * @return The Italian display string for the category.
- */
-fun getDisplayNameForCategory(context: android.content.Context, category: ItemCategory): String {
-    return when (category) {
-        ItemCategory.TOP -> context.getString(R.string.outfit_creator_category_top)
-        ItemCategory.BOTTOM -> context.getString(R.string.outfit_creator_category_bottom)
-        ItemCategory.SHOES -> context.getString(R.string.outfit_creator_category_shoes)
-        ItemCategory.ACCESSORIES -> context.getString(R.string.outfit_creator_category_accessories)
     }
 }

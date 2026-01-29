@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.widget.Toast
 import android.util.Log
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -143,7 +142,7 @@ fun rememberImagePicker(
     context: Context,
     onImageSelected: (Uri) -> Unit,
     onSizeExceeded: (String) -> Unit = { msg ->
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        Log.e("ImagePicker", "Image size exceeded: $msg")
     }
 ): ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?> {
     val errorMessage = stringResource(R.string.error_image_too_large)
