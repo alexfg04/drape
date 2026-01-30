@@ -643,8 +643,39 @@ fun ClothItem(
                     onDragStart = { currentOnSelect() },
                     onDrag = { change, dragAmount ->
                         change.consume()
-                        // Drag amount is already in screen coordinates, so we add it directly to offset
-                        currentOnTransformUpdate(null, null, currentOffset + dragAmount)
+                        
+                        // Transform the drag amount from local coordinates (rotated/scaled) 
+                        // back to global screen coordinates
+                        val rad = Math.toRadians(currentRotation.toDouble())
+                        val cos = Math.cos(rad)
+                        val sin = Math.sin(rad)
+
+                        // 1. Un-scale the drag amount 
+                        // (The gesture detector is inside the graphicsLayer, so it receives scaled deltas.
+                        // We actually want the screen-space movement. 
+                        // However, since we are adding this to the offset which is OUTSIDE the graphicsLayer,
+                        // we need to understand how the touch moves relative to the parent.
+                        // BUT: detectDragGestures returns values in the local coordinate system of the node.
+                        // If the node is scaled by S, a physical movement of P pixels is reported as P/S in local space.
+                        // To move the object by P pixels in parent space, we need to add P to the offset.
+                        // So we must Multiply by Scale: (P/S) * S = P.
+                        val scaledX = dragAmount.x * currentScale
+                        val scaledY = dragAmount.y * currentScale
+
+                        // 2. Un-rotate the drag amount
+                        // If the node is rotated by R, a movement along X in parent space is reported 
+                        // as a movement along rotated X axis in local space.
+                        // We can use standard 2D rotation matrix to transform the local delta back to parent frame.
+                        // Local (x,y) -> Parent (X,Y)
+                        // X = x * cos(R) - y * sin(R)
+                        // Y = x * sin(R) + y * cos(R)
+                        
+                        val globalX = scaledX * cos - scaledY * sin
+                        val globalY = scaledX * sin + scaledY * cos
+                        
+                        val globalDrag = Offset(globalX.toFloat(), globalY.toFloat())
+                        
+                        currentOnTransformUpdate(null, null, currentOffset + globalDrag)
                     }
                 )
             },
