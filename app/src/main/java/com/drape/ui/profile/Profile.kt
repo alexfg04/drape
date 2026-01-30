@@ -50,6 +50,9 @@ import android.net.Uri
 @Composable
 fun ProfileScreen(
     onSavedOutfitsClick: () -> Unit = {},
+    onWardrobeClick: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    profileViewModel: ProfileViewModel = hiltViewModel(),
     viewModel: SavedOutfitsViewModel = hiltViewModel(),
     wardrobeViewModel: com.drape.ui.wardrobe.WardrobeViewModel = hiltViewModel()
 ) {
@@ -201,12 +204,14 @@ fun ProfileScreen(
                 value = wardrobeUiState.clothingItems.size.toString(),
                 icon = Icons.Default.Star,
                 iconColor = Color(0xFF7B1FA2),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onWardrobeClick() }
             )
             StatBox(
-                label = "Profilo",
-                value = "100%",
-                icon = Icons.Default.Person,
+                label = "Giorni",
+                value = profileViewModel.daysInApp.toString(),
+                icon = Icons.Default.Person, // Or DateRange if available in Core
                 iconColor = Color(0xFFC2185B),
                 modifier = Modifier.weight(1f)
             )
@@ -281,7 +286,10 @@ fun ProfileScreen(
             }
             
             TextButton(
-                onClick = { /* No logic */ },
+                onClick = {
+                    profileViewModel.signOut()
+                    onLogout()
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(

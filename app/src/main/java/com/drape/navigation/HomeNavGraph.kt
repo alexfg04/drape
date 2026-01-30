@@ -20,11 +20,14 @@ import com.drape.ui.my_outfit.SavedOutfitsScreen
  * so individual screens don't need NavHostController for bottom bar navigation.
  */
 fun NavGraphBuilder.homeNavGraph(
-    navController: NavHostController
+    navController: NavHostController,
+    onLogout: () -> Unit
 ) {
     navigation<HomeGraph>(startDestination = Home) {
         composable<Home> {
-            HomeScreen()
+            HomeScreen(
+                onNavigateToProfile = { navController.navigate(Profile) }
+            )
         }
 
         composable<Camerino> { backStackEntry ->
@@ -79,9 +82,31 @@ fun NavGraphBuilder.homeNavGraph(
         composable<Profile> {
             ProfileScreen(
                 onSavedOutfitsClick = {
-                    navController.navigate(SavedOutfits)
-                }
+                    // Navigate to SavedOutfits tab, preserving bottom bar state
+                    navController.navigate(SavedOutfits) {
+                        popUpTo(HomeGraph) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onWardrobeClick = {
+                     // Navigate to Wardrobe tab
+                     navController.navigate(Wardrobe) {
+                        popUpTo(HomeGraph) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onLogout = onLogout
             )
+        }
+
+        composable<EmptyPage> {
+            com.drape.ui.empty.EmptyScreen()
         }
     }
 }

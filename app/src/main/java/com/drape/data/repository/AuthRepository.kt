@@ -25,7 +25,8 @@ class AuthRepository @Inject constructor(
                 id = firebaseUser.uid,
                 email = firebaseUser.email ?: "",
                 displayName = firebaseUser.displayName ?: "",
-                isAnonymous = firebaseUser.isAnonymous
+                isAnonymous = firebaseUser.isAnonymous,
+                createdAt = firebaseUser.metadata?.creationTimestamp ?: 0L
             )
         }
 

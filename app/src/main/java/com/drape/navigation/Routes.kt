@@ -61,3 +61,6 @@ object SavedOutfits
 
 @Serializable
 object Profile
+
+@Serializable
+object EmptyPage
