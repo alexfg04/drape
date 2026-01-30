@@ -8,5 +8,8 @@ data class User(
     val email: String = "",
     val displayName: String = "",
     val isAnonymous: Boolean = false,
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    val bio: String = "",
+    val photoUrl: String? = null,
+    val coverPhotoUrl: String? = null
 )
