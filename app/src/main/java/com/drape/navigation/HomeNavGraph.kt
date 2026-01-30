@@ -11,6 +11,7 @@ import com.drape.ui.outfit_creator.OutfitCreatorScreen
 import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
 import com.drape.ui.my_outfit.SavedOutfitsScreen
+import com.drape.ui.profile.season.ProfileSeasonOutfitsScreen
 
 /**
  * Home navigation graph.
@@ -104,6 +105,15 @@ fun NavGraphBuilder.homeNavGraph(
                 onEditProfileClick = {
                     navController.navigate(EditProfile)
                 },
+                onSeasonClick = { season ->
+                    navController.navigate(ProfileSeasonOutfits(season))
+                },
+                onBackToHome = {
+                    navController.navigate(Home) {
+                        popUpTo(HomeGraph) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
                 onLogout = onLogout
             )
         }
@@ -116,6 +126,17 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<EmptyPage> {
             com.drape.ui.empty.EmptyScreen()
+        }
+
+        composable<ProfileSeasonOutfits> { backStackEntry ->
+            val route = backStackEntry.toRoute<ProfileSeasonOutfits>()
+            ProfileSeasonOutfitsScreen(
+                season = route.season,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToOutfit = { outfitId ->
+                    navController.navigate(EditOutfit(outfitId))
+                }
+            )
         }
     }
 }

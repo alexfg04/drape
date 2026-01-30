@@ -41,6 +41,7 @@ import com.drape.ui.upload_clothes.rememberImagePicker
 import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
 import android.net.Uri
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 /**
  * Profile screen.
@@ -53,6 +54,8 @@ fun ProfileScreen(
     onWardrobeClick: () -> Unit = {},
     onEditProfileClick: () -> Unit = {},
     onLogout: () -> Unit = {},
+    onSeasonClick: (String) -> Unit = {},
+    onBackToHome: () -> Unit = {},
     profileViewModel: ProfileViewModel = hiltViewModel(),
     viewModel: SavedOutfitsViewModel = hiltViewModel(),
     wardrobeViewModel: com.drape.ui.wardrobe.WardrobeViewModel = hiltViewModel()
@@ -114,6 +117,22 @@ fun ProfileScreen(
                         )
                     }
                 }
+            }
+
+            // Back/Home Button
+            IconButton(
+                onClick = onBackToHome,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.3f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Or Icons.Default.Home
+                    contentDescription = "Back to Home",
+                    tint = Color.White
+                )
             }
 
             // Circular Profile Picture
@@ -248,25 +267,29 @@ fun ProfileScreen(
                 title = "Outfit Autunno",
                 backgroundColor = MaterialTheme.colorScheme.inverseSurface,
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                backgroundImageRes = R.drawable.autunnobutton
+                backgroundImageRes = R.drawable.autunnobutton,
+                onClick = { onSeasonClick("Autunno") }
             )
             CartinaBanner(
                 title = "Outfit Inverno",
                 backgroundColor = MaterialTheme.colorScheme.inverseSurface,
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                backgroundImageRes = R.drawable.invernobutton
+                backgroundImageRes = R.drawable.invernobutton,
+                onClick = { onSeasonClick("Inverno") }
             )
             CartinaBanner(
                 title = "Outfit Estate",
                 backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = Color.White,
-                backgroundImageRes = R.drawable.estate
+                backgroundImageRes = R.drawable.estate,
+                onClick = { onSeasonClick("Estate") }
             )
             CartinaBanner(
-                title = "Outfit Eventi",
+                title = "Outfit Primavera",
                 backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = Color.White,
-                backgroundImageRes = R.drawable.elegante
+                backgroundImageRes = R.drawable.primavera,
+                onClick = { onSeasonClick("Primavera") }
             )
         }
 
@@ -384,12 +407,14 @@ fun CartinaBanner(
     title: String,
     backgroundColor: Color,
     contentColor: Color,
-    backgroundImageRes: Int? = null
+    backgroundImageRes: Int? = null,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp),
+            .height(100.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor,
