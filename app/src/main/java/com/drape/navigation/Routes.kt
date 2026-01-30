@@ -60,6 +60,9 @@ object UploadClothes
 object SavedOutfits
 
 @Serializable
+object EditProfile
+
+@Serializable
 object Profile
 
 @Serializable

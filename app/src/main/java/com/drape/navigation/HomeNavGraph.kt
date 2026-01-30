@@ -101,7 +101,16 @@ fun NavGraphBuilder.homeNavGraph(
                         restoreState = true
                     }
                 },
+                onEditProfileClick = {
+                    navController.navigate(EditProfile)
+                },
                 onLogout = onLogout
+            )
+        }
+
+        composable<EditProfile> {
+            com.drape.ui.profile.edit.EditProfileScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
 
