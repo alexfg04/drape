@@ -3,6 +3,7 @@ package com.drape.data.repository
 import com.drape.data.datasource.AuthRemoteDataSource
 import com.drape.data.model.User
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,7 +15,9 @@ import javax.inject.Singleton
  */
 @Singleton
 class AuthRepository @Inject constructor(
-    private val authRemoteDataSource: AuthRemoteDataSource
+    private val authRemoteDataSource: AuthRemoteDataSource,
+    private val userDataRemoteDataSource: com.drape.data.datasource.UserDataRemoteDataSource,
+    private val storageRemoteDataSource: com.drape.data.datasource.StorageRemoteDataSource
 ) {
     /**
      * The currently authenticated user, or `null` if not logged in.
@@ -25,7 +28,8 @@ class AuthRepository @Inject constructor(
                 id = firebaseUser.uid,
                 email = firebaseUser.email ?: "",
                 displayName = firebaseUser.displayName ?: "",
-                isAnonymous = firebaseUser.isAnonymous
+                isAnonymous = firebaseUser.isAnonymous,
+                createdAt = firebaseUser.metadata?.creationTimestamp ?: 0L
             )
         }
 
@@ -88,5 +92,83 @@ class AuthRepository @Inject constructor(
      */
     suspend fun deleteAccount() {
         authRemoteDataSource.deleteAccount()
+    }
+
+    /**
+     * Flow emitting the full user profile (Auth + Firestore).
+     */
+    val userFlow: Flow<User?> = kotlinx.coroutines.flow.flow {
+        authRemoteDataSource.currentUserIdFlow.collect { userId ->
+            if (userId != null) {
+                val firebaseUser = authRemoteDataSource.currentUser
+                val userData = userDataRemoteDataSource.getUserData(userId)
+                
+                emit(
+                    User(
+                        id = userId,
+                        email = firebaseUser?.email ?: "",
+                        displayName = firebaseUser?.displayName ?: "",
+                        isAnonymous = firebaseUser?.isAnonymous ?: false,
+                        createdAt = firebaseUser?.metadata?.creationTimestamp ?: 0L,
+                        bio = userData["bio"] as? String ?: "",
+                        photoUrl = firebaseUser?.photoUrl?.toString(),
+                        coverPhotoUrl = userData["coverPhotoUrl"] as? String
+                    )
+                )
+            } else {
+                emit(null)
+            }
+        }
+    }
+
+    suspend fun updateProfile(
+        displayName: String, 
+        bio: String, 
+        photoUri: android.net.Uri?,
+        coverPhotoUri: android.net.Uri?
+    ) {
+        val user = authRemoteDataSource.currentUser ?: return
+        val userId = user.uid
+
+        val firestoreUpdates = mutableMapOf<String, Any?>("bio" to bio)
+
+        // 1. Upload Profile Photo if needed
+        if (photoUri != null) {
+            val photoUrl = storageRemoteDataSource.uploadImage(
+                imageUri = photoUri,
+                userId = userId,
+                id = "profile_image",
+                folder = "profile"
+            )
+            // Update Auth Photo URL
+            user.updateProfile(
+                com.google.firebase.auth.userProfileChangeRequest {
+                    this.photoUri = android.net.Uri.parse(photoUrl)
+                }
+            ).await()
+        }
+
+        // 2. Upload Cover Photo if needed
+        if (coverPhotoUri != null) {
+            val coverUrl = storageRemoteDataSource.uploadImage(
+                imageUri = coverPhotoUri,
+                userId = userId,
+                id = "cover_image",
+                folder = "profile"
+            )
+            firestoreUpdates["coverPhotoUrl"] = coverUrl
+        }
+
+        // 3. Update Display Name
+        if (displayName != user.displayName) {
+            user.updateProfile(
+                com.google.firebase.auth.userProfileChangeRequest {
+                    this.displayName = displayName
+                }
+            ).await()
+        }
+
+        // 4. Update Firestore Data
+        userDataRemoteDataSource.saveUserData(userId, firestoreUpdates)
     }
 }

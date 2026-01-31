@@ -41,6 +41,7 @@ import com.drape.ui.upload_clothes.rememberImagePicker
 import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
 import android.net.Uri
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 /**
  * Profile screen.
@@ -50,24 +51,26 @@ import android.net.Uri
 @Composable
 fun ProfileScreen(
     onSavedOutfitsClick: () -> Unit = {},
+    onWardrobeClick: () -> Unit = {},
+    onEditProfileClick: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    onSeasonClick: (String) -> Unit = {},
+    onBackToHome: () -> Unit = {},
+    profileViewModel: ProfileViewModel = hiltViewModel(),
     viewModel: SavedOutfitsViewModel = hiltViewModel(),
     wardrobeViewModel: com.drape.ui.wardrobe.WardrobeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
+    val user by profileViewModel.userFlow.collectAsState(initial = null)
     val context = LocalContext.current
 
     var coverImageUri by remember { mutableStateOf<Uri?>(null) }
-    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
+    // profileImageUri removed as we use user.photoUrl now
 
     val coverImageLauncher = rememberImagePicker(
         context = context,
         onImageSelected = { uri -> coverImageUri = uri }
-    )
-
-    val profileImageLauncher = rememberImagePicker(
-        context = context,
-        onImageSelected = { uri -> profileImageUri = uri }
     )
 
     Column(
@@ -85,18 +88,13 @@ fun ProfileScreen(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
-                    .clickable {
-                        coverImageLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
+                    .height(180.dp),
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                if (coverImageUri != null) {
+                if (user?.coverPhotoUrl != null) {
                     AsyncImage(
                         model = ImageRequest.Builder(context)
-                            .data(coverImageUri)
+                            .data(user?.coverPhotoUrl)
                             .crossfade(true)
                             .build(),
                         contentDescription = "Cover Image",
@@ -105,33 +103,51 @@ fun ProfileScreen(
                         alpha = 0.8f
                     )
                 } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.outfitblu),
-                        contentDescription = "Cover Image",
-                        contentScale = ContentScale.Crop,
-                        alpha = 0.8f
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person, // Or generic image icon
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f),
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
                 }
+            }
+
+            // Back/Home Button
+            IconButton(
+                onClick = onBackToHome,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(16.dp)
+                    .clip(CircleShape)
+                    .background(Color.Black.copy(alpha = 0.3f))
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Or Icons.Default.Home
+                    contentDescription = "Back to Home",
+                    tint = Color.White
+                )
             }
 
             // Circular Profile Picture
             Surface(
                 modifier = Modifier
                     .size(120.dp)
-                    .align(Alignment.BottomCenter)
-                    .clickable {
-                        profileImageLauncher.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                        )
-                    },
+                    .align(Alignment.BottomCenter),
                 shape = CircleShape,
                 border = BorderStroke(4.dp, MaterialTheme.colorScheme.surface),
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
-                if (profileImageUri != null) {
+                if (user?.photoUrl != null) {
                     AsyncImage(
                         model = ImageRequest.Builder(context)
-                            .data(profileImageUri)
+                            .data(user?.photoUrl)
                             .crossfade(true)
                             .build(),
                         contentDescription = "Profile Picture",
@@ -139,12 +155,19 @@ fun ProfileScreen(
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier.clip(CircleShape),
-                        contentScale = ContentScale.Fit
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                            modifier = Modifier.size(64.dp)
+                        )
+                    }
                 }
             }
         }
@@ -157,25 +180,34 @@ fun ProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Mario Rossi",
+                text = user?.displayName?.takeIf { it.isNotEmpty() } ?: "Utente",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "@mario_drape",
+                text = user?.email ?: "",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.outline
             )
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Text(
-                text = "Fashion Enthusiast | Drape Style",
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(horizontal = 32.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (!user?.bio.isNullOrEmpty()) {
+                Text(
+                    text = user!!.bio,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 32.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                 Text(
+                    text = "Aggiungi una didascalia...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 32.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -201,12 +233,14 @@ fun ProfileScreen(
                 value = wardrobeUiState.clothingItems.size.toString(),
                 icon = Icons.Default.Star,
                 iconColor = Color(0xFF7B1FA2),
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onWardrobeClick() }
             )
             StatBox(
-                label = "Profilo",
-                value = "100%",
-                icon = Icons.Default.Person,
+                label = "Giorni",
+                value = profileViewModel.daysInApp.toString(),
+                icon = Icons.Default.Person, // Or DateRange if available in Core
                 iconColor = Color(0xFFC2185B),
                 modifier = Modifier.weight(1f)
             )
@@ -233,25 +267,29 @@ fun ProfileScreen(
                 title = "Outfit Autunno",
                 backgroundColor = MaterialTheme.colorScheme.inverseSurface,
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                backgroundImageRes = R.drawable.autunnobutton
+                backgroundImageRes = R.drawable.autunnobutton,
+                onClick = { onSeasonClick("Autunno") }
             )
             CartinaBanner(
                 title = "Outfit Inverno",
                 backgroundColor = MaterialTheme.colorScheme.inverseSurface,
                 contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                backgroundImageRes = R.drawable.invernobutton
+                backgroundImageRes = R.drawable.invernobutton,
+                onClick = { onSeasonClick("Inverno") }
             )
             CartinaBanner(
                 title = "Outfit Estate",
                 backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = Color.White,
-                backgroundImageRes = R.drawable.estate
+                backgroundImageRes = R.drawable.estate,
+                onClick = { onSeasonClick("Estate") }
             )
             CartinaBanner(
-                title = "Outfit Eventi",
+                title = "Outfit Primavera",
                 backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
                 contentColor = Color.White,
-                backgroundImageRes = R.drawable.elegante
+                backgroundImageRes = R.drawable.primavera,
+                onClick = { onSeasonClick("Primavera") }
             )
         }
 
@@ -266,7 +304,7 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
-                onClick = { /* No logic */ },
+                onClick = onEditProfileClick,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
@@ -275,13 +313,16 @@ fun ProfileScreen(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
                 Text(
-                    text = "Modifica app",
+                    text = "Modifica Profilo",
                     style = MaterialTheme.typography.labelLarge
                 )
             }
             
             TextButton(
-                onClick = { /* No logic */ },
+                onClick = {
+                    profileViewModel.signOut()
+                    onLogout()
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
@@ -366,12 +407,14 @@ fun CartinaBanner(
     title: String,
     backgroundColor: Color,
     contentColor: Color,
-    backgroundImageRes: Int? = null
+    backgroundImageRes: Int? = null,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(100.dp),
+            .height(100.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor,

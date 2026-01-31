@@ -2,11 +2,6 @@ package com.drape.navigation
 
 import kotlinx.serialization.Serializable
 
-/**
- * Type-safe navigation routes using Kotlin Serialization.
- * Organized by feature/graph.
- */
-
 // ============================================
 // Root Routes
 // ============================================
@@ -60,4 +55,13 @@ object UploadClothes
 object SavedOutfits
 
 @Serializable
+object EditProfile
+
+@Serializable
 object Profile
+
+@Serializable
+data class ProfileSeasonOutfits(val season: String)
+
+@Serializable
+object EmptyPage

@@ -30,8 +30,8 @@ val BottomNavItems = listOf(
         route = Wardrobe
     ),
     DrapeNavigationItem(
-        titleRes = R.string.home_nav_profile,
-        icon = IconSource.Vector(Icons.Default.Person),
-        route = Profile
+        titleRes = R.string.home_nav_profile, // You might want to change this string resource to "Empty" or similar if you have one, or keep it as placeholder
+        icon = IconSource.Vector(Icons.Default.Person), // Using Person icon as placeholder, or switch to something else
+        route = EmptyPage
     )
 )
