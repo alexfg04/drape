@@ -55,7 +55,7 @@ class EditProfileViewModel @Inject constructor(
         _uiState.update { it.copy(selectedCoverUri = uri) }
     }
 
-    fun saveProfile(onSuccess: () -> Unit) {
+     fun saveProfile(onSuccess: () -> Unit) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             try {

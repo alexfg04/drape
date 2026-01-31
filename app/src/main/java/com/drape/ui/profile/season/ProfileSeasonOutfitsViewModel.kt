@@ -28,21 +28,21 @@ class ProfileSeasonOutfitsViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SeasonOutfitsUiState())
     val uiState: StateFlow<SeasonOutfitsUiState> = _uiState.asStateFlow()
 
-    fun loadMarkedSeason(season: String) {
+      fun loadMarkedSeason(season: String) {
         _uiState.value = _uiState.value.copy(season = season, isLoading = true)
-        
+
         viewModelScope.launch {
             combine(
                 outfitRepository.getUserOutfits(),
                 clothesRepository.getUserClothingItems()
             ) { outfits, clothes ->
                 val clothesMap = clothes.associateBy { it.id }
-                
+
                 outfits.filter { outfit ->
                     val seasonItemCount = outfit.items.count { placedItem ->
                         val clothingItem = clothesMap[placedItem.itemId]
                         val itemSeason = clothingItem?.season?.trim() ?: ""
-                        
+
                         // Count item if it matches the specific season OR is applicable to all seasons
                         itemSeason.equals(season.trim(), ignoreCase = true) || 
                         itemSeason.equals("Tutte le stagioni", ignoreCase = true)

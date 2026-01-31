@@ -52,7 +52,7 @@ fun EditProfileScreen(
         viewModel.onCoverPhotoSelected(uri)
     }
     
-    var isPickingCover by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+       var isPickingCover by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()

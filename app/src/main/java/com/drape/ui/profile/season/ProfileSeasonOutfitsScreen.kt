@@ -84,7 +84,7 @@ fun ProfileSeasonOutfitsScreen(
                     // Or ideally we should extract the Grid Item.
                     // Since I cannot easily extract the Grid Item without modifying existing files, I will use SavedOutfitsGrid and provide dummy callbacks for now, 
                     // or implement 'onNavigateToOutfit' as the edit action.
-                    
+
                     SavedOutfitsGrid(
                         outfits = uiState.outfits,
                         favoriteOutfitIds = emptySet(), // Not checking favs here for now
