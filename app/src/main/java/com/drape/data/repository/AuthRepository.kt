@@ -97,12 +97,12 @@ class AuthRepository @Inject constructor(
     /**
      * Flow emitting the full user profile (Auth + Firestore).
      */
-    val userFlow: Flow<User?> = kotlinx.coroutines.flow.flow {
+      val userFlow: Flow<User?> = kotlinx.coroutines.flow.flow {
         authRemoteDataSource.currentUserIdFlow.collect { userId ->
             if (userId != null) {
                 val firebaseUser = authRemoteDataSource.currentUser
                 val userData = userDataRemoteDataSource.getUserData(userId)
-                
+
                 emit(
                     User(
                         id = userId,
@@ -168,7 +168,7 @@ class AuthRepository @Inject constructor(
             ).await()
         }
 
+       
         // 4. Update Firestore Data
         userDataRemoteDataSource.saveUserData(userId, firestoreUpdates)
-    }
 }

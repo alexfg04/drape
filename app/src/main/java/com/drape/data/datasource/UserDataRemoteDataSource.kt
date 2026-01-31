@@ -21,7 +21,8 @@ class UserDataRemoteDataSource @Inject constructor(
             val snapshot = firestore.collection("users").document(userId).get().await()
             snapshot.data ?: emptyMap()
         } catch (e: Exception) {
-            emptyMap()
+            android.util.Log.e("UserDataRemoteDataSource", "Error fetching user data for userId: $userId", e)
+            throw e
         }
     }
 }
