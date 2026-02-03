@@ -13,6 +13,7 @@ import android.graphics.Rect
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.widget.RemoteViews
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.drape.MainActivity
@@ -68,18 +69,20 @@ class NotificationReceiver : BroadcastReceiver() {
             )
 
 
-            // Decode and pad the logo to ensure it's fully visible inside the circle crop
-            val largeIcon = resizeBitmapWithPadding(context, R.drawable.logo)
 
             val title = "È ora del tuo outfit! 👗"
             val message = "Il tuo look perfetto ti aspetta. Entra nel camerino e crea il tuo stile per oggi!"
 
+            // Custom View with Logo on the Left
+            val remoteViews = RemoteViews(context.packageName, R.layout.notification_custom)
+            remoteViews.setImageViewResource(R.id.notification_icon, R.drawable.logo)
+            remoteViews.setTextViewText(R.id.notification_title, title)
+            remoteViews.setTextViewText(R.id.notification_text, message)
+
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setLargeIcon(largeIcon) // Add Large Icon
-                .setContentTitle(title)
-                .setContentText(message)
-                .setStyle(NotificationCompat.BigTextStyle().bigText(message)) // Expandable text
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle()) // Wrap with system header
+                .setCustomContentView(remoteViews)
                 .setPriority(NotificationCompat.PRIORITY_HIGH) 
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -130,40 +133,6 @@ class NotificationReceiver : BroadcastReceiver() {
                 AlarmManager.INTERVAL_DAY,
                 pendingIntent
             )
-        }
-
-        private fun resizeBitmapWithPadding(context: Context, resId: Int): Bitmap? {
-            val originalBitmap = BitmapFactory.decodeResource(context.resources, resId) ?: return null
-            
-            // Create a square bitmap
-            val size = Math.max(originalBitmap.width, originalBitmap.height)
-            val paddedBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(paddedBitmap)
-            
-            // Calculate padding (approx 15-20% to fit in circle)
-            val padding = (size * 0.2f).toInt()
-            
-
-            
-            // Scale down if needed to fit within padding (safe zone)
-            // Safe zone width = size - 2*padding
-            val safeWidth = size - 2 * padding
-            val scale = safeWidth.toFloat() / Math.max(originalBitmap.width, originalBitmap.height)
-            
-            val scaledWidth = originalBitmap.width * scale
-            val scaledHeight = originalBitmap.height * scale
-            
-            val destLeft = (size - scaledWidth) / 2f
-            val destTop = (size - scaledHeight) / 2f
-            val destRect = Rect(destLeft.toInt(), destTop.toInt(), (destLeft + scaledWidth).toInt(), (destTop + scaledHeight).toInt())
-            
-            // Draw transparent background (optional, default is transparent)
-             canvas.drawColor(Color.TRANSPARENT)
-            
-            val paint = Paint().apply { isFilterBitmap = true }
-             canvas.drawBitmap(originalBitmap, null, destRect, paint)
-             
-             return paddedBitmap
         }
     }
 }
