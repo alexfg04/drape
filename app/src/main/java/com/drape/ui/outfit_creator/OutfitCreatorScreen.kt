@@ -293,9 +293,10 @@ fun OutfitCreatorScreen(
                             scope.launch {
                                 // Hide selection before capture to ensure clean thumbnail
                                 viewModel.toggleSelectionVisibility(false)
-                                // A small delay might be needed for state to propagate, but usually record { } records the next draw
+                                // A small delay is needed to ensure the UI recomposition completes before capture
+                                kotlinx.coroutines.delay(250)
                                 val thumbnailUri = captureThumbnail(graphicsLayer, context)
-                            viewModel.saveOutfit(defaultName,thumbnailUri)
+                                viewModel.saveOutfit(defaultName, thumbnailUri)
                             }
                         },
                         enabled = !uiState.isSaving,

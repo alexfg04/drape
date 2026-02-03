@@ -97,7 +97,7 @@ class AuthRepository @Inject constructor(
     /**
      * Flow emitting the full user profile (Auth + Firestore).
      */
-      val userFlow: Flow<User?> = kotlinx.coroutines.flow.flow {
+    val userFlow: Flow<User?> = kotlinx.coroutines.flow.flow {
         authRemoteDataSource.currentUserIdFlow.collect { userId ->
             if (userId != null) {
                 val firebaseUser = authRemoteDataSource.currentUser
@@ -122,8 +122,8 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun updateProfile(
-        displayName: String, 
-        bio: String, 
+        displayName: String,
+        bio: String,
         photoUri: android.net.Uri?,
         coverPhotoUri: android.net.Uri?
     ) {
@@ -168,7 +168,8 @@ class AuthRepository @Inject constructor(
             ).await()
         }
 
-       
+
         // 4. Update Firestore Data
         userDataRemoteDataSource.saveUserData(userId, firestoreUpdates)
+    }
 }
