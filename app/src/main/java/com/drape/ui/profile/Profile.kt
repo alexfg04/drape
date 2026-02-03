@@ -35,6 +35,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.ui.upload_clothes.rememberImagePicker
@@ -72,6 +77,15 @@ fun ProfileScreen(
     val coverImageLauncher = rememberImagePicker(
         context = context,
         onImageSelected = { uri -> coverImageUri = uri }
+    )
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                NotificationReceiver.showNotification(context)
+            }
+        }
     )
 
     Column(
@@ -321,7 +335,19 @@ fun ProfileScreen(
             
             TextButton(
                 onClick = {
-                  NotificationReceiver.showNotification(context)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ContextCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.POST_NOTIFICATIONS
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            NotificationReceiver.showNotification(context)
+                        } else {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    } else {
+                        NotificationReceiver.showNotification(context)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -455,7 +481,7 @@ fun CartinaBanner(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
                     modifier = Modifier.size(60.dp),

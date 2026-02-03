@@ -97,6 +97,7 @@ class NotificationReceiver : BroadcastReceiver() {
             }
         }
 
+        @JvmStatic
         fun scheduleDailyNotification(context: Context) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, NotificationReceiver::class.java)
@@ -142,10 +143,7 @@ class NotificationReceiver : BroadcastReceiver() {
             // Calculate padding (approx 15-20% to fit in circle)
             val padding = (size * 0.2f).toInt()
             
-            // Draw original bitmap in center
-            // If original is not square, center it
-            val left = (size - originalBitmap.width) / 2f
-            val top = (size - originalBitmap.height) / 2f
+
             
             // Scale down if needed to fit within padding (safe zone)
             // Safe zone width = size - 2*padding

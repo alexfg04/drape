@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import com.drape.navigation.DrapeNavGraph
 import com.drape.ui.components.CurvedBottomNavigation
 
@@ -32,25 +34,30 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
             NotificationReceiver.scheduleDailyNotification(this)
-            // Log.d("MainActivity", "Notification permission granted")
-        } else {
-            // Log.d("MainActivity", "Notification permission denied")
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Schedule daily notification
-        NotificationReceiver.scheduleDailyNotification(this)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                NotificationReceiver.scheduleDailyNotification(this)
+            } else {
+                requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            NotificationReceiver.scheduleDailyNotification(this)
         }
         
         // Let the app draw behind system bars
