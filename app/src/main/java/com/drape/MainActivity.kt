@@ -1,9 +1,11 @@
 package com.drape
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -24,12 +26,32 @@ import androidx.compose.ui.unit.dp
 import com.drape.navigation.Camerino
 import com.drape.navigation.UploadClothes
 import com.drape.ui.theme.DrapeTheme
+import com.drape.receivers.NotificationReceiver
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            NotificationReceiver.scheduleDailyNotification(this)
+            // Log.d("MainActivity", "Notification permission granted")
+        } else {
+            // Log.d("MainActivity", "Notification permission denied")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Schedule daily notification
+        NotificationReceiver.scheduleDailyNotification(this)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
         
         // Let the app draw behind system bars
         

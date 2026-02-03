@@ -42,6 +42,7 @@ import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
 import android.net.Uri
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.drape.receivers.NotificationReceiver
 
 /**
  * Profile screen.
@@ -315,6 +316,20 @@ fun ProfileScreen(
                 Text(
                     text = "Modifica Profilo",
                     style = MaterialTheme.typography.labelLarge
+                )
+            }
+            
+            TextButton(
+                onClick = {
+                  NotificationReceiver.showNotification(context)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Test Notifica",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Medium
                 )
             }
             
