@@ -64,7 +64,7 @@
 
     <!-- Home Sections -->
     <string name="home_nav_home">Home</string>
-    <string name="home_nav_camerino">Componi</string>
+    <string name="home_nav_camerino">I tuoi Outfit</string>
     <string name="home_nav_planner">Planner</string>
     <string name="home_nav_wardrobe">Il tuo Armadio</string>
     <string name="home_nav_profile">Profilo</string>

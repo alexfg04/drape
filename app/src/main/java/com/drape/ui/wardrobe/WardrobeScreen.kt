@@ -12,7 +12,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,7 +30,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
-import androidx.compose.ui.platform.LocalContext
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
@@ -42,14 +40,14 @@ import com.drape.ui.components.DrapeSnackbar
  */
 @Composable
 fun WardrobeScreen(
+    onNavigateToClothingDetail: (ClothingItem) -> Unit,
     wardrobeViewModel: WardrobeViewModel = hiltViewModel()
 ) {
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
 
     WardrobeScreenContent(
         wardrobeUiState = wardrobeUiState,
-        onWardrobeItemClick = { wardrobeViewModel.selectItem(it) },
-        onWardrobeClearSelection = { wardrobeViewModel.clearSelection() },
+        onWardrobeItemClick = onNavigateToClothingDetail,
         onWardrobeDeleteItem = { wardrobeViewModel.deleteClothingItem(it) },
         onWardrobeRefresh = { wardrobeViewModel.refresh() },
         onClearError = { wardrobeViewModel.clearError() },
@@ -63,7 +61,6 @@ fun WardrobeScreen(
  *
  * @param wardrobeUiState The current UI state of the wardrobe.
  * @param onWardrobeItemClick Callback triggered when a clothing item is clicked.
- * @param onWardrobeClearSelection Callback to clear the currently selected item.
  * @param onWardrobeDeleteItem Callback to delete a specific clothing item.
  * @param onWardrobeRefresh Callback to refresh the wardrobe contents.
  */
@@ -71,7 +68,6 @@ fun WardrobeScreen(
 fun WardrobeScreenContent(
     wardrobeUiState: WardrobeUiState,
     onWardrobeItemClick: (ClothingItem) -> Unit,
-    onWardrobeClearSelection: () -> Unit,
     onWardrobeDeleteItem: (String) -> Unit,
     onWardrobeRefresh: () -> Unit,
     onClearError: () -> Unit,
@@ -103,21 +99,9 @@ fun WardrobeScreenContent(
         }
     }
 
-    val allFilterText = "Tutti"
-    val filters = listOf(allFilterText) + ItemCategory.entries.map { it.name }
-    var selectedFilter by remember { mutableStateOf(allFilterText) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
 
-    // Handle selected item dialog (wardrobe)
-    wardrobeUiState.selectedItem?.let { selectedItem ->
-        ItemDetailDialog(
-            item = selectedItem,
-            isDeleting = wardrobeUiState.isDeleting,
-            onDismiss = onWardrobeClearSelection,
-            onDelete = { onWardrobeDeleteItem(selectedItem.id) }
-        )
-    }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -208,132 +192,6 @@ fun WardrobeListContent(
                     )
                 }
             }
-        }
-    }
-}
-
-/**
- * Dialog displaying details of a selected clothing item.
- * Provides an option to delete the item.
- *
- * @param item The [ClothingItem] to display details for.
- * @param isDeleting Boolean flag indicating if a deletion is in progress.
- * @param onDismiss Callback to dismiss the dialog.
- * @param onDelete Callback to trigger the deletion of the item.
- */
-@Composable
-fun ItemDetailDialog(
-    item: ClothingItem, isDeleting: Boolean, onDismiss: () -> Unit, onDelete: () -> Unit
-) {
-    AlertDialog(
-        onDismissRequest = { if (!isDeleting) onDismiss() }, confirmButton = {
-        TextButton(
-            onClick = onDelete, enabled = !isDeleting, colors = ButtonDefaults.textButtonColors(
-                contentColor = MaterialTheme.colorScheme.error
-            )
-        ) {
-            if (isDeleting) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp), strokeWidth = 2.dp
-                )
-            } else {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.wardrobe_delete_confirm))
-            }
-        }
-    }, dismissButton = {
-        TextButton(
-            onClick = onDismiss, enabled = !isDeleting
-        ) {
-            Text(stringResource(R.string.wardrobe_delete_cancel))
-        }
-    }, text = {
-        ClothingItemDetailCard(item = item)
-    }, title = {
-        Text(stringResource(R.string.wardrobe_delete_title))
-    }, containerColor = MaterialTheme.colorScheme.surface, shape = RoundedCornerShape(28.dp)
-    )
-}
-
-/**
- * Card component displaying the detailed information of a clothing item.
- * Used within the [ItemDetailDialog].
- *
- * @param item The [ClothingItem] to display.
- */
-@Composable
-fun ClothingItemDetailCard(item: ClothingItem) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            val context = LocalContext.current
-            AsyncImage(
-                model = ImageRequest.Builder(context).data(item.imageUrl).diskCacheKey(item.id)
-                    .memoryCacheKey(item.id).crossfade(true).build(),
-                contentDescription = item.name,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp)
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = item.name, style = MaterialTheme.typography.titleLarge.copy(
-                fontWeight = FontWeight.Bold
-            ), color = MaterialTheme.colorScheme.onSurface
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        DetailRow(label = stringResource(R.string.wardrobe_item_detail_brand), value = item.brand)
-        DetailRow(label = stringResource(R.string.wardrobe_item_detail_category), value = item.category)
-        DetailRow(label = stringResource(R.string.wardrobe_item_detail_color), value = item.color)
-        DetailRow(label = stringResource(R.string.wardrobe_item_detail_season), value = item.season)
-    }
-}
-
-/**
- * A single row showing a label and a value for a clothing item's attribute.
- * Only displays if the value is not blank.
- *
- * @param label The attribute name (e.g., "Brand").
- * @param value The attribute value (e.g., "Levi's").
- */
-@Composable
-fun DetailRow(label: String, value: String) {
-    if (value.isNotBlank()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = value, style = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.Medium
-                ), color = MaterialTheme.colorScheme.onSurface
-            )
         }
     }
 }
@@ -790,7 +648,6 @@ fun WardrobeScreenPreview() {
         WardrobeScreenContent(
             wardrobeUiState = uiState,
             onWardrobeItemClick = {},
-            onWardrobeClearSelection = {},
             onWardrobeDeleteItem = {},
             onWardrobeRefresh = {},
             onClearError = {},
