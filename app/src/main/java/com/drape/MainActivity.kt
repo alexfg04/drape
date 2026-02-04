@@ -1,9 +1,11 @@
 package com.drape
 
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -11,6 +13,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
 import com.drape.navigation.DrapeNavGraph
 import com.drape.ui.components.CurvedBottomNavigation
 
@@ -24,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.drape.navigation.Camerino
 import com.drape.navigation.UploadClothes
 import com.drape.ui.theme.DrapeTheme
+import com.drape.receivers.NotificationReceiver
 import android.app.Activity
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -36,8 +41,32 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            NotificationReceiver.scheduleDailyNotification(this)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    android.Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                NotificationReceiver.scheduleDailyNotification(this)
+            } else {
+                requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            NotificationReceiver.scheduleDailyNotification(this)
+        }
         
         // Let the app draw behind system bars
         
