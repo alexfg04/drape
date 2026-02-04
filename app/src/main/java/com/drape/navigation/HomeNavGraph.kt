@@ -1,10 +1,12 @@
 package com.drape.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.HomeScreen
 import com.drape.ui.outfit_creator.OutfitCreatorScreen
@@ -12,6 +14,9 @@ import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
 import com.drape.ui.my_outfit.SavedOutfitsScreen
 import com.drape.ui.profile.season.ProfileSeasonOutfitsScreen
+import com.drape.ui.planner.PlannerScreen
+import com.drape.ui.planner.SelectOutfitScreen
+import com.drape.ui.planner.SelectOutfitViewModel
 
 /**
  * Home navigation graph.
@@ -36,7 +41,7 @@ fun NavGraphBuilder.homeNavGraph(
             val camerinoRoute = backStackEntry.toRoute<Camerino>()
             OutfitCreatorScreen(
                 outfitId = camerinoRoute.outfitId,
-                onBackClick = { 
+                onBackClick = {
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
                             popUpTo(HomeGraph) { inclusive = false }
@@ -61,7 +66,7 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<UploadClothes> {
             UploadItemScreen(
-                onBackClick = { 
+                onBackClick = {
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
                             popUpTo(HomeGraph) { inclusive = false }
@@ -136,6 +141,23 @@ fun NavGraphBuilder.homeNavGraph(
                 onNavigateToOutfit = { outfitId ->
                     navController.navigate(EditOutfit(outfitId))
                 }
+            )
+        }
+
+        composable<Planner> {
+            PlannerScreen(
+                onNavigateToSelectOutfit = { day, month, year ->
+                    navController.navigate(SelectOutfit(day, month, year))
+                }
+            )
+        }
+
+        composable<SelectOutfit> { backStackEntry ->
+            val route = backStackEntry.toRoute<SelectOutfit>()
+            val viewModel: SelectOutfitViewModel = hiltViewModel()
+            SelectOutfitScreen(
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
