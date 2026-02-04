@@ -50,8 +50,6 @@ class NotificationReceiver : BroadcastReceiver() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                // Fallback: show notification if an error occurs
-                showNotification(context)
             } finally {
                 pendingResult.finish()
             }
@@ -91,7 +89,6 @@ class NotificationReceiver : BroadcastReceiver() {
             )
 
 
-
             val title = "Hai scelto il tuo outfit per oggi? 👗"
             val message = "Il tuo planner è ancora vuoto! Aggiungi un look e inizia la giornata con stile ✨"
 
@@ -105,7 +102,7 @@ class NotificationReceiver : BroadcastReceiver() {
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle()) // Wrap with system header
                 .setCustomContentView(remoteViews)
-                .setPriority(NotificationCompat.PRIORITY_HIGH) 
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setContentIntent(pendingIntent)
@@ -115,8 +112,6 @@ class NotificationReceiver : BroadcastReceiver() {
             // Check permission before notifying (although usually not needed if granted, good practice to catch errors)
             try {
                 notificationManager.notify(NOTIFICATION_ID, notification)
-                // Optional: Show toast for testing confirmation
-                // Toast.makeText(context, "Notifica inviata!", Toast.LENGTH_SHORT).show()
             } catch (_: SecurityException) {
                 Toast.makeText(context, "Permesso notifiche mancante!", Toast.LENGTH_LONG).show()
             }
@@ -126,7 +121,7 @@ class NotificationReceiver : BroadcastReceiver() {
         fun scheduleDailyNotification(context: Context) {
             val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             val intent = Intent(context, NotificationReceiver::class.java)
-            
+
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 REQUEST_CODE,
@@ -134,15 +129,14 @@ class NotificationReceiver : BroadcastReceiver() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            // Set the alarm to start at approximately 8:00 PM (20:00) or current time + small delay if testing
-            // For production: Set to next occurrence of a specific time, e.g., 20:00
+            // Set the alarm to start at approximately 11:00 AM
             val calendar = Calendar.getInstance().apply {
                 timeInMillis = System.currentTimeMillis()
                 set(Calendar.HOUR_OF_DAY, 11)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
-                
-                // If 20:00 has already passed today, schedule for tomorrow
+
+                // If 11:00 has already passed today, schedule for tomorrow
                 if (timeInMillis <= System.currentTimeMillis()) {
                     add(Calendar.DAY_OF_YEAR, 1)
                 }
