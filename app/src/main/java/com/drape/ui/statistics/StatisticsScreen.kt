@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ir.ehsannarmani.compose_charts.ColumnChart
 import ir.ehsannarmani.compose_charts.models.BarProperties
 import ir.ehsannarmani.compose_charts.models.Bars
+import java.util.Locale
 
 /**
  * Detailed Statistics Screen displaying comprehensive wardrobe analytics.
@@ -161,7 +162,7 @@ private fun OutfitStatsSection(stats: OutfitStats) {
 
             // Usage Bar
             Text(
-                text = "Percentuale utilizzo: ${String.format("%.1f", stats.usagePercentage)}%",
+                text = "Percentuale utilizzo: ${String.format(Locale.getDefault(), "%.1f", stats.usagePercentage)}%",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -217,7 +218,7 @@ private fun ClothingStatsSection(stats: ClothingStats) {
 
             // Usage Bar
             Text(
-                text = "Percentuale utilizzo: ${String.format("%.1f", stats.usagePercentage)}%",
+                text = "Percentuale utilizzo: ${String.format(Locale.getDefault(), "%.1f", stats.usagePercentage)}%",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -251,7 +252,7 @@ private fun MonthlyUsageChart(monthlyStats: List<MonthlyUsageStats>) {
     
     val barData = remember(monthlyStats, primaryColor, secondaryColor, tertiaryColor) {
         monthlyStats.mapIndexed { index, stat ->
-            val monthLabel = stat.month.substring(5) // Get "MM" from "yyyy-MM"
+            val monthLabel = extractMonthLabel(stat.month) // Safely extract month from "yyyy-MM"
             val color = when (index % 3) {
                 0 -> primaryColor
                 1 -> secondaryColor
@@ -505,5 +506,19 @@ private fun StatBox(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+/**
+ * Safely extracts the month part from a date string in "yyyy-MM" or "yyyy-MM-dd" format.
+ *
+ * @param dateString The date string to parse (expected format: "yyyy-MM" or "yyyy-MM-dd")
+ * @return The month portion (e.g., "MM" from "yyyy-MM"), or the original string if parsing fails
+ */
+private fun extractMonthLabel(dateString: String): String {
+    return when {
+        dateString.length >= 7 -> dateString.substring(5, 7)
+        dateString.contains("-") -> dateString.split("-").getOrNull(1) ?: dateString
+        else -> dateString
     }
 }

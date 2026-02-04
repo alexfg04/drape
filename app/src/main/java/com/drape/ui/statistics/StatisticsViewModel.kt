@@ -173,17 +173,22 @@ class StatisticsViewModel @Inject constructor(
         plannedDays: List<PlannedDay>
     ): OutfitStats {
         val totalOutfits = outfits.size
-        
-        // Get all outfit IDs that have been used in planner
-        val usedOutfitIds = plannedDays
+
+        // Get valid outfit IDs from current outfits list
+        val validOutfitIds = outfits.map { it.id }.toSet()
+
+        // Get all outfit IDs that have been used in planner, intersected with valid IDs
+        val plannedOutfitIds = plannedDays
             .flatMap { it.items }
             .map { it.outfitId }
             .toSet()
-        
-        val usedOutfits = usedOutfitIds.size
-        val unusedOutfits = totalOutfits - usedOutfits
+
+        // Only count outfits that both appear in planner AND still exist in wardrobe
+        val usedOutfits = plannedOutfitIds.intersect(validOutfitIds).size
+        val unusedOutfits = (totalOutfits - usedOutfits).coerceAtLeast(0)
         val usagePercentage = if (totalOutfits > 0) {
-            (usedOutfits.toFloat() / totalOutfits) * 100
+            ((usedOutfits.toFloat().coerceIn(0f, totalOutfits.toFloat()) / totalOutfits) * 100)
+                .coerceIn(0f, 100f)
         } else 0f
 
         return OutfitStats(
@@ -211,29 +216,35 @@ class StatisticsViewModel @Inject constructor(
         plannedDays: List<PlannedDay>
     ): ClothingStats {
         val totalClothes = clothes.size
-        
+
+        // Get valid clothing IDs from current clothes list
+        val existingClothingIds = clothes.map { it.id }.toSet()
+
         // Get outfit IDs that have been used
         val usedOutfitIds = plannedDays
             .flatMap { it.items }
             .map { it.outfitId }
             .toSet()
-        
-        // Get clothing IDs used in planned outfits
-        val usedClothingIds = outfits
+
+        // Get clothing IDs used in planned outfits, intersected with existing IDs
+        val plannedClothingIds = outfits
             .filter { it.id in usedOutfitIds }
             .flatMap { it.items }
             .map { it.itemId }
             .toSet()
-        
+
+        // Only count clothing items that both appear in planned outfits AND still exist in wardrobe
+        val usedClothingIds = plannedClothingIds.intersect(existingClothingIds)
         val usedClothes = usedClothingIds.size
-        val unusedClothes = totalClothes - usedClothes
+        val unusedClothes = (totalClothes - usedClothes).coerceAtLeast(0)
         val usagePercentage = if (totalClothes > 0) {
-            (usedClothes.toFloat() / totalClothes) * 100
+            ((usedClothes.toFloat().coerceIn(0f, totalClothes.toFloat()) / totalClothes) * 100)
+                .coerceIn(0f, 100f)
         } else 0f
 
         // Group by category
         val byCategory = clothes.groupingBy { it.category }.eachCount()
-        
+
         // Group by color
         val byColor = clothes.groupingBy { it.color }.eachCount()
 

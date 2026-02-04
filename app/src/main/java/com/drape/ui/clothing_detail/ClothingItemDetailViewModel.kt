@@ -114,12 +114,15 @@ class ClothingItemDetailViewModel @Inject constructor(
      */
     fun deleteItem(onSuccess: () -> Unit) {
         val itemId = _uiState.value.item?.id ?: return
-        
+
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
             try {
                 val success = clothesRepository.deleteClothingItem(itemId)
                 if (success) {
+                    // Reset loading state before calling onSuccess to ensure UI state is clean
+                    // even if navigation or downstream logic delays
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = null)
                     onSuccess()
                 } else {
                     _uiState.value = _uiState.value.copy(
