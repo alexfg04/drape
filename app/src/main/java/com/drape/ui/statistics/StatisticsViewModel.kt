@@ -13,12 +13,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 /**
- * Data class representing outfit statistics
+ * Data class representing outfit usage statistics.
+ *
+ * @property totalOutfits Total number of outfits in the wardrobe
+ * @property usedOutfits Number of outfits that have been used in the planner
+ * @property unusedOutfits Number of outfits never used in the planner
+ * @property usagePercentage Percentage of outfits used (0-100)
  */
 data class OutfitStats(
     val totalOutfits: Int,
@@ -27,12 +31,20 @@ data class OutfitStats(
     val usagePercentage: Float
 ) {
     companion object {
+        /** Empty state with zero values */
         val EMPTY = OutfitStats(0, 0, 0, 0f)
     }
 }
 
 /**
- * Data class representing clothing statistics
+ * Data class representing clothing items usage statistics.
+ *
+ * @property totalClothes Total number of clothing items in the wardrobe
+ * @property usedClothes Number of clothing items used in planned outfits
+ * @property unusedClothes Number of clothing items never used
+ * @property usagePercentage Percentage of clothes used (0-100)
+ * @property byCategory Distribution of clothing items by category (e.g., "TOP" -> 5)
+ * @property byColor Distribution of clothing items by color (e.g., "Red" -> 3)
  */
 data class ClothingStats(
     val totalClothes: Int,
@@ -43,12 +55,17 @@ data class ClothingStats(
     val byColor: Map<String, Int>
 ) {
     companion object {
+        /** Empty state with zero values and empty distributions */
         val EMPTY = ClothingStats(0, 0, 0, 0f, emptyMap(), emptyMap())
     }
 }
 
 /**
- * Data class representing monthly usage statistics for charts
+ * Data class representing monthly usage statistics for chart visualization.
+ *
+ * @property month Month identifier in "yyyy-MM" format
+ * @property outfitCount Number of outfits scheduled in this month
+ * @property clothesCount Number of clothing items used in this month (currently simplified)
  */
 data class MonthlyUsageStats(
     val month: String,
@@ -57,7 +74,12 @@ data class MonthlyUsageStats(
 )
 
 /**
- * Data class representing top used outfits
+ * Data class representing the most frequently used outfits.
+ *
+ * @property outfitId Unique identifier of the outfit
+ * @property outfitName Display name of the outfit
+ * @property usageCount Number of times this outfit has been scheduled
+ * @property thumbnailUrl URL of the outfit thumbnail image (nullable)
  */
 data class TopUsedOutfit(
     val outfitId: String,
@@ -67,7 +89,14 @@ data class TopUsedOutfit(
 )
 
 /**
- * Combined statistics state
+ * Combined UI state for the statistics screen.
+ * Contains all statistical data and loading state.
+ *
+ * @property outfitStats Statistics about outfits usage
+ * @property clothingStats Statistics about clothing items usage
+ * @property monthlyStats Monthly usage data for charts
+ * @property topUsedOutfits List of most frequently used outfits
+ * @property isLoading Whether the statistics are currently being calculated
  */
 data class StatisticsUiState(
     val outfitStats: OutfitStats = OutfitStats.EMPTY,
@@ -77,6 +106,21 @@ data class StatisticsUiState(
     val isLoading: Boolean = true
 )
 
+/**
+ * ViewModel responsible for calculating and providing wardrobe statistics.
+ * 
+ * This ViewModel aggregates data from outfits, clothing items, and planned days
+ * to calculate various usage statistics including:
+ * - Outfit usage percentage (used vs total)
+ * - Clothing items usage percentage
+ * - Distribution by category and color
+ * - Monthly usage trends
+ * - Top 5 most used outfits
+ *
+ * @param outfitRepository Repository for accessing outfit data
+ * @param clothesRepository Repository for accessing clothing items data
+ * @param plannedDaysRepository Repository for accessing planner data
+ */
 @HiltViewModel
 class StatisticsViewModel @Inject constructor(
     private val outfitRepository: OutfitRepository,
@@ -88,6 +132,10 @@ class StatisticsViewModel @Inject constructor(
     private val clothesFlow: Flow<List<ClothingItem>> = clothesRepository.getUserClothingItems()
     private val plannedDaysFlow: Flow<List<PlannedDay>> = plannedDaysRepository.getAllPlannedDays()
 
+    /**
+     * Combined UI state flow that automatically updates when underlying data changes.
+     * Uses [SharingStarted.WhileSubscribed] to keep the flow active while there are subscribers.
+     */
     val uiState: StateFlow<StatisticsUiState> = combine(
         outfitsFlow,
         clothesFlow,
@@ -111,6 +159,15 @@ class StatisticsViewModel @Inject constructor(
         initialValue = StatisticsUiState(isLoading = true)
     )
 
+    /**
+     * Calculates outfit usage statistics.
+     *
+     * An outfit is considered "used" if it appears in any planned day.
+     *
+     * @param outfits List of all outfits in the wardrobe
+     * @param plannedDays List of all planned days with scheduled outfits
+     * @return [OutfitStats] containing calculated statistics
+     */
     private fun calculateOutfitStats(
         outfits: List<Outfit>,
         plannedDays: List<PlannedDay>
@@ -137,6 +194,17 @@ class StatisticsViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Calculates clothing items usage statistics.
+     *
+     * A clothing item is considered "used" if it belongs to an outfit
+     * that has been scheduled in the planner.
+     *
+     * @param clothes List of all clothing items in the wardrobe
+     * @param outfits List of all outfits
+     * @param plannedDays List of all planned days
+     * @return [ClothingStats] containing calculated statistics and distributions
+     */
     private fun calculateClothingStats(
         clothes: List<ClothingItem>,
         outfits: List<Outfit>,
@@ -179,6 +247,14 @@ class StatisticsViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Calculates monthly usage statistics for chart visualization.
+     *
+     * Groups planned days by month and counts outfits scheduled in each month.
+     *
+     * @param plannedDays List of all planned days
+     * @return List of [MonthlyUsageStats] sorted chronologically
+     */
     private fun calculateMonthlyStats(
         plannedDays: List<PlannedDay>
     ): List<MonthlyUsageStats> {
@@ -201,6 +277,16 @@ class StatisticsViewModel @Inject constructor(
         return monthlyData
     }
 
+    /**
+     * Calculates the top 5 most frequently used outfits.
+     *
+     * Counts how many times each outfit appears in planned days
+     * and returns the top 5 sorted by usage count.
+     *
+     * @param outfits List of all outfits
+     * @param plannedDays List of all planned days
+     * @return List of [TopUsedOutfit] sorted by usage count (descending), limited to 5 items
+     */
     private fun calculateTopUsedOutfits(
         outfits: List<Outfit>,
         plannedDays: List<PlannedDay>

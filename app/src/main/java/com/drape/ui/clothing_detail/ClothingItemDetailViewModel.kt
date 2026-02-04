@@ -14,6 +14,13 @@ import javax.inject.Inject
 
 /**
  * UI state for the clothing item detail screen.
+ * 
+ * Contains all the data needed to display a clothing item's details
+ * including the item itself, loading state, and any error messages.
+ *
+ * @property item The clothing item to display, null if not loaded or not found
+ * @property isLoading Whether the item data is currently being loaded
+ * @property errorMessage Error message to display if loading fails, null if no error
  */
 data class ClothingItemDetailUiState(
     val item: ClothingItem? = null,
@@ -21,6 +28,21 @@ data class ClothingItemDetailUiState(
     val errorMessage: String? = null
 )
 
+/**
+ * ViewModel for the clothing item detail screen.
+ * 
+ * Manages the loading and deletion of a specific clothing item.
+ * The item ID is retrieved from navigation arguments via [SavedStateHandle].
+ * 
+ * Features:
+ * - Loads clothing item details from [ClothesRepository]
+ * - Verifies user ownership of the item
+ * - Handles item deletion with error handling
+ * - Provides loading and error states for UI feedback
+ *
+ * @param clothesRepository Repository for accessing and modifying clothing item data
+ * @param savedStateHandle Handle for accessing navigation arguments, specifically "itemId"
+ */
 @HiltViewModel
 class ClothingItemDetailViewModel @Inject constructor(
     private val clothesRepository: ClothesRepository,
@@ -28,6 +50,11 @@ class ClothingItemDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClothingItemDetailUiState())
+    
+    /**
+     * Public read-only state flow for observing UI state changes.
+     * UI components should collect this flow to react to state updates.
+     */
     val uiState: StateFlow<ClothingItemDetailUiState> = _uiState.asStateFlow()
 
     init {
@@ -43,6 +70,14 @@ class ClothingItemDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Loads the clothing item details from the repository.
+     * 
+     * Fetches the item by ID and verifies that it belongs to the current user.
+     * Updates the UI state accordingly with the loaded item or an error message.
+     *
+     * @param itemId The unique identifier of the clothing item to load
+     */
     private fun loadClothingItem(itemId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
@@ -68,6 +103,15 @@ class ClothingItemDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Deletes the currently loaded clothing item.
+     * 
+     * Initiates the deletion process and invokes the success callback
+     * if deletion is successful. Updates the UI state with any errors
+     * that occur during the process.
+     *
+     * @param onSuccess Callback invoked when deletion completes successfully
+     */
     fun deleteItem(onSuccess: () -> Unit) {
         val itemId = _uiState.value.item?.id ?: return
         
@@ -92,6 +136,12 @@ class ClothingItemDetailViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Clears any error message currently displayed.
+     * 
+     * Call this after displaying an error to the user (e.g., after showing a Snackbar)
+     * to reset the error state.
+     */
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }

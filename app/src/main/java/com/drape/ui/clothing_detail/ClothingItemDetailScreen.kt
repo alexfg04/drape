@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,8 +34,22 @@ import com.drape.ui.components.DrapeSnackbar
 import com.drape.ui.theme.DrapeTheme
 
 /**
- * Detail screen for a clothing item.
- * Displays full image and all details (name, brand, category, color, season).
+ * Detail screen for displaying comprehensive information about a clothing item.
+ * 
+ * This screen shows:
+ * - Large image of the clothing item
+ * - Item name as the screen title
+ * - Detailed information (brand, category, color, season)
+ * - Delete button in the top app bar
+ * 
+ * The screen handles loading states, errors, and provides feedback via Snackbars.
+ * Users can delete the item from this screen, which will navigate back on success.
+ *
+ * @param onNavigateBack Callback invoked when the user presses the back button
+ *                       or when the item is deleted successfully
+ * @param onItemDeleted Callback invoked specifically when an item is deleted,
+ *                      typically used to trigger navigation back
+ * @param viewModel The [ClothingItemDetailViewModel] instance for managing screen state
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +62,7 @@ fun ClothingItemDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
-    // Handle errors
+    // Handle errors by showing them in a Snackbar
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { message ->
             snackbarHostState.showSnackbar(
@@ -79,6 +94,7 @@ fun ClothingItemDetailScreen(
                     }
                 },
                 actions = {
+                    // Show delete button only when an item is loaded
                     if (uiState.item != null) {
                         IconButton(
                             onClick = { viewModel.deleteItem(onItemDeleted) },
@@ -109,15 +125,18 @@ fun ClothingItemDetailScreen(
                 .padding(paddingValues)
         ) {
             when {
+                // Show loading indicator while fetching data
                 uiState.isLoading -> {
                     LoadingState()
                 }
+                // Show error state if item not found
                 uiState.item == null -> {
                     ErrorState(
                         message = uiState.errorMessage ?: "Capo non trovato",
                         onRetry = onNavigateBack
                     )
                 }
+                // Show item details
                 else -> {
                     val item = uiState.item!!
                     ClothingItemDetailContent(
@@ -130,6 +149,15 @@ fun ClothingItemDetailScreen(
     }
 }
 
+/**
+ * Content component displaying the clothing item details.
+ * 
+ * Shows a large image of the item, the item name, and a card containing
+ * all the item's details (brand, category, color, season).
+ *
+ * @param item The clothing item to display
+ * @param modifier Optional modifier for customization
+ */
 @Composable
 private fun ClothingItemDetailContent(
     item: ClothingItem,
@@ -141,7 +169,7 @@ private fun ClothingItemDetailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Large image
+        // Large image of the clothing item
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -166,6 +194,7 @@ private fun ClothingItemDetailContent(
                         .padding(16.dp)
                 )
             } else {
+                // Placeholder when no image is available
                 Text(
                     text = "👔",
                     fontSize = 120.sp
@@ -215,6 +244,14 @@ private fun ClothingItemDetailContent(
     }
 }
 
+/**
+ * Component for displaying a single detail item.
+ * 
+ * Shows a label and value pair, only rendering if the value is not blank.
+ *
+ * @param label The label describing the detail (e.g., "Brand", "Color")
+ * @param value The actual value of the detail
+ */
 @Composable
 private fun DetailItem(
     label: String,
@@ -238,6 +275,11 @@ private fun DetailItem(
     }
 }
 
+/**
+ * Loading state component.
+ * 
+ * Displays a centered circular progress indicator.
+ */
 @Composable
 private fun LoadingState() {
     Box(
@@ -248,6 +290,14 @@ private fun LoadingState() {
     }
 }
 
+/**
+ * Error state component.
+ * 
+ * Displays an error message with a retry/back button.
+ *
+ * @param message The error message to display
+ * @param onRetry Callback invoked when the retry button is pressed
+ */
 @Composable
 private fun ErrorState(
     message: String,
@@ -270,7 +320,7 @@ private fun ErrorState(
                 text = message,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
             Button(onClick = onRetry) {
@@ -280,6 +330,11 @@ private fun ErrorState(
     }
 }
 
+/**
+ * Preview composable for the clothing item detail content.
+ * 
+ * Shows the detail screen with sample data in the IDE preview.
+ */
 @Preview(showBackground = true)
 @Composable
 private fun ClothingItemDetailScreenPreview() {

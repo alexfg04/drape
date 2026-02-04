@@ -29,7 +29,20 @@ import ir.ehsannarmani.compose_charts.models.BarProperties
 import ir.ehsannarmani.compose_charts.models.Bars
 
 /**
- * Detailed Statistics Screen with bar charts and comprehensive stats using ComposeCharts.
+ * Detailed Statistics Screen displaying comprehensive wardrobe analytics.
+ * 
+ * This screen provides in-depth statistics about the user's wardrobe including:
+ * - Outfit usage statistics (total, used, unused, percentage)
+ * - Clothing items statistics (total, used, unused, percentage)
+ * - Monthly usage bar chart
+ * - Category distribution chart
+ * - Top 5 most used outfits
+ * 
+ * The screen uses ComposeCharts library for data visualization and features
+ * a clean, card-based layout with Material 3 design.
+ *
+ * @param onNavigateBack Callback invoked when the user presses the back button
+ * @param viewModel The [StatisticsViewModel] instance for accessing statistics data
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,6 +123,14 @@ fun StatisticsScreen(
     }
 }
 
+/**
+ * Card component displaying outfit usage statistics.
+ * 
+ * Shows the total number of outfits, how many have been used in the planner,
+ * how many are unused, and a progress bar indicating the usage percentage.
+ *
+ * @param stats The [OutfitStats] data to display
+ */
 @Composable
 private fun OutfitStatsSection(stats: OutfitStats) {
     StatsCard(title = "Outfit") {
@@ -158,6 +179,14 @@ private fun OutfitStatsSection(stats: OutfitStats) {
     }
 }
 
+/**
+ * Card component displaying clothing items statistics.
+ * 
+ * Shows the total number of clothing items, how many have been used in outfits,
+ * how many are unused, and a progress bar indicating the usage percentage.
+ *
+ * @param stats The [ClothingStats] data to display
+ */
 @Composable
 private fun ClothingStatsSection(stats: ClothingStats) {
     StatsCard(title = "Capi di Abbigliamento") {
@@ -206,6 +235,14 @@ private fun ClothingStatsSection(stats: ClothingStats) {
     }
 }
 
+/**
+ * Card component displaying a bar chart of monthly outfit usage.
+ * 
+ * Uses ComposeCharts library to render an animated column chart showing
+ * how many outfits were scheduled in each month.
+ *
+ * @param monthlyStats List of monthly usage statistics to display
+ */
 @Composable
 private fun MonthlyUsageChart(monthlyStats: List<MonthlyUsageStats>) {
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -260,6 +297,14 @@ private fun MonthlyUsageChart(monthlyStats: List<MonthlyUsageStats>) {
     }
 }
 
+/**
+ * Card component displaying clothing distribution by category.
+ * 
+ * Shows horizontal progress bars for each category indicating the relative
+ * quantity of items in that category compared to the largest category.
+ *
+ * @param categoryData Map of category names to item counts
+ */
 @Composable
 private fun CategoryDistributionChart(categoryData: Map<String, Int>) {
     val colors = listOf(
@@ -314,6 +359,14 @@ private fun CategoryDistributionChart(categoryData: Map<String, Int>) {
     }
 }
 
+/**
+ * Card component displaying the top 5 most frequently used outfits.
+ * 
+ * Shows a ranked list with the outfit name and usage count,
+ * with visual ranking indicators (colored badges for top 3).
+ *
+ * @param topOutfits List of top used outfits sorted by usage count
+ */
 @Composable
 private fun TopUsedOutfitsSection(topOutfits: List<TopUsedOutfit>) {
     StatsCard(title = "Outfit Più Utilizzati") {
@@ -330,7 +383,7 @@ private fun TopUsedOutfitsSection(topOutfits: List<TopUsedOutfit>) {
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Rank
+                        // Rank badge with different colors for top 3
                         Box(
                             modifier = Modifier
                                 .size(28.dp)
@@ -380,6 +433,15 @@ private fun TopUsedOutfitsSection(topOutfits: List<TopUsedOutfit>) {
     }
 }
 
+/**
+ * A reusable card component for grouping related statistics.
+ * 
+ * Provides consistent styling with rounded corners, elevation, and padding
+ * for all statistics sections in the screen.
+ *
+ * @param title The section title displayed at the top of the card
+ * @param content The composable content to display inside the card
+ */
 @Composable
 private fun StatsCard(
     title: String,
@@ -409,6 +471,16 @@ private fun StatsCard(
     }
 }
 
+/**
+ * A reusable component for displaying a single statistic value with its label.
+ * 
+ * Displays the value in large bold text with the label below it.
+ *
+ * @param value The numeric value to display
+ * @param label The descriptive label
+ * @param color The color for the value text
+ * @param modifier Optional modifier for customization
+ */
 @Composable
 private fun StatBox(
     value: String,

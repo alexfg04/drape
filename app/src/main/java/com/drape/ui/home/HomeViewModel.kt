@@ -11,12 +11,18 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 /**
  * UI state for the Home screen.
+ * 
+ * Contains the data needed to display the Home screen including recent outfits,
+ * recent clothing items, and loading state.
+ *
+ * @property outfits List of recent outfits to display (last 4, newest first)
+ * @property recentClothes List of recent clothing items to display (last 5, newest first)
+ * @property isLoading Whether the data is currently being loaded
  */
 data class HomeUiState(
     val outfits: List<Outfit> = emptyList(),
@@ -24,12 +30,32 @@ data class HomeUiState(
     val isLoading: Boolean = true
 )
 
+/**
+ * ViewModel for the Home screen.
+ * 
+ * Manages the data displayed on the Home screen including:
+ * - Recent outfits (last 4 created, sorted by creation date)
+ * - Recent clothing items (last 5 added, sorted by creation date)
+ * 
+ * The ViewModel combines flows from [OutfitRepository] and [ClothesRepository]
+ * to provide real-time updates when the underlying data changes.
+ *
+ * @param outfitRepository Repository for accessing outfit data
+ * @param clothesRepository Repository for accessing clothing items data
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val outfitRepository: OutfitRepository,
     private val clothesRepository: ClothesRepository
 ) : ViewModel() {
 
+    /**
+     * Combined UI state flow that automatically updates when data changes.
+     * 
+     * Collects the latest outfits and clothing items, sorts them by creation date
+     * (newest first), and limits the results for display on the Home screen.
+     * Uses [SharingStarted.WhileSubscribed] to keep the flow active while there are subscribers.
+     */
     val uiState: StateFlow<HomeUiState> = combine(
         outfitRepository.getUserOutfits(),
         clothesRepository.getUserClothingItems()
