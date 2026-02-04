@@ -50,6 +50,14 @@ fun PlannerScreen(
         viewModel.getPlannedItemsForDay(selectedDay)
     }
 
+    // Close bottom sheet when no more outfits for selected day
+    LaunchedEffect(selectedDayOutfits) {
+        if (showBottomSheet && selectedDayOutfits.isEmpty()) {
+            sheetState.hide()
+            showBottomSheet = false
+        }
+    }
+
     if (showBottomSheet) {
         PlannedOutfitsBottomSheet(
             sheetState = sheetState,
@@ -143,13 +151,30 @@ fun PlannerScreen(
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             item {
+                // Create a Set of occupied days for efficient lookup
+                val occupiedDays = remember(uiState.plannedDays) {
+                    uiState.plannedDays
+                        .filter { it.items.isNotEmpty() }
+                        .mapNotNull { plannedDay ->
+                            // Extract day from date string "yyyy-MM-dd"
+                            val parts = plannedDay.date.split("-")
+                            if (parts.size == 3) {
+                                val year = parts[0].toIntOrNull()
+                                val month = parts[1].toIntOrNull()?.minus(1) // Convert to 0-indexed
+                                val day = parts[2].toIntOrNull()
+                                if (year == uiState.currentYear && month == uiState.currentMonth) day else null
+                            } else null
+                        }
+                        .toSet()
+                }
+                
                 if (selectedView == PlannerViewMode.MONTHLY) {
                     CalendarGrid(
                         days = uiState.calendarDays,
-                        isDayOccupied = { day -> viewModel.isDayOccupied(day) },
+                        isDayOccupied = { day -> day in occupiedDays },
                         isDayPast = { day -> viewModel.isDayPast(day) },
                         onDayClick = { day ->
-                            if (viewModel.isDayOccupied(day)) {
+                            if (day in occupiedDays) {
                                 selectedDay = day
                                 showBottomSheet = true
                             } else {
@@ -160,10 +185,10 @@ fun PlannerScreen(
                 } else {
                     WeeklyView(
                         daysList = uiState.calendarDays,
-                        isDayOccupied = { day -> viewModel.isDayOccupied(day) },
+                        isDayOccupied = { day -> day in occupiedDays },
                         isDayPast = { day -> viewModel.isDayPast(day) },
                         onDayClick = { day ->
-                            if (viewModel.isDayOccupied(day)) {
+                            if (day in occupiedDays) {
                                 selectedDay = day
                                 showBottomSheet = true
                             } else {
