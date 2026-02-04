@@ -123,6 +123,36 @@ class PlannerViewModel @Inject constructor(
             else -> day < todayDay
         }
     }
+
+    /**
+     * Returns upcoming planned events (today and future) with outfit details.
+     * Limited to 4 events for UI display.
+     */
+    fun getUpcomingEvents(): List<UpcomingEventDisplay> {
+        val todayString = DateUtils.today()
+        val outfitsMap = _uiState.value.outfits.associateBy { it.id }
+        
+        return _uiState.value.plannedDays
+            .filter { it.date >= todayString && it.items.isNotEmpty() }
+            .sortedBy { it.date }
+            .take(4)
+            .flatMap { plannedDay ->
+                plannedDay.items.mapNotNull { item ->
+                    val outfit = outfitsMap[item.outfitId]
+                    if (outfit != null) {
+                        UpcomingEventDisplay(
+                            outfitId = item.outfitId,
+                            outfitName = outfit.name,
+                            label = item.label,
+                            date = plannedDay.date,
+                            imageUrl = outfit.thumbnailUrl
+                        )
+                    } else null
+                }
+            }
+            .take(4)
+    }
+
     fun removeOutfitFromDay(day: Int, outfitId: String) {
         viewModelScope.launch {
             try {
@@ -155,6 +185,14 @@ data class PlannedOutfitDisplay(
     val outfitId: String,
     val outfitTitle: String,
     val label: String,
+    val imageUrl: String? = null
+)
+
+data class UpcomingEventDisplay(
+    val outfitId: String,
+    val outfitName: String,
+    val label: String,
+    val date: String,
     val imageUrl: String? = null
 )
 

@@ -176,6 +176,8 @@
     <string name="calendar_add_description">Crea Nuovo Evento</string>
     <string name="calendar_menu">Menu</string>
     <string name="calendar_add">Aggiungi</string>
+    <string name="calendar_no_upcoming_events">Nessun evento in programma</string>
+    <string name="calendar_no_upcoming_events_subtitle">Pianifica i tuoi outfit per i prossimi giorni</string>
     <string name="wardrobe_empty_title">il tuo armadio è vuoto</string>
     <string name="wardrobe_empty_subtitle">tocca il pulsante + per aggiungere il tuo primo capo</string>
     

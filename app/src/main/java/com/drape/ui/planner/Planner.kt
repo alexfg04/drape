@@ -217,7 +217,7 @@ fun PlannerScreen(
             }
 
             item {
-                UpcomingHighlightsSection()
+                UpcomingHighlightsSection(viewModel = viewModel)
             }
         }
     }
@@ -555,7 +555,14 @@ fun DayCell(day: Int, isOccupied: Boolean, isPast: Boolean, onClick: () -> Unit)
 }
 
 @Composable
-fun UpcomingHighlightsSection() {
+fun UpcomingHighlightsSection(viewModel: PlannerViewModel) {
+    val uiState by viewModel.uiState.collectAsState()
+    
+    // Get upcoming events reactively
+    val upcomingEvents = remember(uiState.plannedDays, uiState.outfits) {
+        viewModel.getUpcomingEvents()
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = stringResource(R.string.calendar_upcoming_highlights),
@@ -563,30 +570,128 @@ fun UpcomingHighlightsSection() {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        val highlights = listOf(
-            HighlightItem(
-                title = stringResource(R.string.calendar_event_date_night),
-                subtitle = stringResource(R.string.calendar_event_dressy_casual),
-                date = "FEB 23"
-            ),
-            HighlightItem(
-                title = stringResource(R.string.calendar_event_presentation),
-                subtitle = stringResource(R.string.calendar_event_formal_business),
-                date = "FEB 25"
-            )
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            highlights.forEach { item ->
-                HighlightCard(item = item, modifier = Modifier.weight(1f))
+        if (upcomingEvents.isEmpty()) {
+            // Empty state
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.calendar_no_upcoming_events),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.calendar_no_upcoming_events_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(upcomingEvents) { event ->
+                    UpcomingEventCard(event = event)
+                }
             }
         }
     }
 }
 
+@Composable
+fun UpcomingEventCard(event: UpcomingEventDisplay) {
+    // Format date for display (from "yyyy-MM-dd" to readable format)
+    val formattedDate = remember(event.date) {
+        try {
+            val parts = event.date.split("-")
+            if (parts.size == 3) {
+                val monthNames = listOf("GEN", "FEB", "MAR", "APR", "MAG", "GIU", 
+                                        "LUG", "AGO", "SET", "OTT", "NOV", "DIC")
+                val month = parts[1].toIntOrNull()?.minus(1) ?: 0
+                val day = parts[2].toIntOrNull() ?: 1
+                "${monthNames.getOrElse(month) { "" }} $day"
+            } else event.date
+        } catch (e: Exception) {
+            event.date
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .width(180.dp)
+            .height(100.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxSize().padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Outfit Thumbnail
+            Card(
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .width(50.dp)
+                    .fillMaxHeight()
+            ) {
+                if (!event.imageUrl.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = event.imageUrl,
+                        contentDescription = event.outfitName,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        modifier = Modifier.fillMaxSize()
+                    ) {}
+                }
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column {
+                Text(
+                    text = formattedDate,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = event.outfitName,
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
+                )
+                Text(
+                    text = event.label,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+// Keep for Preview compatibility
 data class HighlightItem(val title: String, val subtitle: String, val date: String)
 
 @Composable
