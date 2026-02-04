@@ -4,7 +4,7 @@ import com.drape.data.datasource.PlannedDaysRemoteDataSource
 import com.drape.data.model.PlannedDay
 import com.drape.data.model.PlannedItem
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,44 +39,35 @@ class PlannedDaysRepository @Inject constructor(
     }
 
     /**
-     * Adds an outfit to a specific day. Creates the day if it doesn't exist.
+     * Atomically adds an outfit to a specific day using Firestore transactions.
+     * Creates the day if it doesn't exist.
      *
      * @param date The date in "yyyy-MM-dd" format
      * @param outfitId The ID of the outfit to add
      * @param label Optional label for the outfit (e.g., "Morning", "Evening")
+     * @throws Exception If the user is not authenticated
      */
     suspend fun addOutfitToDay(date: String, outfitId: String, label: String = "Daily") {
         val currentUserId = authRepository.currentUser?.id
             ?: throw Exception("User not authenticated")
 
-        val existingDay = plannedDaysRemoteDataSource.getPlannedDayByDate(currentUserId, date)
-        
         val newItem = PlannedItem(label = label, outfitId = outfitId)
-        val updatedItems = (existingDay?.items ?: emptyList()) + newItem
-
-        savePlannedDay(date, updatedItems)
+        plannedDaysRemoteDataSource.addOutfitToDay(currentUserId, date, newItem)
     }
 
     /**
-     * Removes an outfit from a specific day.
+     * Atomically removes an outfit from a specific day using Firestore transactions.
+     * Deletes the document if the resulting items list is empty.
      *
      * @param date The date in "yyyy-MM-dd" format
      * @param outfitId The ID of the outfit to remove
+     * @throws Exception If the user is not authenticated
      */
     suspend fun removeOutfitFromDay(date: String, outfitId: String) {
         val currentUserId = authRepository.currentUser?.id
             ?: throw Exception("User not authenticated")
 
-        val existingDay = plannedDaysRemoteDataSource.getPlannedDayByDate(currentUserId, date)
-            ?: return
-
-        val updatedItems = existingDay.items.filterNot { it.outfitId == outfitId }
-        
-        if (updatedItems.isEmpty()) {
-            plannedDaysRemoteDataSource.deletePlannedDay(existingDay.id)
-        } else {
-            savePlannedDay(date, updatedItems)
-        }
+        plannedDaysRemoteDataSource.removeOutfitFromDay(currentUserId, date, outfitId)
     }
 
     /**
@@ -107,18 +98,20 @@ class PlannedDaysRepository @Inject constructor(
 
     /**
      * Gets all planned days for the current user.
+     * Emits an empty list if user is not authenticated.
      *
      * @return A Flow emitting a list of PlannedDays
      */
     fun getAllPlannedDays(): Flow<List<PlannedDay>> {
         val userId = authRepository.currentUser?.id
-            ?: return emptyFlow()
+            ?: return flowOf(emptyList())
 
         return plannedDaysRemoteDataSource.getUserPlannedDays(userId)
     }
 
     /**
      * Gets planned days within a date range.
+     * Emits an empty list if user is not authenticated.
      *
      * @param startDate Start date in "yyyy-MM-dd" format (inclusive)
      * @param endDate End date in "yyyy-MM-dd" format (inclusive)
@@ -126,7 +119,7 @@ class PlannedDaysRepository @Inject constructor(
      */
     fun getPlannedDaysInRange(startDate: String, endDate: String): Flow<List<PlannedDay>> {
         val userId = authRepository.currentUser?.id
-            ?: return emptyFlow()
+            ?: return flowOf(emptyList())
 
         return plannedDaysRemoteDataSource.getUserPlannedDaysInRange(userId, startDate, endDate)
     }

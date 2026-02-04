@@ -69,7 +69,7 @@ fun SelectOutfitScreen(
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.planner_back)
                         )
                     }
                 },
@@ -87,7 +87,7 @@ fun SelectOutfitScreen(
                             // Weather Icon placeholder (Sun)
                             Text(text = "☀", fontSize = 16.sp)
                             Text(
-                                text = "72°F",
+                                text = stringResource(R.string.calendar_weather),
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
                             )
                         }
@@ -139,7 +139,7 @@ fun SelectOutfitScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FilterList,
-                        contentDescription = "Filter",
+                        contentDescription = stringResource(R.string.planner_filter),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
@@ -379,7 +379,16 @@ fun BottomSelectionBar(
     onConfirm: () -> Unit,
     isLoading: Boolean = false
 ) {
-    val labels = listOf("Daily", "Morning", "Afternoon", "Evening", "Work", "Sport")
+    // Label keys mapped to their display strings
+    data class LabelOption(val key: String, val displayResId: Int)
+    val labelOptions = listOf(
+        LabelOption("Daily", R.string.planner_time_daily),
+        LabelOption("Morning", R.string.planner_time_morning),
+        LabelOption("Afternoon", R.string.planner_time_afternoon),
+        LabelOption("Evening", R.string.planner_time_evening),
+        LabelOption("Work", R.string.planner_tag_work),
+        LabelOption("Sport", R.string.planner_tag_sport)
+    )
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -424,11 +433,11 @@ fun BottomSelectionBar(
                     .horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                labels.forEach { label ->
+                labelOptions.forEach { option ->
                     FilterChip(
-                        selected = selectedLabel == label,
-                        onClick = { onLabelSelected(label) },
-                        label = { Text(label) },
+                        selected = selectedLabel == option.key,
+                        onClick = { onLabelSelected(option.key) },
+                        label = { Text(stringResource(option.displayResId)) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer

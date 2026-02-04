@@ -8,12 +8,15 @@ import java.util.Locale
 /**
  * Utility object for date formatting and parsing.
  * Uses "yyyy-MM-dd" format for PlannedDay storage.
+ * Uses Locale.ROOT for consistent ASCII output and strict parsing.
  */
 object DateUtils {
     private const val DATE_PATTERN = "yyyy-MM-dd"
     
     private val formatter: SimpleDateFormat
-        get() = SimpleDateFormat(DATE_PATTERN, Locale.getDefault())
+        get() = SimpleDateFormat(DATE_PATTERN, Locale.ROOT).apply {
+            isLenient = false
+        }
 
     /**
      * Formats a Date to "yyyy-MM-dd" string.
@@ -43,6 +46,7 @@ object DateUtils {
 
     /**
      * Parses a "yyyy-MM-dd" string to Date.
+     * Uses strict parsing - rejects invalid dates.
      * Returns null if parsing fails.
      */
     fun parse(dateString: String): Date? {

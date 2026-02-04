@@ -137,34 +137,48 @@
     <string name="wardrobe_delete_success">Rimozione effettuata!</string>
 
     <!-- Planner Screen -->
-    <string name="planner_title">Select Outfit for Day</string>
+    <string name="planner_title">Seleziona Outfit per il Giorno</string>
     <string name="planner_add_outfit">Aggiungi Outfit</string>
     <string name="planner_planned_outfits">OUTFIT PIANIFICATI</string>
-    <string name="planner_filter">Filter</string>
-    <string name="planner_tab_all">All Outfits</string>
-    <string name="planner_tab_creator">Creator Saved</string>
-    <string name="planner_tab_photo">Photo Outfits</string>
-    <string name="planner_selection">SELECTION</string>
+    <string name="planner_filter">Filtra</string>
+    <string name="planner_tab_all">Tutti gli Outfit</string>
+    <string name="planner_tab_creator">Salvati</string>
+    <string name="planner_tab_photo">Foto Outfit</string>
+    <string name="planner_selection">SELEZIONE</string>
     <string name="planner_label">OCCASIONE</string>
-    <string name="planner_confirm">Confirm Selection</string>
-    <string name="planner_create_new">CREATE NEW OUTFIT</string>
-    <string name="planner_casual_friday">Casual Friday Look</string>
-    <string name="planner_fall_cafe">Fall Cafe Date</string>
-    <string name="planner_office_smart">Office Smart</string>
-    <string name="planner_weekend_brunch">Weekend Brunch</string>
-    <string name="planner_summer_breeze">Summer Breeze</string>
+    <string name="planner_confirm">Conferma Selezione</string>
+    <string name="planner_create_new">CREA NUOVO OUTFIT</string>
+    <string name="planner_casual_friday">Look Casual Venerdì</string>
+    <string name="planner_fall_cafe">Appuntamento Autunnale</string>
+    <string name="planner_office_smart">Ufficio Elegante</string>
+    <string name="planner_weekend_brunch">Brunch del Weekend</string>
+    <string name="planner_summer_breeze">Brezza Estiva</string>
+    <string name="planner_back">Indietro</string>
+    <string name="planner_selected">Selezionato</string>
+    <string name="planner_time_daily">Giornaliero</string>
+    <string name="planner_time_morning">Mattina</string>
+    <string name="planner_time_afternoon">Pomeriggio</string>
+    <string name="planner_time_evening">Sera</string>
+    <string name="planner_tag_work">Lavoro</string>
+    <string name="planner_tag_sport">Sport</string>
+    <string name="planner_outfit_for_day">Outfit per il giorno %1$d</string>
 
     <!-- Calendar Screen -->
-    <string name="calendar_month_october">October 2023</string>
-    <string name="calendar_weather">68°F Partly Cloudy</string>
-    <string name="calendar_view_monthly">Monthly</string>
-    <string name="calendar_view_weekly">Weekly</string>
-    <string name="calendar_upcoming_highlights">Upcoming Highlights</string>
-    <string name="calendar_event_date_night">Date Night</string>
-    <string name="calendar_event_dressy_casual">Dressy Casual</string>
-    <string name="calendar_event_presentation">Presentation</string>
-    <string name="calendar_event_formal_business">Formal Business</string>
-    <string name="calendar_add_description">Create New Event</string>
+    <string name="calendar_month_format">%1$s %2$d</string>
+    <string name="calendar_weather">22°C Soleggiato</string>
+    <string name="calendar_view_monthly">Mensile</string>
+    <string name="calendar_view_weekly">Settimanale</string>
+    <string name="calendar_upcoming_highlights">Prossimi Eventi</string>
+    <string name="calendar_event_date_night">Serata Romantica</string>
+    <string name="calendar_event_dressy_casual">Elegante Casual</string>
+    <string name="calendar_event_presentation">Presentazione</string>
+    <string name="calendar_event_formal_business">Business Formale</string>
+    <string name="calendar_add_description">Crea Nuovo Evento</string>
+    <string name="calendar_menu">Menu</string>
+    <string name="calendar_add">Aggiungi</string>
     <string name="wardrobe_empty_title">il tuo armadio è vuoto</string>
-    <string name="wardrobe_empty_subtitle">tocca il pulsante + per aggiunre il tuo primo capo</string>
+    <string name="wardrobe_empty_subtitle">tocca il pulsante + per aggiungere il tuo primo capo</string>
+    
+    <!-- General -->
+    <string name="press_again_to_exit">Premi ancora per uscire</string>
 </resources>

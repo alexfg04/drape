@@ -13,8 +13,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import javax.inject.Inject
 
+/**
+ * ViewModel for the outfit selection screen.
+ * Requires day, month, and year navigation arguments to be present in SavedStateHandle.
+ * 
+ * @throws IllegalArgumentException if required navigation arguments are missing
+ */
 @HiltViewModel
 class SelectOutfitViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
@@ -22,10 +29,16 @@ class SelectOutfitViewModel @Inject constructor(
     private val plannedDaysRepository: PlannedDaysRepository
 ) : ViewModel() {
 
-    // Navigation arguments
-    private val day: Int = savedStateHandle["day"] ?: 1
-    private val month: Int = savedStateHandle["month"] ?: 0
-    private val year: Int = savedStateHandle["year"] ?: 2026
+    // Navigation arguments - fail fast if missing
+    private val day: Int = requireNotNull(savedStateHandle["day"]) {
+        "SelectOutfitViewModel requires 'day' navigation argument"
+    }
+    private val month: Int = requireNotNull(savedStateHandle["month"]) {
+        "SelectOutfitViewModel requires 'month' navigation argument"
+    }
+    private val year: Int = requireNotNull(savedStateHandle["year"]) {
+        "SelectOutfitViewModel requires 'year' navigation argument"
+    }
 
     private val _uiState = MutableStateFlow(SelectOutfitUiState(selectedDay = day))
     val uiState: StateFlow<SelectOutfitUiState> = _uiState.asStateFlow()

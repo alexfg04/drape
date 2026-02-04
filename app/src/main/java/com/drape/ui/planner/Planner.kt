@@ -19,17 +19,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.drape.R
 
 import com.drape.ui.theme.DrapeTheme
 
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
+import java.text.DateFormatSymbols
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,35 +46,48 @@ fun PlannerScreen(
     
     val sheetState = rememberModalBottomSheetState()
     var showBottomSheet by remember { mutableStateOf(false) }
-    var selectedDay by remember { mutableStateOf(0) }
+    var selectedDay by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
 
-    // Get planned outfits for selected day from ViewModel
+    // Get planned outfits for selected day from ViewModel (only when a day is selected)
     val selectedDayOutfits = remember(selectedDay, uiState.plannedDays, uiState.outfits) {
-        viewModel.getPlannedItemsForDay(selectedDay)
+        selectedDay?.let { viewModel.getPlannedItemsForDay(it) } ?: emptyList()
     }
 
     // Close bottom sheet when no more outfits for selected day
     LaunchedEffect(selectedDayOutfits) {
-        if (showBottomSheet && selectedDayOutfits.isEmpty()) {
+        if (showBottomSheet && selectedDay != null && selectedDayOutfits.isEmpty()) {
             sheetState.hide()
             showBottomSheet = false
+            selectedDay = null
         }
     }
 
-    if (showBottomSheet) {
+    // Get month name from current month
+    val monthName = remember(uiState.currentMonth) {
+        DateFormatSymbols(Locale.getDefault()).months.getOrElse(uiState.currentMonth) { "" }
+            .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+    }
+
+    if (showBottomSheet && selectedDay != null) {
         PlannedOutfitsBottomSheet(
             sheetState = sheetState,
-            day = selectedDay,
+            day = selectedDay!!,
             plannedOutfits = selectedDayOutfits,
-            onDismiss = { showBottomSheet = false },
+            onDismiss = { 
+                showBottomSheet = false
+                selectedDay = null
+            },
             onRemoveOutfit = { outfitId -> 
-                viewModel.removeOutfitFromDay(selectedDay, outfitId)
+                selectedDay?.let { viewModel.removeOutfitFromDay(it, outfitId) }
             },
             onAddOutfit = {
                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                     showBottomSheet = false
-                    onNavigateToSelectOutfit(selectedDay, uiState.currentMonth, uiState.currentYear)
+                    selectedDay?.let { day ->
+                        onNavigateToSelectOutfit(day, uiState.currentMonth, uiState.currentYear)
+                    }
+                    selectedDay = null
                 }
             }
         )
@@ -83,7 +100,7 @@ fun PlannerScreen(
                     title = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = "October",
+                                text = stringResource(R.string.calendar_month_format, monthName, uiState.currentYear),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -95,7 +112,7 @@ fun PlannerScreen(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "22°C Sunny",
+                                    text = stringResource(R.string.calendar_weather),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -106,7 +123,7 @@ fun PlannerScreen(
                         IconButton(onClick = { /* Menu */ }) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
-                                contentDescription = "Menu"
+                                contentDescription = stringResource(R.string.calendar_menu)
                             )
                         }
                     },
@@ -124,13 +141,13 @@ fun PlannerScreen(
                         .padding(4.dp)
                 ) {
                     TabButton(
-                        text = "Monthly",
+                        text = stringResource(R.string.calendar_view_monthly),
                         isSelected = selectedView == PlannerViewMode.MONTHLY,
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.setViewMode(PlannerViewMode.MONTHLY) }
                     )
                     TabButton(
-                        text = "Weekly",
+                        text = stringResource(R.string.calendar_view_weekly),
                         isSelected = selectedView == PlannerViewMode.WEEKLY,
                         modifier = Modifier.weight(1f),
                         onClick = { viewModel.setViewMode(PlannerViewMode.WEEKLY) }
@@ -228,7 +245,7 @@ fun PlannedOutfitsBottomSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                text = "Outfit per il giorno $day",
+                text = stringResource(R.string.planner_outfit_for_day, day),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -260,7 +277,7 @@ fun PlannedOutfitsBottomSheet(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Aggiungi Outfit")
+                Text(stringResource(R.string.planner_add_outfit))
             }
         }
     }
@@ -528,7 +545,7 @@ fun DayCell(day: Int, isOccupied: Boolean, isPast: Boolean, onClick: () -> Unit)
                 // Add Icon
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = "Add",
+                    contentDescription = stringResource(R.string.calendar_add),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -541,27 +558,27 @@ fun DayCell(day: Int, isOccupied: Boolean, isPast: Boolean, onClick: () -> Unit)
 fun UpcomingHighlightsSection() {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-            text = "Upcoming Highlights",
+            text = stringResource(R.string.calendar_upcoming_highlights),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
         val highlights = listOf(
             HighlightItem(
-                title = "Date Night",
-                subtitle = "Dressy Casual",
-                date = "OCT 23"
+                title = stringResource(R.string.calendar_event_date_night),
+                subtitle = stringResource(R.string.calendar_event_dressy_casual),
+                date = "FEB 23"
             ),
             HighlightItem(
-                title = "Presentation",
-                subtitle = "Formal Business",
-                date = "OCT 25"
+                title = stringResource(R.string.calendar_event_presentation),
+                subtitle = stringResource(R.string.calendar_event_formal_business),
+                date = "FEB 25"
             )
         )
 
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxWidth() // Should be LazyRow in real app if many items
+            modifier = Modifier.fillMaxWidth()
         ) {
             highlights.forEach { item ->
                 HighlightCard(item = item, modifier = Modifier.weight(1f))

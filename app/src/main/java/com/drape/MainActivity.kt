@@ -76,7 +76,7 @@ fun DrapeApp() {
             if (System.currentTimeMillis() - backPressedTime < 2000) {
                 (context as? Activity)?.finish()
             } else {
-                Toast.makeText(context, "Premi ancora per uscire", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Press back again to exit", Toast.LENGTH_SHORT).show()
                 backPressedTime = System.currentTimeMillis()
             }
         } else {

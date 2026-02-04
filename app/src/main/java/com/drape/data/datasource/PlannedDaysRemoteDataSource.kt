@@ -1,6 +1,8 @@
 package com.drape.data.datasource
 
 import com.drape.data.model.PlannedDay
+import com.drape.data.model.PlannedItem
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
@@ -23,14 +25,88 @@ class PlannedDaysRemoteDataSource @Inject constructor(
     /**
      * Saves a planned day to Firestore.
      * Uses "{userId}_{date}" as document ID for easy querying.
+     * 
+     * @throws IllegalArgumentException if userId or date is blank
      */
     suspend fun savePlannedDay(plannedDay: PlannedDay) {
+        require(plannedDay.userId.isNotBlank()) {
+            "Cannot save PlannedDay to $plannedDaysCollection: userId is blank"
+        }
+        require(plannedDay.date.isNotBlank()) {
+            "Cannot save PlannedDay to $plannedDaysCollection: date is blank"
+        }
+        
         val documentId = plannedDay.id.ifBlank {
             "${plannedDay.userId}_${plannedDay.date}"
         }
         
         val plannedDayWithId = plannedDay.copy(id = documentId)
         plannedDaysCollection.document(documentId).set(plannedDayWithId).await()
+    }
+
+    /**
+     * Atomically adds an outfit to a day using FieldValue.arrayUnion.
+     * Creates the document if it doesn't exist.
+     * 
+     * @throws IllegalArgumentException if userId or date is blank
+     */
+    suspend fun addOutfitToDay(userId: String, date: String, item: PlannedItem) {
+        require(userId.isNotBlank()) {
+            "Cannot add outfit to $plannedDaysCollection: userId is blank"
+        }
+        require(date.isNotBlank()) {
+            "Cannot add outfit to $plannedDaysCollection: date is blank"
+        }
+        
+        val documentId = "${userId}_${date}"
+        val docRef = plannedDaysCollection.document(documentId)
+        
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(docRef)
+            if (snapshot.exists()) {
+                transaction.update(docRef, "items", FieldValue.arrayUnion(item))
+            } else {
+                val newDay = PlannedDay(
+                    id = documentId,
+                    userId = userId,
+                    date = date,
+                    items = listOf(item)
+                )
+                transaction.set(docRef, newDay)
+            }
+        }.await()
+    }
+
+    /**
+     * Atomically removes an outfit from a day.
+     * Deletes the document if the resulting items list is empty.
+     * 
+     * @throws IllegalArgumentException if userId or date is blank
+     */
+    suspend fun removeOutfitFromDay(userId: String, date: String, outfitId: String) {
+        require(userId.isNotBlank()) {
+            "Cannot remove outfit from $plannedDaysCollection: userId is blank"
+        }
+        require(date.isNotBlank()) {
+            "Cannot remove outfit from $plannedDaysCollection: date is blank"
+        }
+        
+        val documentId = "${userId}_${date}"
+        val docRef = plannedDaysCollection.document(documentId)
+        
+        firestore.runTransaction { transaction ->
+            val snapshot = transaction.get(docRef)
+            if (snapshot.exists()) {
+                val plannedDay = snapshot.toObject(PlannedDay::class.java)
+                val updatedItems = plannedDay?.items?.filterNot { it.outfitId == outfitId } ?: emptyList()
+                
+                if (updatedItems.isEmpty()) {
+                    transaction.delete(docRef)
+                } else {
+                    transaction.update(docRef, "items", updatedItems)
+                }
+            }
+        }.await()
     }
 
     /**
