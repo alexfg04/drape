@@ -66,7 +66,7 @@ fun CurvedBottomNavigation(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(95.dp + navBarPadding)
+            .height(65.dp + navBarPadding)
             .graphicsLayer(clip = false)
     ) {
         // 1. Background with notch (the white bar)
@@ -95,7 +95,7 @@ fun CurvedBottomNavigation(
 
             Box(
                 modifier = Modifier
-                    .offset(x = bubbleOffset, y = 12.dp)
+                    .offset(x = bubbleOffset, y = (-20).dp)
                     .size(bubbleSize)
                     .shadow(
                         elevation = 12.dp,
