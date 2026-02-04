@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="64dp"
+    android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:padding="8dp">
@@ -26,7 +26,7 @@
             android:text="Title"
             android:textAppearance="@style/TextAppearance.Compat.Notification.Title"
             android:textColor="#000000"
-            android:singleLine="true" 
+            android:maxLines="1"
             android:ellipsize="end"/>
 
         <TextView
@@ -36,7 +36,7 @@
             android:text="Text"
             android:textAppearance="@style/TextAppearance.Compat.Notification.Line2"
             android:textColor="#555555"
-            android:maxLines="2"
+            android:maxLines="4"
             android:ellipsize="end"/>
     </LinearLayout>
 
