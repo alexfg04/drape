@@ -162,6 +162,7 @@
     <string name="planner_tag_work">Lavoro</string>
     <string name="planner_tag_sport">Sport</string>
     <string name="planner_outfit_for_day">Outfit per il giorno %1$d</string>
+    <string name="planner_remove_outfit">Rimuovi outfit</string>
 
     <!-- Calendar Screen -->
     <string name="calendar_month_format">%1$s %2$d</string>

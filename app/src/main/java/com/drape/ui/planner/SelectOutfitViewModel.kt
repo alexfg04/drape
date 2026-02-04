@@ -49,6 +49,8 @@ class SelectOutfitViewModel @Inject constructor(
 
     private fun loadOutfits() {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            
             outfitRepository.getUserOutfits()
                 .catch { e ->
                     _uiState.value = _uiState.value.copy(

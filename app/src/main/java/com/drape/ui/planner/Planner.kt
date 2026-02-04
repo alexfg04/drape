@@ -326,7 +326,7 @@ fun PlannedOutfitCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Rimuovi",
+                        contentDescription = stringResource(R.string.planner_remove_outfit),
                         tint = MaterialTheme.colorScheme.onError,
                         modifier = Modifier
                             .size(18.dp)

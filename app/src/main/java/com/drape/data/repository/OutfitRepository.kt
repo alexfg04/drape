@@ -5,7 +5,7 @@ import com.drape.data.datasource.OutfitsRemoteDataSource
 import com.drape.data.datasource.StorageRemoteDataSource
 import com.drape.data.model.Outfit
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -101,7 +101,7 @@ class OutfitRepository @Inject constructor(
      */
     fun getUserOutfits(): Flow<List<Outfit>> {
         val userId = authRepository.currentUser?.id
-            ?: return emptyFlow()
+            ?: return flowOf(emptyList())
             
         return outfitsRemoteDataSource.getUserOutfits(userId)
     }
