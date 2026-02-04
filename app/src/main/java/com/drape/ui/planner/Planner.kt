@@ -4,10 +4,13 @@ package com.drape.ui.planner
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
@@ -15,23 +18,55 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 
 import com.drape.ui.theme.DrapeTheme
 
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlannerScreen(
-    onNavigateToSelectOutfit: () -> Unit = {},
+    onNavigateToSelectOutfit: (day: Int, month: Int, year: Int) -> Unit = { _, _, _ -> },
     viewModel: PlannerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val selectedView = uiState.viewMode
+    
+    val sheetState = rememberModalBottomSheetState()
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var selectedDay by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
+
+    // Get planned outfits for selected day from ViewModel
+    val selectedDayOutfits = remember(selectedDay, uiState.plannedDays, uiState.outfits) {
+        viewModel.getPlannedItemsForDay(selectedDay)
+    }
+
+    if (showBottomSheet) {
+        PlannedOutfitsBottomSheet(
+            sheetState = sheetState,
+            day = selectedDay,
+            plannedOutfits = selectedDayOutfits,
+            onDismiss = { showBottomSheet = false },
+            onRemoveOutfit = { outfitId -> 
+                viewModel.removeOutfitFromDay(selectedDay, outfitId)
+            },
+            onAddOutfit = {
+                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    showBottomSheet = false
+                    onNavigateToSelectOutfit(selectedDay, uiState.currentMonth, uiState.currentYear)
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -45,7 +80,7 @@ fun PlannerScreen(
                             )
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    imageVector = Icons.Default.WbSunny, // Placeholder for weather icon
+                                    imageVector = Icons.Default.WbSunny,
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -96,13 +131,13 @@ fun PlannerScreen(
             }
         },
         floatingActionButton = {
-            // Placeholder FAB if needed, though mostly handled inline
+            // Placeholder FAB if needed
         }
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface) // Ensure consistent background
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(paddingValues)
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -111,12 +146,30 @@ fun PlannerScreen(
                 if (selectedView == PlannerViewMode.MONTHLY) {
                     CalendarGrid(
                         days = uiState.calendarDays,
-                        onDayClick = onNavigateToSelectOutfit
+                        isDayOccupied = { day -> viewModel.isDayOccupied(day) },
+                        isDayPast = { day -> viewModel.isDayPast(day) },
+                        onDayClick = { day ->
+                            if (viewModel.isDayOccupied(day)) {
+                                selectedDay = day
+                                showBottomSheet = true
+                            } else {
+                                onNavigateToSelectOutfit(day, uiState.currentMonth, uiState.currentYear)
+                            }
+                        }
                     )
                 } else {
                     WeeklyView(
                         daysList = uiState.calendarDays,
-                        onDayClick = onNavigateToSelectOutfit
+                        isDayOccupied = { day -> viewModel.isDayOccupied(day) },
+                        isDayPast = { day -> viewModel.isDayPast(day) },
+                        onDayClick = { day ->
+                            if (viewModel.isDayOccupied(day)) {
+                                selectedDay = day
+                                showBottomSheet = true
+                            } else {
+                                onNavigateToSelectOutfit(day, uiState.currentMonth, uiState.currentYear)
+                            }
+                        }
                     )
                 }
             }
@@ -124,8 +177,149 @@ fun PlannerScreen(
             item {
                 UpcomingHighlightsSection()
             }
+        }
+    }
+}
 
-            // Removed bottom spacer to avoid whitespace gap with navbar
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlannedOutfitsBottomSheet(
+    sheetState: SheetState,
+    day: Int,
+    plannedOutfits: List<PlannedOutfitDisplay>,
+    onDismiss: () -> Unit,
+    onRemoveOutfit: (String) -> Unit,
+    onAddOutfit: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                text = "Outfit per il giorno $day",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                items(plannedOutfits) { outfit ->
+                    PlannedOutfitCard(
+                        outfit = outfit,
+                        onRemove = { onRemoveOutfit(outfit.outfitId) }
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(20.dp))
+            
+            Button(
+                onClick = onAddOutfit,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Aggiungi Outfit")
+            }
+        }
+    }
+}
+
+@Composable
+fun PlannedOutfitCard(
+    outfit: PlannedOutfitDisplay,
+    onRemove: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .width(100.dp)
+            .height(130.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Outfit image
+            if (!outfit.imageUrl.isNullOrEmpty()) {
+                AsyncImage(
+                    model = outfit.imageUrl,
+                    contentDescription = outfit.outfitTitle,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier.fillMaxSize()
+                ) {}
+            }
+
+            IconButton(
+                onClick = onRemove,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(24.dp)
+                    .padding(2.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.error
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Rimuovi",
+                        tint = MaterialTheme.colorScheme.onError,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .padding(2.dp)
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
+                            startY = 60f
+                        )
+                    ),
+                contentAlignment = Alignment.BottomStart
+            ) {
+                Column(
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Text(
+                        text = outfit.outfitTitle,
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Color.White,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = outfit.label,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                }
+            }
         }
     }
 }
@@ -162,7 +356,9 @@ fun TabButton(
 @Composable
 fun CalendarGrid(
     days: List<Int>,
-    onDayClick: () -> Unit
+    isDayOccupied: (Int) -> Boolean,
+    isDayPast: (Int) -> Boolean,
+    onDayClick: (Int) -> Unit
 ) {
     val weekDays = listOf("S", "M", "T", "W", "T", "F", "S")
 
@@ -197,7 +393,12 @@ fun CalendarGrid(
                 row.forEach { day ->
                     // Handle empty slots for first row if needed, but here our list is simple
                     Box(modifier = Modifier.weight(1f).padding(2.dp)) {
-                        DayCell(day = day, onClick = onDayClick)
+                        DayCell(
+                            day = day,
+                            isOccupied = isDayOccupied(day),
+                            isPast = isDayPast(day),
+                            onClick = { onDayClick(day) }
+                        )
                     }
                 }
                 // Fill remaining space if last row incomplete
@@ -214,7 +415,9 @@ fun CalendarGrid(
 @Composable
 fun WeeklyView(
     daysList: List<Int>,
-    onDayClick: () -> Unit
+    isDayOccupied: (Int) -> Boolean,
+    isDayPast: (Int) -> Boolean,
+    onDayClick: (Int) -> Unit
 ) {
     // Current week view (e.g., 22-28)
     val weekDays = listOf("S", "M", "T", "W", "T", "F", "S")
@@ -236,7 +439,12 @@ fun WeeklyView(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Box(modifier = Modifier.fillMaxWidth().aspectRatio(0.6f)) {
-                        DayCell(day = dayNum, onClick = onDayClick)
+                        DayCell(
+                            day = dayNum,
+                            isOccupied = isDayOccupied(dayNum),
+                            isPast = isDayPast(dayNum),
+                            onClick = { onDayClick(dayNum) }
+                        )
                     }
                 }
             }
@@ -246,14 +454,18 @@ fun WeeklyView(
 
 
 @Composable
-fun DayCell(day: Int, onClick: () -> Unit) {
+fun DayCell(day: Int, isOccupied: Boolean, isPast: Boolean, onClick: () -> Unit) {
     Card(
-        onClick = onClick,
+        onClick = { if (!isPast) onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (day == 5 || day == 23) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow
+            containerColor = when {
+                isPast -> MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.5f)
+                isOccupied -> MaterialTheme.colorScheme.primaryContainer
+                else -> MaterialTheme.colorScheme.surfaceContainerLow
+            }
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isPast) 0.dp else 2.dp),
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.7f)
@@ -269,34 +481,32 @@ fun DayCell(day: Int, onClick: () -> Unit) {
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),
-                color = if (day in 21..27) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isPast) 
+                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f) 
+                else 
+                    MaterialTheme.colorScheme.onSurface
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Content (Outfit, Add Button, or Empty)
-            // Hardcoded logic for demo based on screenshot
-            when (day) {
-                1, 2, 6, 7, 10, 11, 12 -> {
-                    // Add Icon
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                3, 4, 5, 8, 9, 13, 14, 18, 23 -> {
-                    // Outfit Dot Indicator
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(MaterialTheme.colorScheme.primary, CircleShape)
-                    )
-                }
-                else -> {
-                    // Empty state
-                }
+            // Content indicator
+            if (isPast) {
+                // No indicator for past days
+            } else if (isOccupied) {
+                // Outfit Dot Indicator
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                )
+            } else {
+                // Add Icon
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
     }

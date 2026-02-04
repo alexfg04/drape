@@ -57,4 +57,7 @@ object UploadClothes
 object Profile
 
 @Serializable
-object SelectOutfit
+object Planner
+
+@Serializable
+data class SelectOutfit(val day: Int, val month: Int, val year: Int)

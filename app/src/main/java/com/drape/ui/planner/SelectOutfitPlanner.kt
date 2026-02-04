@@ -3,11 +3,13 @@ package com.drape.ui.planner
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,6 +20,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,59 +28,45 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.drape.R
+import com.drape.data.model.Outfit
 import com.drape.ui.theme.DrapeTheme
-
-data class OutfitItem(
-    val id: String,
-    val title: String,
-    val subtitle: String,
-    val imageUrl: String? = null,
-    val isCreatorSaved: Boolean = false,
-    val isPhotoOutfit: Boolean = false
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectOutfitScreen(
-    onNavigateBack: () -> Unit = {},
-    onConfirmSelection: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    viewModel: SelectOutfitViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
+    
     var selectedTab by remember { mutableStateOf(0) }
     var selectedOutfitId by remember { mutableStateOf<String?>(null) }
+    var selectedLabel by remember { mutableStateOf("Daily") }
 
-    val outfits = listOf(
-        OutfitItem("1", stringResource(R.string.planner_casual_friday), stringResource(R.string.planner_tab_creator), isCreatorSaved = true),
-        OutfitItem("2", stringResource(R.string.planner_fall_cafe), stringResource(R.string.planner_tab_photo), isPhotoOutfit = true),
-        OutfitItem("3", stringResource(R.string.planner_office_smart), stringResource(R.string.planner_tab_creator), isCreatorSaved = true),
-        OutfitItem("4", stringResource(R.string.planner_weekend_brunch), stringResource(R.string.planner_tab_photo), isPhotoOutfit = true),
-        OutfitItem("5", stringResource(R.string.planner_summer_breeze), stringResource(R.string.planner_tab_creator), isCreatorSaved = true)
-    )
-
-    // Filter outfits based on tab
-    val filteredOutfits = when(selectedTab) {
-        1 -> outfits.filter { it.isCreatorSaved }
-        2 -> outfits.filter { it.isPhotoOutfit }
-        else -> outfits
-    }
+    // Use outfits from ViewModel
+    val outfits = uiState.outfits
 
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = "Wednesday, Oct 23",
+                        text = viewModel.getFormattedDate(),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                 },
 
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
@@ -110,8 +99,15 @@ fun SelectOutfitScreen(
             if (selectedOutfitId != null) {
                 val selectedOutfit = outfits.find { it.id == selectedOutfitId }
                 BottomSelectionBar(
-                    selectedOutfitName = selectedOutfit?.title ?: "",
-                    onConfirm = onConfirmSelection
+                    selectedOutfitName = selectedOutfit?.name ?: "",
+                    selectedLabel = selectedLabel,
+                    onLabelSelected = { selectedLabel = it },
+                    onConfirm = { 
+                        viewModel.addOutfitToDay(selectedOutfitId!!, selectedLabel) {
+                            onBackClick()
+                        }
+                    },
+                    isLoading = uiState.isSaving
                 )
             }
         }
@@ -131,7 +127,7 @@ fun SelectOutfitScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(R.string.planner_title), // "Select Outfit for Day"
+                    text = stringResource(R.string.planner_add_outfit),
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -180,28 +176,38 @@ fun SelectOutfitScreen(
                 )
             }
 
-            // Grid
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 20.dp)
-            ) {
-                items(filteredOutfits) { outfit ->
-                    OutfitCard(
-                        outfit = outfit,
-                        isSelected = selectedOutfitId == outfit.id,
-                        onClick = { selectedOutfitId = outfit.id }
-                    )
+            // Loading state
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
+            } else {
+                // Grid
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(bottom = 20.dp)
+                ) {
+                    items(outfits) { outfit ->
+                        OutfitCard(
+                            outfit = outfit,
+                            isSelected = selectedOutfitId == outfit.id,
+                            onClick = { selectedOutfitId = outfit.id }
+                        )
+                    }
 
-                item {
-                    CreateNewOutfitCard()
-                }
+                    item {
+                        CreateNewOutfitCard()
+                    }
 
-                // Add spacer at the bottom if needed
-                item(span = { GridItemSpan(2) }) {
-                    Spacer(modifier = Modifier.height(80.dp))
+                    // Add spacer at the bottom if needed
+                    item(span = { GridItemSpan(2) }) {
+                        Spacer(modifier = Modifier.height(80.dp))
+                    }
                 }
             }
         }
@@ -236,7 +242,7 @@ fun OutfitTab(
 
 @Composable
 fun OutfitCard(
-    outfit: OutfitItem,
+    outfit: Outfit,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -252,12 +258,19 @@ fun OutfitCard(
         border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            // Placeholder Image
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // In a real app, AsyncImage here
+            // Outfit thumbnail
+            if (outfit.thumbnailUrl.isNotEmpty()) {
+                AsyncImage(
+                    model = outfit.thumbnailUrl,
+                    contentDescription = outfit.name,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    modifier = Modifier.fillMaxSize()
+                ) {}
             }
 
             // Checkmark if selected
@@ -309,14 +322,9 @@ fun OutfitCard(
                     modifier = Modifier.padding(12.dp)
                 ) {
                     Text(
-                        text = outfit.title,
+                        text = outfit.name,
                         style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
                         color = Color.White
-                    )
-                    Text(
-                        text = outfit.subtitle,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White.copy(alpha = 0.8f)
                     )
                 }
             }
@@ -366,8 +374,13 @@ fun CreateNewOutfitCard() {
 @Composable
 fun BottomSelectionBar(
     selectedOutfitName: String,
-    onConfirm: () -> Unit
+    selectedLabel: String,
+    onLabelSelected: (String) -> Unit,
+    onConfirm: () -> Unit,
+    isLoading: Boolean = false
 ) {
+    val labels = listOf("Daily", "Morning", "Afternoon", "Evening", "Work", "Sport")
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface,
@@ -385,7 +398,7 @@ fun BottomSelectionBar(
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween, // Add image thumbnail on right if needed
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
@@ -393,11 +406,41 @@ fun BottomSelectionBar(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                // Small thumbnail could go here
             }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Label selector
+            Text(
+                text = stringResource(R.string.planner_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                labels.forEach { label ->
+                    FilterChip(
+                        selected = selectedLabel == label,
+                        onClick = { onLabelSelected(label) },
+                        label = { Text(label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    )
+                }
+            }
+            
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onConfirm,
+                enabled = !isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -406,18 +449,26 @@ fun BottomSelectionBar(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Text(
-                    text = stringResource(R.string.planner_confirm),
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.planner_confirm),
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(10.dp)) // Extra padding for safety
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }

@@ -138,11 +138,14 @@
 
     <!-- Planner Screen -->
     <string name="planner_title">Select Outfit for Day</string>
+    <string name="planner_add_outfit">Aggiungi Outfit</string>
+    <string name="planner_planned_outfits">OUTFIT PIANIFICATI</string>
     <string name="planner_filter">Filter</string>
     <string name="planner_tab_all">All Outfits</string>
     <string name="planner_tab_creator">Creator Saved</string>
     <string name="planner_tab_photo">Photo Outfits</string>
     <string name="planner_selection">SELECTION</string>
+    <string name="planner_label">OCCASIONE</string>
     <string name="planner_confirm">Confirm Selection</string>
     <string name="planner_create_new">CREATE NEW OUTFIT</string>
     <string name="planner_casual_friday">Casual Friday Look</string>
