@@ -11,9 +11,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Checkroom
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.AllInclusive
+import androidx.compose.material.icons.filled.Diamond
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -31,7 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
-import androidx.compose.ui.platform.LocalContext
+// Duplicate import removed
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
@@ -42,12 +53,16 @@ import com.drape.ui.components.DrapeSnackbar
  */
 @Composable
 fun WardrobeScreen(
-    wardrobeViewModel: WardrobeViewModel = hiltViewModel()
+    wardrobeViewModel: WardrobeViewModel = hiltViewModel(),
+    onNavigateToOutfitCreator: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {}
 ) {
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
 
     WardrobeScreenContent(
         wardrobeUiState = wardrobeUiState,
+        onNavigateToOutfitCreator = onNavigateToOutfitCreator,
+        onNavigateToProfile = onNavigateToProfile,
         onWardrobeItemClick = { wardrobeViewModel.selectItem(it) },
         onWardrobeClearSelection = { wardrobeViewModel.clearSelection() },
         onWardrobeDeleteItem = { wardrobeViewModel.deleteClothingItem(it) },
@@ -70,6 +85,8 @@ fun WardrobeScreen(
 @Composable
 fun WardrobeScreenContent(
     wardrobeUiState: WardrobeUiState,
+    onNavigateToOutfitCreator: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onWardrobeItemClick: (ClothingItem) -> Unit,
     onWardrobeClearSelection: () -> Unit,
     onWardrobeDeleteItem: (String) -> Unit,
@@ -121,27 +138,22 @@ fun WardrobeScreenContent(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopBar(
-                isSearchActive = isSearchActive,
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it },
-                onSearchTriggered = { isSearchActive = true },
-                onSearchClosed = {
-                    isSearchActive = false
-                    searchQuery = ""
-                }
-            )
+            // TopBar moved to content
         },
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 DrapeSnackbar(snackbarData = data)
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             WardrobeListContent(
                 uiState = wardrobeUiState,
                 searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onNavigateToOutfitCreator = onNavigateToOutfitCreator,
+                onNavigateToProfile = onNavigateToProfile,
                 onItemClick = onWardrobeItemClick,
                 onRefresh = onWardrobeRefresh
             )
@@ -153,6 +165,9 @@ fun WardrobeScreenContent(
 fun WardrobeListContent(
     uiState: WardrobeUiState,
     searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onNavigateToOutfitCreator: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onItemClick: (ClothingItem) -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -160,52 +175,128 @@ fun WardrobeListContent(
     val filters = listOf(allFilterText) + ItemCategory.entries.map { it.name }
     var selectedFilter by remember { mutableStateOf(allFilterText) }
 
-    Column(
+    val filteredItems = remember(uiState.clothingItems, searchQuery, selectedFilter) {
+        uiState.clothingItems.filter { item ->
+            (selectedFilter == allFilterText || item.category.equals(selectedFilter, ignoreCase = true)) &&
+            (searchQuery.isEmpty() || item.name.contains(searchQuery, ignoreCase = true) ||
+             item.brand.contains(searchQuery, ignoreCase = true) ||
+             item.color.contains(searchQuery, ignoreCase = true))
+        }
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        FilterSection(
-            filters = filters,
-            selectedFilter = selectedFilter,
-            onFilterSelected = { selectedFilter = it })
+        // --- HEADER SECTION (Full Span) ---
+        item(span = { GridItemSpan(2) }) {
+            Column {
+                TopBar(onProfileClick = onNavigateToProfile)
 
-        Spacer(modifier = Modifier.height(16.dp))
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    placeholder = { Text("Cerca") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Cerca",
+                            tint = Color.Gray
+                        )
+                    },
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color.Black,
+                        unfocusedBorderColor = Color.Black,
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    shape = RoundedCornerShape(50) // Rounded corners
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp)) // Added Spacer
 
+                // Promo Banner
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp) // Increased spacing
+                        .clickable { onNavigateToOutfitCreator() },
+                    shape = RoundedCornerShape(12.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Image(
+                        painter = androidx.compose.ui.res.painterResource(id = R.drawable.banner),
+                        contentDescription = "Crea il tuo outfit perfetto",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxWidth().height(160.dp) // Adjust height as needed
+                    )
+                }
+
+                // Category Section
+                Text(
+                    text = "Category",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(bottom = 16.dp) // Increased spacing
+                )
+
+                FilterSection(
+                    filters = filters,
+                    selectedFilter = selectedFilter,
+                    onFilterSelected = { selectedFilter = it }
+                )
+
+
+                // Increased spacing
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+
+        // --- CONTENT SECTION (Grid Items or Full Span States) ---
         when {
             uiState.isLoading -> {
-                LoadingState()
+                item(span = { GridItemSpan(2) }) {
+                   Box(modifier = Modifier.height(400.dp)) {
+                       LoadingState()
+                   }
+                }
             }
 
             uiState.errorMessage != null && uiState.clothingItems.isEmpty() -> {
-                ErrorState(
-                    message = uiState.errorMessage, onRetry = onRefresh
-                )
+                item(span = { GridItemSpan(2) }) {
+                     Box(modifier = Modifier.height(400.dp)) {
+                        ErrorState(message = uiState.errorMessage, onRetry = onRefresh)
+                     }
+                }
             }
 
             uiState.clothingItems.isEmpty() -> {
-                EmptyState()
+                item(span = { GridItemSpan(2) }) {
+                    Box(modifier = Modifier.height(400.dp)) {
+                        EmptyState()
+                    }
+                }
             }
 
-            else -> {
-                val filteredItems = uiState.clothingItems.filter { item ->
-                    (selectedFilter == allFilterText || item.category.equals(
-                        selectedFilter, ignoreCase = true
-                    )) && (searchQuery.isEmpty() || item.name.contains(
-                        searchQuery,
-                        ignoreCase = true
-                    ) || item.brand.contains(
-                        searchQuery,
-                        ignoreCase = true
-                    ) || item.color.contains(searchQuery, ignoreCase = true))
+            filteredItems.isEmpty() -> {
+                item(span = { GridItemSpan(2) }) {
+                    Box(modifier = Modifier.height(400.dp)) {
+                        NoResultsState(searchQuery = searchQuery, filter = selectedFilter)
+                    }
                 }
-
-                if (filteredItems.isEmpty()) {
-                    NoResultsState(searchQuery = searchQuery, filter = selectedFilter)
-                } else {
-                    WardrobeGrid(
-                        clothingItems = filteredItems, onItemClick = onItemClick
-                    )
+            }
+            
+            else -> {
+                items(filteredItems, key = { it.id }) { item ->
+                    WardrobeItemCard(item = item, onClick = { onItemClick(item) })
                 }
             }
         }
@@ -275,8 +366,7 @@ fun ClothingItemDetailCard(item: ClothingItem) {
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1f)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .clip(RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
             val context = LocalContext.current
@@ -492,59 +582,61 @@ fun FilterSection(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         filters.forEach { filter ->
             val isSelected = filter == selectedFilter
-            val backgroundColor =
-                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-            val contentColor =
-                if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-            val borderColor =
-                if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            val containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+            val contentColor = MaterialTheme.colorScheme.primary
 
-            Surface(
-                onClick = { onFilterSelected(filter) },
-                shape = RoundedCornerShape(percent = 50),
-                color = backgroundColor,
-                border = if (!isSelected) androidx.compose.foundation.BorderStroke(
-                    1.dp, borderColor
-                ) else null,
-                modifier = Modifier.height(36.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable { onFilterSelected(filter) }
             ) {
                 Box(
-                    contentAlignment = Alignment.Center, modifier = Modifier.padding(horizontal = 20.dp)
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(containerColor)
                 ) {
-                    Text(
-                        text = filter, style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Medium
-                        ), color = contentColor
-                    )
+                   val (iconVector, iconDetail) = when (filter.uppercase()) {
+                       "TUTTI", "ALL" -> Icons.Default.AllInclusive to null
+                       "TOP", "TOPS" -> null to R.drawable.iconamaglietta
+                       "BOTTOM", "BOTTOMS" -> null to R.drawable.pantaloniicone
+                       "SHOES" -> null to R.drawable.scarpeicone
+                       "ACCESSORIES" -> Icons.Default.Diamond to null
+                       else -> Icons.Default.Category to null
+                   }
+
+                   if (iconVector != null) {
+                       Icon(
+                           imageVector = iconVector,
+                           contentDescription = filter,
+                           tint = contentColor,
+                           modifier = Modifier.size(24.dp)
+                       )
+                   } else if (iconDetail != null) {
+                       Icon(
+                           painter = androidx.compose.ui.res.painterResource(id = iconDetail),
+                           contentDescription = filter,
+                           tint = contentColor,
+                           modifier = Modifier.size(24.dp)
+                       )
+                   }
                 }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = filter,
+                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
 }
 
-/**
- * Grid component displaying clothing items.
- *
- * @param clothingItems List of [ClothingItem] to display in the grid.
- * @param onItemClick Callback triggered when an item is clicked.
- */
-@Composable
-fun WardrobeGrid(clothingItems: List<ClothingItem>, onItemClick: (ClothingItem) -> Unit) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 80.dp)
-    ) {
-        items(clothingItems, key = { it.id }) { item ->
-            WardrobeItemCard(item = item, onClick = { onItemClick(item) })
-        }
-    }
-}
+
 
 /**
  * Card component representing a single clothing item in the wardrobe grid.
@@ -572,7 +664,7 @@ fun WardrobeItemCard(item: ClothingItem, onClick: () -> Unit, modifier: Modifier
                     .fillMaxWidth()
                     .aspectRatio(0.85f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(Color.Transparent), // Removed gray background
                 contentAlignment = Alignment.Center
             ) {
                 val context = LocalContext.current
@@ -580,10 +672,10 @@ fun WardrobeItemCard(item: ClothingItem, onClick: () -> Unit, modifier: Modifier
                     model = ImageRequest.Builder(context).data(item.imageUrl).diskCacheKey(item.id)
                         .memoryCacheKey(item.id).crossfade(true).build(),
                     contentDescription = item.name,
-                    contentScale = ContentScale.Fit,
+                    contentScale = ContentScale.Fit, // Changed to Fit to ensure entire item is visible without cropping
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(8.dp)
+                        //.padding(8.dp) // Removed padding to maximize item size
                 )
             }
 
@@ -616,129 +708,43 @@ fun WardrobeItemCard(item: ClothingItem, onClick: () -> Unit, modifier: Modifier
     }
 }
 
+
 /**
  * The top bar of the Wardrobe screen.
+ * Displays the screen title and a profile button.
  *
- * @param isSearchActive Boolean flag indicating if search is currently active.
- * @param searchQuery The current search query string.
- * @param onSearchQueryChange Callback triggered when the search query changes.
- * @param onSearchTriggered Callback to activate search mode.
- * @param onSearchClosed Callback to deactivate search mode and clear the query.
+ * @param onProfileClick Callback triggered when the profile button is clicked.
  */
 @Composable
 fun TopBar(
-    isSearchActive: Boolean,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onSearchTriggered: () -> Unit,
-    onSearchClosed: () -> Unit
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background)
-    ) {
-        if (isSearchActive) {
-            SearchTopBar(
-                query = searchQuery,
-                onQueryChange = onSearchQueryChange,
-                onClose = onSearchClosed
-            )
-        } else {
-            DefaultTopBar(
-                onSearchTriggered = onSearchTriggered
-            )
-        }
-    }
-}
-
-/**
- * Search view for the [TopBar].
- * Includes a text field to enter search queries and buttons to close search or clear the input.
- *
- * @param query The current search query string.
- * @param onQueryChange Callback triggered when the query changes.
- * @param onClose Callback to close the search view.
- */
-@Composable
-fun SearchTopBar(
-    query: String, onQueryChange: (String) -> Unit, onClose: () -> Unit
+    onProfileClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp, horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        IconButton(onClick = onClose) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Chiudi ricerca",
-                tint = MaterialTheme.colorScheme.onBackground
-            )
-        }
-
-        TextField(
-            value = query,
-            onValueChange = onQueryChange,
-            modifier = Modifier.weight(1f),
-            placeholder = { Text(stringResource(R.string.wardrobe_search_placeholder)) },
-            singleLine = true,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            trailingIcon = {
-                if (query.isNotEmpty()) {
-                    IconButton(onClick = { onQueryChange("") }) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = "Cancella ricerca",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            })
-    }
-}
-
-/**
- * Default title view for the [TopBar].
- * Displays the screen title, a search icon to trigger search mode, and a profile placeholder.
- *
- * @param onSearchTriggered Callback to activate search mode.
- */
-@Composable
-fun DefaultTopBar(
-    onSearchTriggered: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
+            .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 16.dp), // Increased padding
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(R.string.home_nav_wardrobe), style = MaterialTheme.typography.headlineMedium.copy(
+            text = stringResource(R.string.home_nav_wardrobe),
+            style = MaterialTheme.typography.headlineLarge.copy( // Larger Headline
                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground
             )
         )
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        FilledIconButton( // Changed to FilledIconButton for better visibility/style
+            onClick = onProfileClick,
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         ) {
-            IconButton(onClick = onSearchTriggered) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "Cerca",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Profilo",
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -789,6 +795,8 @@ fun WardrobeScreenPreview() {
     DrapeTheme {
         WardrobeScreenContent(
             wardrobeUiState = uiState,
+            onNavigateToOutfitCreator = {},
+            onNavigateToProfile = {},
             onWardrobeItemClick = {},
             onWardrobeClearSelection = {},
             onWardrobeDeleteItem = {},

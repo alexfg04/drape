@@ -61,7 +61,14 @@ fun NavGraphBuilder.homeNavGraph(
         }
 
         composable<Wardrobe> {
-            WardrobeScreen()
+            WardrobeScreen(
+                onNavigateToOutfitCreator = {
+                    navController.navigate(Camerino())
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Profile)
+                }
+            )
         }
 
         composable<UploadClothes> {
