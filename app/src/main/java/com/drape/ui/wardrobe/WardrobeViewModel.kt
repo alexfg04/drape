@@ -20,8 +20,6 @@ data class WardrobeUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val clothingItems: List<ClothingItem> = emptyList(),
-    val selectedItem: ClothingItem? = null,
-    val isDeleting: Boolean = false,
     val deleteSuccess: Boolean = false
 )
 
@@ -77,37 +75,20 @@ class WardrobeViewModel @Inject constructor(
     }
 
     /**
-     * Selects a clothing item to show details.
-     */
-    fun selectItem(item: ClothingItem) {
-        _uiState.value = _uiState.value.copy(selectedItem = item)
-    }
-
-    /**
-     * Clears the selected item.
-     */
-    fun clearSelection() {
-        _uiState.value = _uiState.value.copy(selectedItem = null)
-    }
-
-    /**
      * Deletes the specified clothing item.
      */
     fun deleteClothingItem(clothingId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isDeleting = true, deleteSuccess = false)
+            _uiState.value = _uiState.value.copy(deleteSuccess = false)
             
             try {
                 val success = clothesRepository.deleteClothingItem(clothingId)
                 _uiState.value = _uiState.value.copy(
-                    isDeleting = false,
                     deleteSuccess = success,
-                    selectedItem = null,
                     errorMessage = if (!success) "Impossibile eliminare il capo" else null
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
-                    isDeleting = false,
                     deleteSuccess = false,
                     errorMessage = e.localizedMessage ?: "Errore durante l'eliminazione"
                 )

@@ -15,8 +15,10 @@ import com.drape.ui.upload_clothes.UploadItemScreen
 import com.drape.ui.my_outfit.SavedOutfitsScreen
 import com.drape.ui.profile.season.ProfileSeasonOutfitsScreen
 import com.drape.ui.planner.PlannerScreen
+import com.drape.ui.clothing_detail.ClothingItemDetailScreen
 import com.drape.ui.planner.SelectOutfitScreen
 import com.drape.ui.planner.SelectOutfitViewModel
+import com.drape.ui.statistics.StatisticsScreen
 
 /**
  * Home navigation graph.
@@ -32,7 +34,30 @@ fun NavGraphBuilder.homeNavGraph(
     navigation<HomeGraph>(startDestination = Home) {
         composable<Home> {
             HomeScreen(
-                onNavigateToProfile = { navController.navigate(Profile) }
+                onNavigateToProfile = { navController.navigate(Profile) },
+                onNavigateToStatistics = { navController.navigate(Statistics) },
+                onOutfitClick = { outfit ->
+                    navController.navigate(EditOutfit(outfitId = outfit.id))
+                },
+                onClothingItemClick = { item ->
+                    navController.navigate(ClothingItemDetail(itemId = item.id))
+                }
+            )
+        }
+
+        composable<Statistics> {
+            StatisticsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ClothingItemDetail> { backStackEntry ->
+            val route = backStackEntry.toRoute<ClothingItemDetail>()
+            ClothingItemDetailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onItemDeleted = { 
+                    navController.popBackStack()
+                }
             )
         }
 
@@ -61,7 +86,11 @@ fun NavGraphBuilder.homeNavGraph(
         }
 
         composable<Wardrobe> {
-            WardrobeScreen()
+            WardrobeScreen(
+                onNavigateToClothingDetail = { item ->
+                    navController.navigate(ClothingItemDetail(itemId = item.id))
+                }
+            )
         }
 
         composable<UploadClothes> {

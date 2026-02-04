@@ -75,4 +75,5 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.play.services.mlkit.subject.segmentation)
+    implementation(libs.compose.charts)
 }
