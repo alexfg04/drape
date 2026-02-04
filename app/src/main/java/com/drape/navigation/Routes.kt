@@ -71,3 +71,9 @@ data class ProfileSeasonOutfits(val season: String)
 
 @Serializable
 object EmptyPage
+
+@Serializable
+object Statistics
+
+@Serializable
+data class ClothingItemDetail(val itemId: String)

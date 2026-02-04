@@ -15,8 +15,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.Layers
@@ -42,7 +40,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
+<<<<<<< refactor/my-outfit-ui
 // Duplicate import removed
+=======
+>>>>>>> main
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
@@ -53,18 +54,14 @@ import com.drape.ui.components.DrapeSnackbar
  */
 @Composable
 fun WardrobeScreen(
-    wardrobeViewModel: WardrobeViewModel = hiltViewModel(),
-    onNavigateToOutfitCreator: () -> Unit = {},
-    onNavigateToProfile: () -> Unit = {}
+    onNavigateToClothingDetail: (ClothingItem) -> Unit,
+    wardrobeViewModel: WardrobeViewModel = hiltViewModel()
 ) {
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
 
     WardrobeScreenContent(
         wardrobeUiState = wardrobeUiState,
-        onNavigateToOutfitCreator = onNavigateToOutfitCreator,
-        onNavigateToProfile = onNavigateToProfile,
-        onWardrobeItemClick = { wardrobeViewModel.selectItem(it) },
-        onWardrobeClearSelection = { wardrobeViewModel.clearSelection() },
+        onWardrobeItemClick = onNavigateToClothingDetail,
         onWardrobeDeleteItem = { wardrobeViewModel.deleteClothingItem(it) },
         onWardrobeRefresh = { wardrobeViewModel.refresh() },
         onClearError = { wardrobeViewModel.clearError() },
@@ -78,7 +75,6 @@ fun WardrobeScreen(
  *
  * @param wardrobeUiState The current UI state of the wardrobe.
  * @param onWardrobeItemClick Callback triggered when a clothing item is clicked.
- * @param onWardrobeClearSelection Callback to clear the currently selected item.
  * @param onWardrobeDeleteItem Callback to delete a specific clothing item.
  * @param onWardrobeRefresh Callback to refresh the wardrobe contents.
  */
@@ -88,7 +84,6 @@ fun WardrobeScreenContent(
     onNavigateToOutfitCreator: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onWardrobeItemClick: (ClothingItem) -> Unit,
-    onWardrobeClearSelection: () -> Unit,
     onWardrobeDeleteItem: (String) -> Unit,
     onWardrobeRefresh: () -> Unit,
     onClearError: () -> Unit,
@@ -120,21 +115,9 @@ fun WardrobeScreenContent(
         }
     }
 
-    val allFilterText = "Tutti"
-    val filters = listOf(allFilterText) + ItemCategory.entries.map { it.name }
-    var selectedFilter by remember { mutableStateOf(allFilterText) }
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
 
-    // Handle selected item dialog (wardrobe)
-    wardrobeUiState.selectedItem?.let { selectedItem ->
-        ItemDetailDialog(
-            item = selectedItem,
-            isDeleting = wardrobeUiState.isDeleting,
-            onDismiss = onWardrobeClearSelection,
-            onDelete = { onWardrobeDeleteItem(selectedItem.id) }
-        )
-    }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -304,6 +287,7 @@ fun WardrobeListContent(
 }
 
 /**
+<<<<<<< refactor/my-outfit-ui
  * Dialog displaying details of a selected clothing item.
  * Provides an option to delete the item.
  *
@@ -429,6 +413,8 @@ fun DetailRow(label: String, value: String) {
 }
 
 /**
+=======
+>>>>>>> main
  * Full-screen loading state for the Wardrobe.
  */
 @Composable
@@ -798,7 +784,6 @@ fun WardrobeScreenPreview() {
             onNavigateToOutfitCreator = {},
             onNavigateToProfile = {},
             onWardrobeItemClick = {},
-            onWardrobeClearSelection = {},
             onWardrobeDeleteItem = {},
             onWardrobeRefresh = {},
             onClearError = {},

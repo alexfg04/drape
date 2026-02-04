@@ -21,9 +21,11 @@ composeIcons = "1.7.8"
 coil = "2.7.0"
 mlkitSubjectSegmentation = "16.0.0-beta1"
 compose = "1.10.1"
+composeCharts = "0.2.0"
 
 
 [libraries]
+compose-charts = { module = "io.github.ehsannarmani:compose-charts", version.ref = "composeCharts" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
