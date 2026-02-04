@@ -23,6 +23,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.Diamond
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,10 +42,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
-<<<<<<< refactor/my-outfit-ui
-// Duplicate import removed
-=======
->>>>>>> main
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
@@ -55,12 +53,16 @@ import com.drape.ui.components.DrapeSnackbar
 @Composable
 fun WardrobeScreen(
     onNavigateToClothingDetail: (ClothingItem) -> Unit,
+    onNavigateToOutfitCreator: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     wardrobeViewModel: WardrobeViewModel = hiltViewModel()
 ) {
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
 
     WardrobeScreenContent(
         wardrobeUiState = wardrobeUiState,
+        onNavigateToOutfitCreator = onNavigateToOutfitCreator,
+        onNavigateToProfile = onNavigateToProfile,
         onWardrobeItemClick = onNavigateToClothingDetail,
         onWardrobeDeleteItem = { wardrobeViewModel.deleteClothingItem(it) },
         onWardrobeRefresh = { wardrobeViewModel.refresh() },
@@ -187,7 +189,7 @@ fun WardrobeListContent(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    placeholder = { Text("Cerca") },
+                    placeholder = { Text(stringResource(R.string.search_placeholder)) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -218,7 +220,7 @@ fun WardrobeListContent(
                 ) {
                     Image(
                         painter = androidx.compose.ui.res.painterResource(id = R.drawable.banner),
-                        contentDescription = "Crea il tuo outfit perfetto",
+                        contentDescription = stringResource(R.string.promo_banner_description),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxWidth().height(160.dp) // Adjust height as needed
                     )
@@ -226,7 +228,7 @@ fun WardrobeListContent(
 
                 // Category Section
                 Text(
-                    text = "Category",
+                    text = stringResource(R.string.category_title),
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     modifier = Modifier.padding(bottom = 16.dp) // Increased spacing
                 )
@@ -728,7 +730,7 @@ fun TopBar(
         ) {
             Icon(
                 imageVector = Icons.Default.Person,
-                contentDescription = "Profilo",
+                contentDescription = stringResource(R.string.profile),
                 modifier = Modifier.size(24.dp)
             )
         }

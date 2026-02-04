@@ -87,16 +87,14 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<Wardrobe> {
             WardrobeScreen(
-<<<<<<< refactor/my-outfit-ui
                 onNavigateToOutfitCreator = {
                     navController.navigate(Camerino())
                 },
                 onNavigateToProfile = {
                     navController.navigate(Profile)
-=======
+                },
                 onNavigateToClothingDetail = { item ->
                     navController.navigate(ClothingItemDetail(itemId = item.id))
->>>>>>> main
                 }
             )
         }

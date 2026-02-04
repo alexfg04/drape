@@ -179,6 +179,10 @@
     <string name="outfit_creator_default_name">Mio Outfit</string>
     <string name="outfit_creator_error_not_found">Outfit non trovato</string>
     <string name="wardrobe_item_detail_season">Season</string>
+    <string name="search_placeholder">Cerca</string>
+    <string name="promo_banner_description">Crea il tuo outfit perfetto</string>
+    <string name="category_title">Categoria</string>
+    <string name="profile">Profilo</string>
 
     <!-- Planner Screen -->
     <string name="planner_title">Seleziona Outfit per il Giorno</string>
