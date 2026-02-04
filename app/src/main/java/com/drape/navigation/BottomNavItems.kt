@@ -1,6 +1,7 @@
 package com.drape.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
@@ -30,8 +31,8 @@ val BottomNavItems = listOf(
         route = Wardrobe
     ),
     DrapeNavigationItem(
-        titleRes = R.string.home_nav_profile, // You might want to change this string resource to "Empty" or similar if you have one, or keep it as placeholder
-        icon = IconSource.Vector(Icons.Default.Person), // Using Person icon as placeholder, or switch to something else
-        route = EmptyPage
+        titleRes = R.string.home_nav_planner,
+        icon = IconSource.Vector(Icons.Default.CalendarMonth),
+        route = Planner
     )
 )

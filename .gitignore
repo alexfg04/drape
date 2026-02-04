@@ -16,3 +16,4 @@ local.properties
 
 app/google-services.json
 GoogleService-Info.plist
+/.github/copilot-instructions.md

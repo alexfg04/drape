@@ -61,6 +61,12 @@ object EditProfile
 object Profile
 
 @Serializable
+object Planner
+
+@Serializable
+data class SelectOutfit(val day: Int, val month: Int, val year: Int)
+
+@Serializable
 data class ProfileSeasonOutfits(val season: String)
 
 @Serializable
