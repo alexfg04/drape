@@ -4,24 +4,30 @@ import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Rect
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.widget.RemoteViews
 import android.os.Build
+import android.widget.RemoteViews
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.drape.MainActivity
 import com.drape.R
-import android.widget.Toast
+import com.drape.data.repository.PlannedDaysRepository
+import com.drape.util.DateUtils
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.Calendar
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class NotificationReceiver : BroadcastReceiver() {
+
+    @Inject
+    lateinit var plannedDaysRepository: PlannedDaysRepository
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
@@ -29,11 +35,27 @@ class NotificationReceiver : BroadcastReceiver() {
             return
         }
 
-        showNotification(context)
-        // Since it's a daily repeating alarm set via setInexactRepeating, 
-        // we don't strictly need to reschedule it manually here if the device hasn't rebooted.
-        // However, if we used setExactAndAllowWhileIdle due to doze mode, we would need to reschedule.
-        // For this implementation, AlarmManager.INTERVAL_DAY handles the repeat.
+        val pendingResult = goAsync()
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+        scope.launch {
+            try {
+                val today = DateUtils.today()
+                // Check if user has planned anything for today
+                val plannedDay = plannedDaysRepository.getPlannedDay(today)
+                val hasOutfit = plannedDay != null && plannedDay.items.isNotEmpty()
+
+                if (!hasOutfit) {
+                    showNotification(context)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Fallback: show notification if an error occurs
+                showNotification(context)
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 
     companion object {
@@ -70,8 +92,8 @@ class NotificationReceiver : BroadcastReceiver() {
 
 
 
-            val title = "È ora del tuo outfit! 👗"
-            val message = "Il tuo look perfetto ti aspetta. Entra nel camerino e crea il tuo stile per oggi!"
+            val title = "Hai scelto il tuo outfit per oggi? 👗"
+            val message = "Il tuo planner è ancora vuoto! Aggiungi un look e inizia la giornata con stile ✨"
 
             // Custom View with Logo on the Left
             val remoteViews = RemoteViews(context.packageName, R.layout.notification_custom)
@@ -116,7 +138,7 @@ class NotificationReceiver : BroadcastReceiver() {
             // For production: Set to next occurrence of a specific time, e.g., 20:00
             val calendar = Calendar.getInstance().apply {
                 timeInMillis = System.currentTimeMillis()
-                set(Calendar.HOUR_OF_DAY, 20)
+                set(Calendar.HOUR_OF_DAY, 11)
                 set(Calendar.MINUTE, 0)
                 set(Calendar.SECOND, 0)
                 
