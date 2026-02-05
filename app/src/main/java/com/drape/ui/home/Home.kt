@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -47,6 +46,7 @@ import com.drape.ui.theme.DrapeTheme
  *
  * @param onNavigateToProfile Callback invoked to navigate to profile screen.
  * @param onNavigateToStatistics Callback invoked to navigate to statistics screen.
+ * @param onNavigateToPlanner Callback invoked to navigate to planner screen.
  * @param onOutfitClick Callback invoked when an outfit is clicked.
  * @param onClothingItemClick Callback invoked when a clothing item is clicked.
  */
