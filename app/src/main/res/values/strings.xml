@@ -229,5 +229,10 @@
     <string name="calendar_no_upcoming_events_subtitle">Pianifica i tuoi outfit per i prossimi giorni</string>
 
     <!-- General -->
+    <!-- Planner Banner -->
+    <string name="home_planner_banner_title">PIANIFICA IL TUO STILE!</string>
+    <string name="home_planner_banner_subtitle">Con il nuovo planner , crea outfit settimanali in un tap.</string>
+    <string name="home_planner_banner_button">SCOPRI IL FUTURO</string>
+
     <string name="press_again_to_exit">Premi ancora per uscire</string>
 </resources>

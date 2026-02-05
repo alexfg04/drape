@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -16,6 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +56,7 @@ import com.drape.ui.theme.DrapeTheme
 fun HomeScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToStatistics: () -> Unit = {},
+    onNavigateToPlanner: () -> Unit = {},
     onOutfitClick: (Outfit) -> Unit = {},
     onClothingItemClick: (ClothingItem) -> Unit = {},
     onOpenMenu: () -> Unit = {},
@@ -156,6 +162,13 @@ fun HomeScreen(
                 }
             }
 
+            // Planner Banner
+            item {
+                PlannerBanner(
+                    onNavigateToPlanner = onNavigateToPlanner
+                )
+            }
+
             // Recent Clothing Items Section
             if (uiState.recentClothes.isNotEmpty()) {
                 item {
@@ -218,6 +231,98 @@ fun HomeSectionTitle(
         if (showSeeAll) {
             TextButton(onClick = onSeeAllClick) {
                 Text(stringResource(R.string.home_see_all), color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    }
+}
+
+@Composable
+fun PlannerBanner(
+    onNavigateToPlanner: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF2E3192),
+                            Color(0xFF00C6FB)
+                        )
+                    )
+                )
+                .padding(24.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Calendar Icon with Year
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.size(64.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    Text(
+                        text = "2026",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            color = Color(0xFF2E3192)
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .padding(top = 8.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column {
+                    Text(
+                        text = stringResource(R.string.home_planner_banner_title),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color.White,
+                            fontSize = 18.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.home_planner_banner_subtitle),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = onNavigateToPlanner,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF2E3192)
+                        ),
+                        shape = RoundedCornerShape(50),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_planner_banner_button),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         }
     }

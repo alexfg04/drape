@@ -4,8 +4,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
-import androidx.navigation.toRoute
-import androidx.navigation.navigation
+import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
 import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.HomeScreen
@@ -41,6 +40,15 @@ fun NavGraphBuilder.homeNavGraph(
                 },
                 onClothingItemClick = { item ->
                     navController.navigate(ClothingItemDetail(itemId = item.id))
+                },
+                onNavigateToPlanner = {
+                    navController.navigate(Planner) {
+                        popUpTo(HomeGraph) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             )
         }
