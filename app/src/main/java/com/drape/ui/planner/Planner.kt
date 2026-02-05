@@ -119,14 +119,7 @@ fun PlannerScreen(
                             }
                         }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { /* Menu */ }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = stringResource(R.string.calendar_menu)
-                            )
-                        }
-                    },
+                    navigationIcon = {},
                     actions = {
 
                     }

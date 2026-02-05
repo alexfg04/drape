@@ -33,6 +33,7 @@ fun ProfileSeasonOutfitsScreen(
     season: String,
     onBackClick: () -> Unit,
     onNavigateToOutfit: (String) -> Unit,
+    onCreateOutfit: () -> Unit,
     viewModel: ProfileSeasonOutfitsViewModel = hiltViewModel()
 ) {
     LaunchedEffect(season) {
@@ -91,6 +92,7 @@ fun ProfileSeasonOutfitsScreen(
                         onOutfitImageClick = { outfit -> onNavigateToOutfit(outfit.id) },
                         onDeleteOutfit = { /* Prevent delete from here for now */ },
                         onEditOutfit = { outfit -> onNavigateToOutfit(outfit.id) },
+                        onCreateOutfit = onCreateOutfit,
                         onToggleFavorite = { /* No favorite toggle here for now */ }
                     )
                 }

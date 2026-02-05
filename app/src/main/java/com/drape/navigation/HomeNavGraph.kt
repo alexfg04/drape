@@ -124,6 +124,9 @@ fun NavGraphBuilder.homeNavGraph(
             SavedOutfitsScreen(
                 onEditOutfit = { outfit ->
                     navController.navigate(EditOutfit(outfitId = outfit.id))
+                },
+                onCreateOutfit = {
+                    navController.navigate(Camerino())
                 }
             )
         }
@@ -183,6 +186,9 @@ fun NavGraphBuilder.homeNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToOutfit = { outfitId ->
                     navController.navigate(EditOutfit(outfitId))
+                },
+                onCreateOutfit = {
+                    navController.navigate(Camerino())
                 }
             )
         }

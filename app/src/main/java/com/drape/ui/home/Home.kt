@@ -49,7 +49,6 @@ import com.drape.ui.theme.DrapeTheme
  * @param onNavigateToStatistics Callback invoked to navigate to statistics screen.
  * @param onOutfitClick Callback invoked when an outfit is clicked.
  * @param onClothingItemClick Callback invoked when a clothing item is clicked.
- * @param onOpenMenu Callback to open the side menu.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +58,6 @@ fun HomeScreen(
     onNavigateToPlanner: () -> Unit = {},
     onOutfitClick: (Outfit) -> Unit = {},
     onClothingItemClick: (ClothingItem) -> Unit = {},
-    onOpenMenu: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -78,15 +76,7 @@ fun HomeScreen(
                     )
                 )
             },
-            navigationIcon = {
-                IconButton(onClick = onOpenMenu) {
-                    Icon(
-                        Icons.Default.Menu,
-                        contentDescription = stringResource(R.string.home_menu_description),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            },
+            navigationIcon = {},
             actions = {
                 IconButton(onClick = onNavigateToProfile) {
                     Icon(
@@ -243,83 +233,95 @@ fun PlannerBanner(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp),
+            .padding(vertical = 8.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.Transparent
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Box(
-            modifier = Modifier
-                .background(
-                    brush = Brush.horizontalGradient(
-                        colors = listOf(
-                            Color(0xFF2E3192),
-                            Color(0xFF00C6FB)
-                        )
+            modifier = Modifier.background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFF4A49A1), // Softer Deep Blue
+                        Color(0xFF6FC8E3)  // Softer Cyan
                     )
                 )
-                .padding(24.dp)
+            )
         ) {
             Row(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Calendar Icon with Year
+                // Icon container
                 Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.size(64.dp)
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.2f)), // Glassy look
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.DateRange,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.size(32.dp)
                     )
-                    Text(
-                        text = "2026",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 10.sp,
-                            color = Color(0xFF2E3192)
-                        ),
+                    // Small alert badge
+                    Box(
                         modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(top = 8.dp)
-                    )
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .background(Color(0xFFFF6D6D), CircleShape) // Reddish dot for contrast
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = stringResource(R.string.home_planner_banner_title),
                         style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            fontSize = 18.sp
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
                         )
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.home_planner_banner_subtitle),
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.9f),
+                        lineHeight = 16.sp
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = onNavigateToPlanner,
+                        shape = RoundedCornerShape(50),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.White,
-                            contentColor = Color(0xFF2E3192)
-                        ),
-                        shape = RoundedCornerShape(50),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                            contentColor = Color(0xFF4A49A1)
+                        )
                     ) {
                         Text(
                             text = stringResource(R.string.home_planner_banner_button),
-                            fontWeight = FontWeight.Bold
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            )
                         )
                     }
                 }
@@ -527,7 +529,6 @@ fun HomePreview() {
             onNavigateToStatistics = {},
             onOutfitClick = {},
             onClothingItemClick = {},
-            onOpenMenu = {}
         )
     }
 }
