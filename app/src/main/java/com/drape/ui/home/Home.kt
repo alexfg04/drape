@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -19,8 +20,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,19 +65,54 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    HomeContent(
+        uiState = uiState,
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToStatistics = onNavigateToStatistics,
+        onNavigateToPlanner = onNavigateToPlanner,
+        onOutfitClick = onOutfitClick,
+        onClothingItemClick = onClothingItemClick
+    )
+}
+
+/**
+ * Stateless version of HomeScreen for better testability and Preview support.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeContent(
+    uiState: HomeUiState,
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToStatistics: () -> Unit = {},
+    onNavigateToPlanner: () -> Unit = {},
+    onOutfitClick: (Outfit) -> Unit = {},
+    onClothingItemClick: (ClothingItem) -> Unit = {},
+) {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         // Top App Bar
         CenterAlignedTopAppBar(
             title = {
-                Text(
-                    stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Logo icon - replace with your actual logo resource
+                    Image(
+                        painter = painterResource(R.drawable.ic_logo),
+                        contentDescription = null,
+                        modifier = Modifier.size(32.dp)
                     )
-                )
+                    // App name text
+                    Text(
+                        stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                }
             },
             navigationIcon = {},
             actions = {
@@ -361,10 +399,10 @@ fun OutfitCard(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
-                            brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    androidx.compose.ui.graphics.Color.Transparent,
-                                    androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.6f)
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.6f)
                                 )
                             )
                         )
@@ -524,7 +562,18 @@ fun OutfitPlaceholderCard(modifier: Modifier = Modifier, title: String) {
 @Composable
 fun HomePreview() {
     DrapeTheme {
-        HomeScreen(
+        HomeContent(
+            uiState = HomeUiState(
+                outfits = listOf(
+                    Outfit(name = "Summer Look", thumbnailUrl = ""),
+                    Outfit(name = "Business Casual", thumbnailUrl = "")
+                ),
+                recentClothes = listOf(
+                    ClothingItem(name = "White T-Shirt", brand = "Uniqlo", category = "TOP"),
+                    ClothingItem(name = "Blue Jeans", brand = "Levi's", category = "BOTTOM")
+                ),
+                isLoading = false
+            ),
             onNavigateToProfile = {},
             onNavigateToStatistics = {},
             onOutfitClick = {},
