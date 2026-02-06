@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -119,14 +118,7 @@ fun PlannerScreen(
                             }
                         }
                     },
-                    navigationIcon = {
-                        IconButton(onClick = { /* Menu */ }) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = stringResource(R.string.calendar_menu)
-                            )
-                        }
-                    },
+                    navigationIcon = {},
                     actions = {
 
                     }

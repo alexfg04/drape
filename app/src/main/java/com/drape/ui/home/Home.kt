@@ -7,7 +7,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -16,6 +17,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,18 +46,18 @@ import com.drape.ui.theme.DrapeTheme
  *
  * @param onNavigateToProfile Callback invoked to navigate to profile screen.
  * @param onNavigateToStatistics Callback invoked to navigate to statistics screen.
+ * @param onNavigateToPlanner Callback invoked to navigate to planner screen.
  * @param onOutfitClick Callback invoked when an outfit is clicked.
  * @param onClothingItemClick Callback invoked when a clothing item is clicked.
- * @param onOpenMenu Callback to open the side menu.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToProfile: () -> Unit = {},
     onNavigateToStatistics: () -> Unit = {},
+    onNavigateToPlanner: () -> Unit = {},
     onOutfitClick: (Outfit) -> Unit = {},
     onClothingItemClick: (ClothingItem) -> Unit = {},
-    onOpenMenu: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -72,15 +76,7 @@ fun HomeScreen(
                     )
                 )
             },
-            navigationIcon = {
-                IconButton(onClick = onOpenMenu) {
-                    Icon(
-                        Icons.Default.Menu,
-                        contentDescription = stringResource(R.string.home_menu_description),
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-            },
+            navigationIcon = {},
             actions = {
                 IconButton(onClick = onNavigateToProfile) {
                     Icon(
@@ -156,6 +152,13 @@ fun HomeScreen(
                 }
             }
 
+            // Planner Banner
+            item {
+                PlannerBanner(
+                    onNavigateToPlanner = onNavigateToPlanner
+                )
+            }
+
             // Recent Clothing Items Section
             if (uiState.recentClothes.isNotEmpty()) {
                 item {
@@ -218,6 +221,110 @@ fun HomeSectionTitle(
         if (showSeeAll) {
             TextButton(onClick = onSeeAllClick) {
                 Text(stringResource(R.string.home_see_all), color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    }
+}
+
+@Composable
+fun PlannerBanner(
+    onNavigateToPlanner: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Box(
+            modifier = Modifier.background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFF4A49A1), // Softer Deep Blue
+                        Color(0xFF6FC8E3)  // Softer Cyan
+                    )
+                )
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .padding(20.dp)
+                    .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon container
+                Box(
+                    modifier = Modifier
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color.White.copy(alpha = 0.2f)), // Glassy look
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp)
+                    )
+                    // Small alert badge
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .background(Color(0xFFFF6D6D), CircleShape) // Reddish dot for contrast
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = stringResource(R.string.home_planner_banner_title),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.home_planner_banner_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.9f),
+                        lineHeight = 16.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onNavigateToPlanner,
+                        shape = RoundedCornerShape(50),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF4A49A1)
+                        )
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_planner_banner_button),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
             }
         }
     }
@@ -422,7 +529,6 @@ fun HomePreview() {
             onNavigateToStatistics = {},
             onOutfitClick = {},
             onClothingItemClick = {},
-            onOpenMenu = {}
         )
     }
 }

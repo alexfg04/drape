@@ -1,11 +1,17 @@
 package com.drape.ui.my_outfit
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape // explicit import
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -16,6 +22,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.material.icons.filled.Favorite // For empty state
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,8 +35,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -39,6 +48,10 @@ import com.drape.R
 import com.drape.data.model.Outfit
 import com.drape.ui.theme.DrapeTheme
 import com.drape.ui.components.DrapeSnackbar
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.AutoAwesome
+
 
 /**
  * Screen for viewing and managing saved outfits.
@@ -46,9 +59,11 @@ import com.drape.ui.components.DrapeSnackbar
 @Composable
 fun SavedOutfitsScreen(
     viewModel: SavedOutfitsViewModel = hiltViewModel(),
-    onEditOutfit: (Outfit) -> Unit = {}
+    onEditOutfit: (Outfit) -> Unit = {},
+    onCreateOutfit: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
 
     SavedOutfitsScreenContent(
         uiState = uiState,
@@ -56,6 +71,7 @@ fun SavedOutfitsScreen(
         onDismissDetail = { viewModel.selectOutfit(null) },
         onDeleteOutfit = { viewModel.deleteOutfit(it) },
         onEditOutfit = onEditOutfit,
+        onCreateOutfit = onCreateOutfit,
         onToggleFavorite = { viewModel.toggleFavorite(it) },
         onRefresh = { viewModel.refresh() },
         onClearError = { viewModel.clearError() },
@@ -70,6 +86,7 @@ fun SavedOutfitsScreenContent(
     onDismissDetail: () -> Unit,
     onDeleteOutfit: (String) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
+    onCreateOutfit: () -> Unit,
     onToggleFavorite: (Outfit) -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
@@ -141,7 +158,7 @@ fun SavedOutfitsScreenContent(
     }
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.White,
         snackbarHost = {
              SnackbarHost(hostState = snackbarHostState) { data ->
                  DrapeSnackbar(snackbarData = data)
@@ -167,6 +184,7 @@ fun SavedOutfitsScreenContent(
                 onOutfitImageClick = onOutfitImageClick,
                 onDeleteOutfit = { outfitToDelete = it },
                 onEditOutfit = onEditOutfit,
+                onCreateOutfit = onCreateOutfit,
                 onToggleFavorite = onToggleFavorite,
                 onRefresh = onRefresh
             )
@@ -181,6 +199,7 @@ fun SavedOutfitsListContent(
     onOutfitImageClick: (Outfit) -> Unit,
     onDeleteOutfit: (Outfit) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
+    onCreateOutfit: () -> Unit,
     onToggleFavorite: (Outfit) -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -221,6 +240,7 @@ fun SavedOutfitsListContent(
                         onOutfitImageClick = onOutfitImageClick,
                         onDeleteOutfit = onDeleteOutfit,
                         onEditOutfit = onEditOutfit,
+                        onCreateOutfit = onCreateOutfit,
                         onToggleFavorite = onToggleFavorite
                     )
                 }
@@ -384,21 +404,29 @@ fun OutfitDetailDialog(
     }
 }
 
+
+
 @Composable
 fun SavedOutfitsGrid(
     outfits: List<Outfit>,
     favoriteOutfitIds: Set<String>,
+
     onOutfitImageClick: (Outfit) -> Unit,
     onDeleteOutfit: (Outfit) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
+    onCreateOutfit: () -> Unit,
     onToggleFavorite: (Outfit) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 80.dp)
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+        contentPadding = PaddingValues(bottom = 120.dp)
     ) {
+        item(span = { GridItemSpan(2) }) {
+            PremiumBanner(onCreateOutfit = onCreateOutfit)
+        }
+
         items(outfits, key = { it.id }) { outfit ->
             SavedOutfitItemCard(
                 outfit = outfit,
@@ -423,83 +451,105 @@ fun SavedOutfitItemCard(
     modifier: Modifier = Modifier
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = Color.Black.copy(alpha = 0.1f))
+            .clickable { onImageClick() }
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(0.75f) // Taller aspect ratio for premium look
         ) {
-            // Image Section (Clickable for Zoom)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(0.85f)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .clickable { onImageClick() },
-                contentAlignment = Alignment.Center
-            ) {
-                if (outfit.thumbnailUrl.isNotBlank()) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(outfit.thumbnailUrl)
-                            .crossfade(true)
-                            .build(),
-                        contentDescription = outfit.name,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                } else {
-                    Text(
-                        text = stringResource(R.string.saved_outfits_no_image),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                
-                // Star Button Overlay
+            // Hero Image
+            if (outfit.thumbnailUrl.isNotBlank()) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(outfit.thumbnailUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = outfit.name,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
                 Box(
-                    modifier = Modifier.fillMaxSize().padding(8.dp),
-                    contentAlignment = Alignment.TopEnd
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
                 ) {
-                    IconButton(
-                        onClick = onToggleFavorite,
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                            contentDescription = stringResource(R.string.saved_outfits_icon_desc_favorite),
-                            tint = if (isFavorite) Color(0xFFFFD700) else Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                    Text(
+                        text = "👕",
+                        style = MaterialTheme.typography.displayMedium
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = outfit.name,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1
+            // Gradient Overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.1f),
+                                Color.Black.copy(alpha = 0.7f)
+                            ),
+                            startY = 300f
+                        )
+                    )
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            // Action Row (Edit/Delete)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            // Content Overlay (Name & Items)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
             ) {
                 Text(
-                    text = stringResource(R.string.saved_outfits_items_count, outfit.items.size),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = outfit.name,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Text(
+                    text = stringResource(R.string.saved_outfits_items_count, outfit.items.size),
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                )
+            }
+
+            // Floating Favorite Button (Top Right)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(12.dp)
+            ) {
+                 // Glassmorphism effect background
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(Color.Black.copy(alpha = 0.3f))
+                        .clickable { onToggleFavorite() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                        contentDescription = stringResource(R.string.saved_outfits_icon_desc_favorite),
+                        tint = if (isFavorite) Color(0xFFFFD700) else Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
     }
@@ -513,14 +563,22 @@ fun SavedOutfitsTopBar(
     onSearchTriggered: () -> Unit,
     onSearchClosed: () -> Unit
 ) {
-    if (isSearchActive) {
-        SavedOutfitsSearchTopBar(
-            query = searchQuery,
-            onQueryChange = onSearchQueryChange,
-            onClose = onSearchClosed
-        )
-    } else {
-        SavedOutfitsDefaultTopBar(onSearchTriggered = onSearchTriggered)
+    AnimatedContent(
+        targetState = isSearchActive,
+        transitionSpec = {
+            fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
+        },
+        label = "TopBarTransition"
+    ) { active ->
+        if (active) {
+            SavedOutfitsSearchTopBar(
+                query = searchQuery,
+                onQueryChange = onSearchQueryChange,
+                onClose = onSearchClosed
+            )
+        } else {
+            SavedOutfitsDefaultTopBar(onSearchTriggered = onSearchTriggered)
+        }
     }
 }
 
@@ -533,29 +591,48 @@ fun SavedOutfitsSearchTopBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp, horizontal = 16.dp),
+            .statusBarsPadding()
+            .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onClose) {
+        IconButton(
+            onClick = onClose,
+            modifier = Modifier
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), CircleShape)
+                .size(40.dp)
+        ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = stringResource(R.string.wardrobe_search_close),
-                tint = MaterialTheme.colorScheme.onBackground
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(20.dp)
             )
         }
+
+        Spacer(modifier = Modifier.width(12.dp))
 
         TextField(
             value = query,
             onValueChange = onQueryChange,
-            modifier = Modifier.weight(1f),
-            placeholder = { Text(stringResource(R.string.wardrobe_search_placeholder)) },
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(50.dp)), // Pill shape for search
+            placeholder = {
+                Text(
+                    stringResource(R.string.wardrobe_search_placeholder),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            },
             singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge,
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                focusedIndicatorColor = MaterialTheme.colorScheme.primary,
-                unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                cursorColor = MaterialTheme.colorScheme.primary
             ),
             trailingIcon = {
                 if (query.isNotEmpty()) {
@@ -577,31 +654,34 @@ fun SavedOutfitsDefaultTopBar(onSearchTriggered: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 16.dp, horizontal = 16.dp),
+            .statusBarsPadding()
+            .padding(top = 24.dp, bottom = 24.dp, start = 20.dp, end = 20.dp), // More horizontal padding
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = stringResource(R.string.saved_outfits_topbar_title),
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        )
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            IconButton(onClick = onSearchTriggered) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = stringResource(R.string.search),
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(28.dp)
+        Column {
+            Text(
+                text = stringResource(R.string.saved_outfits_topbar_title),
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
-            }
+            )
+            // Optional: Date or Subtitle if available in resources, skipping for now to keep it safe
+        }
 
+        IconButton(
+            onClick = onSearchTriggered,
+            modifier = Modifier
+                .size(48.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), CircleShape)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = stringResource(R.string.search),
+                tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
@@ -610,11 +690,15 @@ fun SavedOutfitsDefaultTopBar(onSearchTriggered: () -> Unit) {
 fun SavedOutfitsLoadingState() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.height(16.dp))
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary,
+                strokeWidth = 3.dp,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = stringResource(R.string.saved_outfits_loading_message),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -625,11 +709,20 @@ fun SavedOutfitsLoadingState() {
 fun SavedOutfitsErrorState(message: String, onRetry: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-            Text(text = "😕", style = MaterialTheme.typography.displayMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+            // Error Illustration Placeholder
+            Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "!", style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.error)
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = stringResource(R.string.saved_outfits_error_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
@@ -640,8 +733,14 @@ fun SavedOutfitsErrorState(message: String, onRetry: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(onClick = onRetry) { Text(stringResource(R.string.saved_outfits_retry_button)) }
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = onRetry,
+                shape = RoundedCornerShape(50),
+                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 16.dp)
+            ) { 
+                Text(stringResource(R.string.saved_outfits_retry_button), fontWeight = FontWeight.Bold) 
+            }
         }
     }
 }
@@ -650,20 +749,36 @@ fun SavedOutfitsErrorState(message: String, onRetry: () -> Unit) {
 fun SavedOutfitsEmptyState() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-            Text(text = "👗", style = MaterialTheme.typography.displayLarge)
-            Spacer(modifier = Modifier.height(16.dp))
+            // Premium Empty State Icon
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Favorite, // Heart icon for saved outfits
+                    contentDescription = null,
+                    modifier = Modifier.size(56.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            
             Text(
                 text = stringResource(R.string.saved_outfits_empty_message),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = stringResource(R.string.saved_outfits_empty_subtitle),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = 280.dp)
             )
         }
     }
@@ -673,11 +788,24 @@ fun SavedOutfitsEmptyState() {
 fun SavedOutfitsNoResultsState(searchQuery: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(32.dp)) {
-            Text(text = "🔍", style = MaterialTheme.typography.displayMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+             Box(
+                modifier = Modifier
+                    .size(100.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                 Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null,
+                    modifier = Modifier.size(48.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
                 text = stringResource(R.string.saved_outfits_search_no_results_title),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
@@ -692,7 +820,105 @@ fun SavedOutfitsNoResultsState(searchQuery: String) {
     }
 }
 
+@Composable
+fun PremiumBanner(
+    onCreateOutfit: () -> Unit = {}
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp), // Compact height
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFF4A49A1), // Softer Deep Blue
+                            Color(0xFF6FC8E3)  // Softer Cyan
+                        )
+                    )
+                )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Icon Section
+                Box(
+                    contentAlignment = Alignment.TopStart,
+                    modifier = Modifier.padding(end = 16.dp)
+                ) {
+                    Icon(
+                        painter = androidx.compose.ui.res.painterResource(R.drawable.apparel_24px),
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(64.dp)
+                            .padding(top = 8.dp) // Push down slightly
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.AutoAwesome,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .align(Alignment.TopStart)
+                            .offset(x = (-4).dp, y = (-4).dp)
+                    )
+                }
+
+                // Text Section
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = stringResource(R.string.premium_banner_title),
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            lineHeight = 28.sp // Better line height for caps
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(R.string.premium_banner_subtitle),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = Color.White.copy(alpha = 0.9f)
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = onCreateOutfit,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
+                        modifier = Modifier
+                            .height(36.dp),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.premium_banner_button),
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2E2D88) // Match brand color
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true)
+
 @Composable
 fun SavedOutfitsScreenPreview() {
     val sampleOutfits = listOf(
@@ -708,6 +934,7 @@ fun SavedOutfitsScreenPreview() {
             onDismissDetail = {},
             onDeleteOutfit = {},
             onEditOutfit = {},
+            onCreateOutfit = {},
             onToggleFavorite = {},
             onRefresh = {},
             onClearError = {},
