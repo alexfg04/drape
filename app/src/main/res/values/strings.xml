@@ -156,6 +156,11 @@
     <string name="saved_outfits_search_no_results_title">Nessun risultato</string>
     <string name="saved_outfits_search_no_results_message">Nessun outfit trovato per "%1$s"</string>
 
+    <!-- Premium Banner -->
+    <string name="premium_banner_title">CREA IL TUO PRIMO OUTFIT</string>
+    <string name="premium_banner_subtitle">Inizia subito la tua prova gratuita!</string>
+    <string name="premium_banner_button">INIZIA ORA</string>
+
     <!-- Wardrobe Screen -->
     <string name="wardrobe_delete_title">Elimina Capo</string>
     <string name="wardrobe_delete_message">Sei sicuro di voler eliminare "%1$s"? Questa azione non può essere annullata.</string>
@@ -231,7 +236,7 @@
     <!-- General -->
     <!-- Planner Banner -->
     <string name="home_planner_banner_title">PIANIFICA IL TUO STILE!</string>
-    <string name="home_planner_banner_subtitle">Con il nuovo planner , crea outfit settimanali in un tap.</string>
+    <string name="home_planner_banner_subtitle">Con il nuovo planner, crea outfit settimanali in un tap.</string>
     <string name="home_planner_banner_button">SCOPRI IL FUTURO</string>
 
     <string name="press_again_to_exit">Premi ancora per uscire</string>

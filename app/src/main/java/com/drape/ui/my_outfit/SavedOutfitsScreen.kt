@@ -880,7 +880,7 @@ fun PremiumBanner(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "CREA IL TUO PRIMO OUTFIT",
+                        text = stringResource(R.string.premium_banner_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
@@ -889,7 +889,7 @@ fun PremiumBanner(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Inizia subito la tua prova gratuita!",
+                        text = stringResource(R.string.premium_banner_subtitle),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             color = Color.White.copy(alpha = 0.9f)
                         )
@@ -904,7 +904,7 @@ fun PremiumBanner(
                         shape = RoundedCornerShape(50)
                     ) {
                         Text(
-                            text = "INIZIA ORA",
+                            text = stringResource(R.string.premium_banner_button),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF2E2D88) // Match brand color
