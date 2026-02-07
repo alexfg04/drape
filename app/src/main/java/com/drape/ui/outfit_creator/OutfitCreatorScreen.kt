@@ -21,9 +21,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
@@ -75,6 +77,7 @@ import kotlin.math.roundToInt
 fun OutfitCreatorScreen(
     outfitId: String? = null,
     onBackClick: () -> Unit = {},
+    onCalendarClick: () -> Unit = {},
     viewModel: OutfitCreatorViewModel = hiltViewModel()
 ) {
     LaunchedEffect(outfitId) {
@@ -295,7 +298,7 @@ fun OutfitCreatorScreen(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 24.dp)
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
+                horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Calendar Button
@@ -305,7 +308,7 @@ fun OutfitCreatorScreen(
                         modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
                         tonalElevation = 4.dp
                     ) {
-                        IconButton(onClick = { /* TODO: Open Calendar logic */ }) {
+                        IconButton(onClick = onCalendarClick) {
                             Icon(
                                 imageVector = Icons.Default.DateRange,
                                 contentDescription = stringResource(R.string.outfit_creator_schedule_description),
@@ -349,18 +352,30 @@ fun OutfitCreatorScreen(
 
                     Spacer(Modifier.width(16.dp))
 
-                    // Suggestions Button
+                    // Virtual Try-On Button (AI Style)
+                    val aiGradient = androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(
+                            Color(0xFFD0BCFF), // Light Purple
+                            Color(0xFF9A82DB), // Purple
+                            Color(0xFF7D5260)  // Darker shade
+                        )
+                    )
+                    
                     Surface(
                         shape = CircleShape,
+                        modifier = Modifier
+                            .size(56.dp) // Slightly larger
+                            .shadow(12.dp, CircleShape)
+                            .border(2.dp, aiGradient, CircleShape),
                         color = MaterialTheme.colorScheme.surface,
-                        modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
-                        tonalElevation = 4.dp
+                        tonalElevation = 8.dp
                     ) {
-                        IconButton(onClick = { /* TODO: Suggestions */ }) {
+                        IconButton(onClick = { /* TODO: Virtual Try-On */ }) {
                             Icon(
-                                imageVector = Icons.Default.Star,
-                                contentDescription = stringResource(R.string.outfit_creator_suggestions_description),
-                                tint = MaterialTheme.colorScheme.primary
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = "AI Virtual Try-On",
+                                tint = Color(0xFF6750A4), // Deep Purple for AI feel
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                     }

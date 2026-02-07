@@ -81,6 +81,9 @@ fun NavGraphBuilder.homeNavGraph(
                             launchSingleTop = true
                         }
                     }
+                },
+                onCalendarClick = {
+                    navController.navigate(Planner)
                 }
             )
         }
@@ -89,7 +92,10 @@ fun NavGraphBuilder.homeNavGraph(
             val route = backStackEntry.toRoute<EditOutfit>()
             OutfitCreatorScreen(
                 outfitId = route.outfitId,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onCalendarClick = {
+                    navController.navigate(Planner)
+                }
             )
         }
 

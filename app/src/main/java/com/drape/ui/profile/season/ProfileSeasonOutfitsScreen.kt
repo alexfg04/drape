@@ -88,12 +88,10 @@ fun ProfileSeasonOutfitsScreen(
 
                     SavedOutfitsGrid(
                         outfits = uiState.outfits,
-                        favoriteOutfitIds = emptySet(), // Not checking favs here for now
                         onOutfitImageClick = { outfit -> onNavigateToOutfit(outfit.id) },
                         onDeleteOutfit = { /* Prevent delete from here for now */ },
                         onEditOutfit = { outfit -> onNavigateToOutfit(outfit.id) },
-                        onCreateOutfit = onCreateOutfit,
-                        onToggleFavorite = { /* No favorite toggle here for now */ }
+                        onCreateOutfit = onCreateOutfit
                     )
                 }
             }
