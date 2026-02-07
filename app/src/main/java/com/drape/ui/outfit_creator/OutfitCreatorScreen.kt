@@ -39,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
@@ -47,7 +46,6 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -126,22 +124,23 @@ fun OutfitCreatorScreen(
                 .background(Color(0xFFF8F9FA))
         ) {
             // PREVIEW AREA (Interactive Canvas)
-            BoxWithConstraints(
+            Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .clipToBounds()
+                    .pointerInput(Unit) {
+                        detectDragGestures { change, dragAmount ->
+                            change.consume()
+                            viewModel.updateCanvasOffset(dragAmount)
+                        }
+                    }
                     .pointerInput(Unit) {
                         // Tap on background to hide selection
                         detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
                     },
                 contentAlignment = Alignment.Center
             ) {
-                // Calculate limits in pixels. BoxWithConstraintsScope is a Density, so toPx() works here.
-                val density = LocalDensity.current
-                val limitX = with(density) { maxWidth.toPx() / 2f }
-                val limitY = with(density) { maxHeight.toPx() / 2f }
-
                 // SCROLLABLE CONTAINER
                 Box(
                     modifier = Modifier
@@ -157,17 +156,10 @@ fun OutfitCreatorScreen(
                             graphicsLayer.record(
                                 size = IntSize(size.width.roundToInt(), size.height.roundToInt())
                             ) {
-                                // Translate the canvas by the offset to capture the correct area
-                                translate(uiState.canvasOffset.x, uiState.canvasOffset.y) {
-                                    this@drawWithContent.drawContent()
-                                }
+                                this@drawWithContent.drawContent()
                             }
                             // Draw the recorded layer to the screen
-                            // We need to translate back by the negative offset because the Box itself is already offset
-                            // by uiState.canvasOffset via the modifier. If we don't, the content will be double-offset.
-                            translate(-uiState.canvasOffset.x, -uiState.canvasOffset.y) {
-                                drawLayer(graphicsLayer)
-                            }
+                            drawLayer(graphicsLayer)
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -183,28 +175,7 @@ fun OutfitCreatorScreen(
                                 isActive = uiState.isSelectionVisible && (selectedCategory == category),
                                 onSelect = { viewModel.selectCategory(category) },
                                 onTransformUpdate = { s, r, o ->
-                                    // Clamp position to keep item STRICTLY on screen
-                                    // Item size is fixed at 250.dp in ClothItem
-                                    val itemSize = 250.dp
-                                    val itemHalfSizePx = with(density) { (itemSize / 2).toPx() }
-                                    
-                                    val currentScale = s ?: itemState.scale
-                                    val scaledHalfSize = itemHalfSizePx * currentScale
-
-                                    val safeOffset = o?.let { offset ->
-                                        // Calculate limits so the edge of the item touches the edge of the screen
-                                        // limit = (ScreenHalfDim - ItemHalfDim)
-                                        // If item is larger than screen, result is negative (center constraint logic might need inversion or just clamp to 0)
-                                        val xConstraint = (limitX - scaledHalfSize).coerceAtLeast(0f)
-                                        val yConstraint = (limitY - scaledHalfSize).coerceAtLeast(0f)
-                                        
-                                        Offset(
-                                            x = offset.x.coerceIn(-xConstraint, xConstraint),
-                                            y = offset.y.coerceIn(-yConstraint, yConstraint)
-                                        )
-                                    }
-                                    
-                                    viewModel.updateTransform(category, s, r, safeOffset)
+                                    viewModel.updateTransform(category, s, r, o)
                                 }
                             )
                         }
