@@ -324,11 +324,12 @@ class OutfitCreatorViewModel @Inject constructor(
                     id = currentOutfitId ?: "",
                     name = outfitName,
                     items = outfitItems,
-                    thumbnailUrl = thumbnailUri?.toString() ?: "",
+                    thumbnailUrl = "", // Will be set by repository after upload
                     createdAt = currentState.originalCreatedAt ?: Timestamp.now(),
                 )
 
-                outfitRepository.saveOutfit(outfit)
+                // Pass thumbnailUri separately so repository can upload it to Firebase Storage
+                outfitRepository.saveOutfit(outfit, thumbnailUri)
                 _uiState.update { it.copy(isSaving = false, saveSuccess = true) }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, errorMessage = e.message) }
