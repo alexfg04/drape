@@ -291,8 +291,10 @@ fun OutfitCreatorScreen(
                     Button(
                         onClick = {
                             scope.launch {
-                                // Hide selection before capture to ensure clean thumbnail
+                                // Hide selection and collapse menu before capture to ensure clean thumbnail
+                                // (the menu affects the canvas size via weight(1f), causing a cropped image)
                                 viewModel.toggleSelectionVisibility(false)
+                                isMenuExpanded = false
                                 // A small delay is needed to ensure the UI recomposition completes before capture
                                 kotlinx.coroutines.delay(250)
                                 val thumbnailUri = captureThumbnail(graphicsLayer, context)
