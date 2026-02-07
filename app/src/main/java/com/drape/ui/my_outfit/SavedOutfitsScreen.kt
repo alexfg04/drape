@@ -72,7 +72,6 @@ fun SavedOutfitsScreen(
         onDeleteOutfit = { viewModel.deleteOutfit(it) },
         onEditOutfit = onEditOutfit,
         onCreateOutfit = onCreateOutfit,
-        onToggleFavorite = { viewModel.toggleFavorite(it) },
         onRefresh = { viewModel.refresh() },
         onClearError = { viewModel.clearError() },
         onClearDeleteSuccess = { viewModel.clearDeleteSuccess() }
@@ -87,7 +86,6 @@ fun SavedOutfitsScreenContent(
     onDeleteOutfit: (String) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
     onCreateOutfit: () -> Unit,
-    onToggleFavorite: (Outfit) -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
     onClearDeleteSuccess: () -> Unit
@@ -149,16 +147,14 @@ fun SavedOutfitsScreenContent(
     uiState.selectedOutfit?.let { outfit ->
         OutfitDetailDialog(
             outfit = outfit,
-            isFavorite = uiState.favoriteOutfitIds.contains(outfit.id),
             onDismiss = onDismissDetail,
-            onToggleFavorite = { onToggleFavorite(outfit) },
             onDelete = { outfitToDelete = outfit },
             onEdit = { onEditOutfit(outfit) }
         )
     }
 
     Scaffold(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
              SnackbarHost(hostState = snackbarHostState) { data ->
                  DrapeSnackbar(snackbarData = data)
@@ -185,7 +181,6 @@ fun SavedOutfitsScreenContent(
                 onDeleteOutfit = { outfitToDelete = it },
                 onEditOutfit = onEditOutfit,
                 onCreateOutfit = onCreateOutfit,
-                onToggleFavorite = onToggleFavorite,
                 onRefresh = onRefresh
             )
         }
@@ -200,7 +195,6 @@ fun SavedOutfitsListContent(
     onDeleteOutfit: (Outfit) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
     onCreateOutfit: () -> Unit,
-    onToggleFavorite: (Outfit) -> Unit,
     onRefresh: () -> Unit
 ) {
     Column(
@@ -236,12 +230,10 @@ fun SavedOutfitsListContent(
                 } else {
                     SavedOutfitsGrid(
                         outfits = filteredOutfits,
-                        favoriteOutfitIds = uiState.favoriteOutfitIds,
                         onOutfitImageClick = onOutfitImageClick,
                         onDeleteOutfit = onDeleteOutfit,
                         onEditOutfit = onEditOutfit,
-                        onCreateOutfit = onCreateOutfit,
-                        onToggleFavorite = onToggleFavorite
+                        onCreateOutfit = onCreateOutfit
                     )
                 }
             }
@@ -255,9 +247,7 @@ fun SavedOutfitsListContent(
 @Composable
 fun OutfitDetailDialog(
     outfit: Outfit,
-    isFavorite: Boolean,
     onDismiss: () -> Unit,
-    onToggleFavorite: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit // Added callback for edit
 ) {
@@ -288,14 +278,7 @@ fun OutfitDetailDialog(
                         )
                     }
                     
-                    IconButton(onClick = onToggleFavorite) {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                            contentDescription = stringResource(R.string.saved_outfits_icon_desc_favorite),
-                            tint = if (isFavorite) Color(0xFFFFD700) else MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
+
                 }
 
                 Column(
@@ -409,13 +392,10 @@ fun OutfitDetailDialog(
 @Composable
 fun SavedOutfitsGrid(
     outfits: List<Outfit>,
-    favoriteOutfitIds: Set<String>,
-
     onOutfitImageClick: (Outfit) -> Unit,
     onDeleteOutfit: (Outfit) -> Unit,
     onEditOutfit: (Outfit) -> Unit,
-    onCreateOutfit: () -> Unit,
-    onToggleFavorite: (Outfit) -> Unit
+    onCreateOutfit: () -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -430,11 +410,9 @@ fun SavedOutfitsGrid(
         items(outfits, key = { it.id }) { outfit ->
             SavedOutfitItemCard(
                 outfit = outfit,
-                isFavorite = favoriteOutfitIds.contains(outfit.id),
                 onImageClick = { onOutfitImageClick(outfit) },
                 onDelete = { onDeleteOutfit(outfit) }, // Pass the whole outfit for confirmation
-                onEdit = { onEditOutfit(outfit) },
-                onToggleFavorite = { onToggleFavorite(outfit) }
+                onEdit = { onEditOutfit(outfit) }
             )
         }
     }
@@ -443,20 +421,18 @@ fun SavedOutfitsGrid(
 @Composable
 fun SavedOutfitItemCard(
     outfit: Outfit,
-    isFavorite: Boolean,
     onImageClick: () -> Unit,
     onDelete: () -> Unit,
     onEdit: () -> Unit,
-    onToggleFavorite: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = Color.Black.copy(alpha = 0.1f))
+            .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
             .clickable { onImageClick() }
     ) {
         Box(
@@ -528,29 +504,7 @@ fun SavedOutfitItemCard(
                 )
             }
 
-            // Floating Favorite Button (Top Right)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(12.dp)
-            ) {
-                 // Glassmorphism effect background
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(androidx.compose.foundation.shape.CircleShape)
-                        .background(Color.Black.copy(alpha = 0.3f))
-                        .clickable { onToggleFavorite() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
-                        contentDescription = stringResource(R.string.saved_outfits_icon_desc_favorite),
-                        tint = if (isFavorite) Color(0xFFFFD700) else Color.White,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
+
         }
     }
 }
@@ -838,8 +792,8 @@ fun PremiumBanner(
                 .background(
                     Brush.horizontalGradient(
                         colors = listOf(
-                            Color(0xFF4A49A1), // Softer Deep Blue
-                            Color(0xFF6FC8E3)  // Softer Cyan
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.tertiary
                         )
                     )
                 )
@@ -858,7 +812,7 @@ fun PremiumBanner(
                     Icon(
                         painter = androidx.compose.ui.res.painterResource(R.drawable.apparel_24px),
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .size(64.dp)
                             .padding(top = 8.dp) // Push down slightly
@@ -866,7 +820,7 @@ fun PremiumBanner(
                     Icon(
                         imageVector = Icons.Filled.AutoAwesome,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier
                             .size(24.dp)
                             .align(Alignment.TopStart)
@@ -883,7 +837,7 @@ fun PremiumBanner(
                         text = stringResource(R.string.premium_banner_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             lineHeight = 28.sp // Better line height for caps
                         )
                     )
@@ -891,13 +845,13 @@ fun PremiumBanner(
                     Text(
                         text = stringResource(R.string.premium_banner_subtitle),
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White.copy(alpha = 0.9f)
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
                         )
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = onCreateOutfit,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onPrimary),
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 0.dp),
                         modifier = Modifier
                             .height(36.dp),
@@ -907,7 +861,7 @@ fun PremiumBanner(
                             text = stringResource(R.string.premium_banner_button),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2E2D88) // Match brand color
+                                color = MaterialTheme.colorScheme.primary
                             )
                         )
                     }
@@ -935,7 +889,6 @@ fun SavedOutfitsScreenPreview() {
             onDeleteOutfit = {},
             onEditOutfit = {},
             onCreateOutfit = {},
-            onToggleFavorite = {},
             onRefresh = {},
             onClearError = {},
             onClearDeleteSuccess = {}

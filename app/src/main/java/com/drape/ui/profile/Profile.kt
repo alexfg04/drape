@@ -1,6 +1,7 @@
 package com.drape.ui.profile
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +14,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -72,6 +75,7 @@ fun ProfileScreen(
     val context = LocalContext.current
 
     var coverImageUri by remember { mutableStateOf<Uri?>(null) }
+    var isTryOnExpanded by remember { mutableStateOf(false) }
     // profileImageUri removed as we use user.photoUrl now
 
     val coverImageLauncher = rememberImagePicker(
@@ -306,8 +310,156 @@ fun ProfileScreen(
                 backgroundImageRes = R.drawable.primavera,
                 onClick = { onSeasonClick("Primavera") }
             )
+
         }
 
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Body Reference Section (Virtual Try-On)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            var isTryOnExpanded by remember { mutableStateOf(false) }
+
+            // Header with Toggle
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { isTryOnExpanded = !isTryOnExpanded }
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Virtual Try-On",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Icon(
+                    imageVector = if (isTryOnExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (isTryOnExpanded) "Collassa" else "Espandi",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                // Collapsible Content
+                androidx.compose.animation.AnimatedVisibility(visible = isTryOnExpanded) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Advice Section
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "Consigli per una foto perfetta:",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            val adviceList = listOf(
+                                "Usa uno specchio a figura intera",
+                                "Assicurati che la stanza sia ben illuminata",
+                                "Indossa abiti aderenti per misurazioni precise",
+                                "Tieni il telefono all'altezza della vita",
+                                "Assicurati che tutto il corpo sia visibile"
+                            )
+                            adviceList.forEach { advice ->
+                                Row(verticalAlignment = Alignment.Top) {
+                                    Text("• ", color = MaterialTheme.colorScheme.primary)
+                                    Text(
+                                        text = advice,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+
+                        // Placeholder Image Area
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                    RoundedCornerShape(12.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                             // Placeholder for user body image
+                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Nessuna foto salvata",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                                )
+                             }
+                        }
+
+                        // Action Buttons
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { /* TODO: Take Photo */ },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Scatta Foto")
+                            }
+                            OutlinedButton(
+                                onClick = { /* TODO: Upload Photo */ },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Carica")
+                            }
+                        }
+                        
+                        // Edit Button (Visible only if photo exists - simulated as always visible for layout)
+                        TextButton(
+                            onClick = { /* TODO: Edit Photo */ },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Modifica Foto")
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(32.dp))
 
         // Bottom Actions Section
