@@ -87,7 +87,6 @@ fun SavedOutfitsScreenContent(
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
     onClearDeleteSuccess: () -> Unit,
-    onClearFavoriteToggled: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var searchQuery by remember { mutableStateOf("") }
@@ -891,7 +890,6 @@ fun SavedOutfitsScreenPreview() {
             onRefresh = {},
             onClearError = {},
             onClearDeleteSuccess = {},
-            onClearFavoriteToggled = {}
         )
     }
 }
