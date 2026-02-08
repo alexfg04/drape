@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.drape.R
 
+import com.drape.ui.components.DrapeSnackbar
 import com.drape.ui.theme.DrapeTheme
 
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,6 +38,7 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlannerScreen(
+    outfitPlanned: Boolean = false,
     onNavigateToSelectOutfit: (day: Int, month: Int, year: Int) -> Unit = { _, _, _ -> },
     viewModel: PlannerViewModel = hiltViewModel()
 ) {
@@ -47,6 +49,38 @@ fun PlannerScreen(
     var showBottomSheet by remember { mutableStateOf(false) }
     var selectedDay by remember { mutableStateOf<Int?>(null) }
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val removeSuccessMessage = stringResource(R.string.planner_outfit_removed)
+    LaunchedEffect(uiState.removeSuccess) {
+        if (uiState.removeSuccess) {
+            snackbarHostState.showSnackbar(
+                message = removeSuccessMessage,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearRemoveSuccess()
+        }
+    }
+
+    val addSuccessMessage = stringResource(R.string.planner_outfit_added)
+    LaunchedEffect(outfitPlanned) {
+        if (outfitPlanned) {
+            snackbarHostState.showSnackbar(
+                message = addSuccessMessage,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearError()
+        }
+    }
 
     // Get planned outfits for selected day from ViewModel (only when a day is selected)
     val selectedDayOutfits = remember(selectedDay, uiState.plannedDays, uiState.outfits) {
@@ -93,6 +127,11 @@ fun PlannerScreen(
     }
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
+            }
+        },
         topBar = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 CenterAlignedTopAppBar(

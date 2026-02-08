@@ -60,6 +60,7 @@ import com.drape.R
 @Composable
 fun UploadItemScreen(
     onBackClick: () -> Unit,
+    onUploadSuccess: () -> Unit = onBackClick,
     viewModel: UploadClothesViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -67,6 +68,7 @@ fun UploadItemScreen(
     UploadItemContent(
         uiState = uiState,
         onBackClick = onBackClick,
+        onUploadSuccess = onUploadSuccess,
         onUploadClothingItem = viewModel::uploadClothingItem,
         onProcessImage = viewModel::processImage,
         onClearError = viewModel::clearError,
@@ -83,6 +85,7 @@ fun UploadItemScreen(
 fun UploadItemContent(
     uiState: UploadClothesUiState,
     onBackClick: () -> Unit = {},
+    onUploadSuccess: () -> Unit = onBackClick,
     onUploadClothingItem: (Uri, String, String, String, String, String, Boolean) -> Unit,
     onProcessImage: (Uri, Boolean) -> Unit,
     onClearError: () -> Unit,
@@ -115,13 +118,11 @@ fun UploadItemContent(
     val noImageErrorMessage = stringResource(R.string.upload_clothes_error_no_image)
     val errorMessage = uiState.errorMessage // errorMessage is already a String from ViewModel
     
-    // Handle successful upload
+    // Navigate back on successful upload
     LaunchedEffect(uiState.isUploadSuccessful) {
         if (uiState.isUploadSuccessful) {
-            snackbarHostState.showSnackbar(successMessage)
             onClearSuccessState()
-            // Navigate back to wardrobe
-            onBackClick()
+            onUploadSuccess()
         }
     }
 

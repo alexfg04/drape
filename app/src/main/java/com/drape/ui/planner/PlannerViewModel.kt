@@ -158,6 +158,7 @@ class PlannerViewModel @Inject constructor(
             try {
                 val dateString = getDateStringForDay(day)
                 plannedDaysRepository.removeOutfitFromDay(dateString, outfitId)
+                _uiState.value = _uiState.value.copy(removeSuccess = true)
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(errorMessage = e.message)
             }
@@ -167,11 +168,16 @@ class PlannerViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
+
+    fun clearRemoveSuccess() {
+        _uiState.value = _uiState.value.copy(removeSuccess = false)
+    }
 }
 
 data class PlannerUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
+    val removeSuccess: Boolean = false,
     val viewMode: PlannerViewMode = PlannerViewMode.MONTHLY,
     val currentYear: Int = 2026,
     val currentMonth: Int = 0, // 0-indexed (January = 0)

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,12 +39,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.drape.R
 import com.drape.data.model.Outfit
+import com.drape.ui.components.DrapeSnackbar
 import com.drape.ui.theme.DrapeTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectOutfitScreen(
     onBackClick: () -> Unit = {},
+    onOutfitPlanned: () -> Unit = {},
     viewModel: SelectOutfitViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -51,11 +54,27 @@ fun SelectOutfitScreen(
     var selectedTab by remember { mutableStateOf(0) }
     var selectedOutfitId by remember { mutableStateOf<String?>(null) }
     var selectedLabel by remember { mutableStateOf("Daily") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearError()
+        }
+    }
 
     // Use outfits from ViewModel
     val outfits = uiState.outfits
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
+            }
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -104,7 +123,7 @@ fun SelectOutfitScreen(
                     onLabelSelected = { selectedLabel = it },
                     onConfirm = { 
                         viewModel.addOutfitToDay(selectedOutfitId!!, selectedLabel) {
-                            onBackClick()
+                            onOutfitPlanned()
                         }
                     },
                     isLoading = uiState.isSaving

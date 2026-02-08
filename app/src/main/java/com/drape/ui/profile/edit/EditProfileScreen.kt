@@ -3,10 +3,8 @@ package com.drape.ui.profile.edit
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,19 +15,21 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
+import com.drape.ui.components.DrapeSnackbar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +39,28 @@ fun EditProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val saveSuccessMessage = stringResource(R.string.profile_saved)
+    LaunchedEffect(uiState.saveSuccess) {
+        if (uiState.saveSuccess) {
+            snackbarHostState.showSnackbar(
+                message = saveSuccessMessage,
+                duration = SnackbarDuration.Short
+            )
+            viewModel.clearSaveSuccess()
+        }
+    }
+
+    LaunchedEffect(uiState.errorMessage) {
+        uiState.errorMessage?.let {
+            snackbarHostState.showSnackbar(
+                message = it,
+                duration = SnackbarDuration.Long
+            )
+            viewModel.clearError()
+        }
+    }
     
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -51,51 +73,15 @@ fun EditProfileScreen(
     ) { uri ->
         viewModel.onCoverPhotoSelected(uri)
     }
-    
-       var isPickingCover by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { _ ->
-        // We try to launch picker regardless of permission result as fallback
-        val picker = if (isPickingCover) coverPickerLauncher else imagePickerLauncher
-        picker.launch(
-             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
-    }
-
-    fun launchPicker(isCover: Boolean) {
-        isPickingCover = isCover
-        val picker = if (isCover) coverPickerLauncher else imagePickerLauncher
-        
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (androidx.core.content.ContextCompat.checkSelfPermission(
-                    context,
-                    android.Manifest.permission.READ_MEDIA_IMAGES
-                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            ) {
-                picker.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-            } else {
-                permissionLauncher.launch(android.Manifest.permission.READ_MEDIA_IMAGES)
-            }
-        } else {
-            if (androidx.core.content.ContextCompat.checkSelfPermission(
-                    context,
-                    android.Manifest.permission.READ_EXTERNAL_STORAGE
-                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-            ) {
-                picker.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                )
-            } else {
-                permissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        }
-    }
+    val pickImageRequest = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
 
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState) { data ->
+                DrapeSnackbar(snackbarData = data)
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text("Modifica Profilo") },
@@ -137,7 +123,7 @@ fun EditProfileScreen(
                 val coverModel = uiState.selectedCoverUri ?: uiState.currentCoverUrl
                 
                 Surface(
-                    modifier = Modifier.fillMaxSize().clickable { launchPicker(true) },
+                    modifier = Modifier.fillMaxSize().clickable { coverPickerLauncher.launch(pickImageRequest) },
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                 ) {
@@ -168,7 +154,7 @@ fun EditProfileScreen(
                     }
                 }
                  SmallFloatingActionButton(
-                    onClick = { launchPicker(true) },
+                    onClick = { coverPickerLauncher.launch(pickImageRequest) },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
@@ -187,7 +173,7 @@ fun EditProfileScreen(
                     modifier = Modifier
                         .size(120.dp)
                         .clickable {
-                        launchPicker(false)
+                        imagePickerLauncher.launch(pickImageRequest)
                     },
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer
@@ -222,7 +208,7 @@ fun EditProfileScreen(
                 
                 SmallFloatingActionButton(
                     onClick = {
-                        launchPicker(false)
+                        imagePickerLauncher.launch(pickImageRequest)
                     },
                     modifier = Modifier.size(32.dp),
                     containerColor = MaterialTheme.colorScheme.primary

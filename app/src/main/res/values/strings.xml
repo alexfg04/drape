@@ -240,4 +240,12 @@
     <string name="home_planner_banner_button">SCOPRI IL FUTURO</string>
 
     <string name="press_again_to_exit">Premi ancora per uscire</string>
+
+    <!-- Snackbar Messages -->
+    <string name="planner_outfit_removed">Outfit rimosso dal giorno</string>
+    <string name="planner_outfit_added">Outfit aggiunto al giorno</string>
+    <string name="profile_saved">Profilo salvato con successo</string>
+    <string name="profile_save_error">Errore durante il salvataggio del profilo</string>
+    <string name="saved_outfits_favorite_added">Aggiunto ai preferiti</string>
+    <string name="saved_outfits_favorite_removed">Rimosso dai preferiti</string>
 </resources>

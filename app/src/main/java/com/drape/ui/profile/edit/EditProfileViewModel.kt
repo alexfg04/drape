@@ -6,11 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.drape.data.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -57,7 +55,7 @@ class EditProfileViewModel @Inject constructor(
 
      fun saveProfile(onSuccess: () -> Unit) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
                 authRepository.updateProfile(
                     displayName = uiState.value.displayName,
@@ -65,14 +63,20 @@ class EditProfileViewModel @Inject constructor(
                     photoUri = uiState.value.selectedPhotoUri,
                     coverPhotoUri = uiState.value.selectedCoverUri
                 )
+                _uiState.update { it.copy(isLoading = false, saveSuccess = true) }
                 onSuccess()
             } catch (e: Exception) {
-                // Handle error
-                e.printStackTrace()
-            } finally {
-                _uiState.update { it.copy(isLoading = false) }
+                _uiState.update { it.copy(isLoading = false, errorMessage = e.message) }
             }
         }
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
+    fun clearSaveSuccess() {
+        _uiState.update { it.copy(saveSuccess = false) }
     }
 }
 
@@ -83,5 +87,7 @@ data class EditProfileUiState(
     val selectedPhotoUri: Uri? = null,
     val currentCoverUrl: String? = null,
     val selectedCoverUri: Uri? = null,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val saveSuccess: Boolean = false,
+    val errorMessage: String? = null
 )
