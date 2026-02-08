@@ -62,6 +62,7 @@ import com.drape.data.model.ItemCategory
 import com.drape.ui.components.DrapeSnackbar
 import com.drape.ui.components.getDisplayNameForCategory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -112,32 +113,28 @@ fun OutfitCreatorScreen(
     }
 
     Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState) { data ->
-                DrapeSnackbar(snackbarData = data)
-            }
-        },
         containerColor = Color.Transparent, // Preserve background color from Column
         contentWindowInsets = WindowInsets(0)
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(Color(0xFFF8F9FA))
-        ) {
-            // PREVIEW AREA (Interactive Canvas)
-            Box(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .clipToBounds()
-                    .pointerInput(Unit) {
-                        detectDragGestures { change, dragAmount ->
-                            change.consume()
-                            viewModel.updateCanvasOffset(dragAmount)
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(Color(0xFFF8F9FA))
+            ) {
+                // PREVIEW AREA (Interactive Canvas)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .clipToBounds()
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                viewModel.updateCanvasOffset(dragAmount)
+                            }
                         }
-                    }
                     .pointerInput(Unit) {
                         // Tap on background to hide selection
                         detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
@@ -343,7 +340,20 @@ fun OutfitCreatorScreen(
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 8.dp
                     ) {
-                        IconButton(onClick = { /* TODO: Virtual Try-On */ }) {
+                        IconButton(onClick = {
+                            if (snackbarHostState.currentSnackbarData == null) {
+                                scope.launch {
+                                    val job = launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Funzionalità a breve disponibile! ✨",
+                                            duration = SnackbarDuration.Indefinite
+                                        )
+                                    }
+                                    delay(800)
+                                    job.cancel()
+                                }
+                            }
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
                                 contentDescription = "AI Virtual Try-On",
@@ -508,6 +518,17 @@ fun OutfitCreatorScreen(
                         }
                     }
                 }
+                }
+            }
+
+            // Central Snackbars
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(32.dp) // Add padding to avoid screen edges if full width
+            ) { data ->
+                DrapeSnackbar(snackbarData = data)
             }
         }
     }

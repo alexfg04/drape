@@ -3,6 +3,7 @@ package com.drape.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
@@ -40,6 +41,10 @@ fun DrapeSnackbar(
                     message.contains("Caricato", ignoreCase = true) ||
                     message.contains("successful", ignoreCase = true)
 
+    val isPremium = message.contains("A breve", ignoreCase = true) ||
+                    message.contains("Coming Soon", ignoreCase = true) ||
+                    message.contains("✨")
+
     val (containerColor, contentColor, icon) = when {
         isError -> Triple(
             MaterialTheme.colorScheme.errorContainer,
@@ -50,6 +55,11 @@ fun DrapeSnackbar(
             Color(0xFFE8F5E9), // Premium Light Green
             Color(0xFF2E7D32), // Deep Green
             Icons.Default.CheckCircle
+        )
+        isPremium -> Triple(
+            Color(0xFFECE6F0), // Light Purple/Surface Variant
+            Color(0xFF6750A4), // Deep Purple
+            Icons.Default.AutoAwesome
         )
         else -> Triple(
             MaterialTheme.colorScheme.surfaceVariant,
