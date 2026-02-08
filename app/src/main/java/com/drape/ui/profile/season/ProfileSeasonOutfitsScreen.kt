@@ -1,22 +1,16 @@
 package com.drape.ui.profile.season
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.drape.ui.my_outfit.SavedOutfitsGrid
 import com.drape.ui.my_outfit.SavedOutfitsLoadingState
-import com.drape.data.model.Outfit
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -89,8 +83,6 @@ fun ProfileSeasonOutfitsScreen(
                     SavedOutfitsGrid(
                         outfits = uiState.outfits,
                         onOutfitImageClick = { outfit -> onNavigateToOutfit(outfit.id) },
-                        onDeleteOutfit = { /* Prevent delete from here for now */ },
-                        onEditOutfit = { outfit -> onNavigateToOutfit(outfit.id) },
                         onCreateOutfit = onCreateOutfit
                     )
                 }

@@ -114,7 +114,6 @@ fun UploadItemContent(
     var color by rememberSaveable { mutableStateOf("") }
     var season by rememberSaveable { mutableStateOf("") }
 
-    val successMessage = stringResource(R.string.upload_clothes_success)
     val noImageErrorMessage = stringResource(R.string.upload_clothes_error_no_image)
     val errorMessage = uiState.errorMessage // errorMessage is already a String from ViewModel
     

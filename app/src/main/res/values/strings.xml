@@ -43,23 +43,18 @@
     <string name="login_legal_suffix">.</string>
 
     <!-- Home Screen -->
-    <string name="home_menu_description">Menu</string>
     <string name="home_profile_description">Profilo</string>
-    <string name="home_add_description">Aggiungi</string>
     <string name="home_greeting">Ciao, Bentornato!</string>
     <string name="home_greeting_subtitle">Ecco cosa c\'è nel tuo armadio oggi.</string>
     <string name="home_section_outfits">I tuoi Outfit</string>
     <string name="home_section_recent_items">Ultimi Capi Aggiunti</string>
     <string name="home_see_all">Vedi tutto</string>
-    <string name="home_outfit_casual">Casual</string>
-    <string name="home_outfit_elegant">Elegante</string>
 
     <!-- Color Selection Screen -->
     <string name="color_selection_title">Scegli il tuo colore preferito</string>
     <string name="color_selection_subtitle">Personalizza la tua esperienza e scopri outfit abbinati al tuo gusto.</string>
     <string name="continue_button">Continua</string>
     <string name="outfit_preview_label">Anteprima Outfit</string>
-    <string name="color_selection_personalize">Personalizza il tuo stile</string>
     <string name="outfit_preview_subtitle">Personalizza il tuo stile</string>
 
     <!-- Home Sections -->
@@ -67,18 +62,12 @@
     <string name="home_nav_camerino">I tuoi Outfit</string>
     <string name="home_nav_planner">Planner</string>
     <string name="home_nav_wardrobe">Il tuo Armadio</string>
-    <string name="home_nav_profile">Profilo</string>
-    <string name="home_page_camerino">Pagina Camerino</string>
-    <string name="home_page_add">Pagina Aggiungi</string>
-    <string name="home_page_profile">Pagina Profilo</string>
 
     <!-- Common -->
     <string name="back_description">Indietro</string>
 
     <!-- Add Screen -->
     <string name="add_title">Aggiungi Vestiti</string>
-    <string name="add_subtitle">Espandi il tuo guardaroba con nuovi capi</string>
-    <string name="add_button">Aggiungi Nuovo Capo</string>
 
     <!-- Outfit Creator Screen -->
     <string name="outfit_creator_category_top">Sopra</string>
@@ -88,7 +77,6 @@
     <string name="outfit_creator_save_button">Salva Outfit</string>
     <string name="outfit_creator_back_description">Torna indietro</string>
     <string name="outfit_creator_schedule_description">Programma outfit</string>
-    <string name="outfit_creator_suggestions_description">Suggerimenti</string>
     <string name="outfit_creator_success_title">Successo</string>
     <string name="outfit_creator_success_message">Outfit salvato correttamente!</string>
     <string name="outfit_creator_menu_title_expanded">Personalizza Look</string>
@@ -114,7 +102,6 @@
     <string name="upload_clothes_name">Nome</string>
     <string name="upload_clothes_brand">Marca</string>
     <string name="upload_clothes_category">Categoria</string>
-    <string name="upload_clothes_color">Colore</string>
     <string name="upload_clothes_season">Stagione</string>
 
     <string-array name="seasons">
@@ -141,7 +128,6 @@
     <string name="saved_outfits_delete_message">Sei sicuro di voler eliminare l\'outfit "%1$s"? Questa azione non può essere annullata.</string>
     <string name="saved_outfits_delete_confirm">Elimina</string>
     <string name="saved_outfits_delete_cancel">Annulla</string>
-    <string name="saved_outfits_icon_desc_favorite">Preferiti</string>
     <string name="saved_outfits_no_image">No Image</string>
     <string name="saved_outfits_topbar_title">I miei outfit</string>
     <string name="saved_outfits_empty_message">Nessun outfit salvato</string>
@@ -163,7 +149,6 @@
 
     <!-- Wardrobe Screen -->
     <string name="wardrobe_delete_title">Elimina Capo</string>
-    <string name="wardrobe_delete_message">Sei sicuro di voler eliminare "%1$s"? Questa azione non può essere annullata.</string>
     <string name="wardrobe_delete_confirm">Elimina</string>
     <string name="wardrobe_delete_cancel">Chiudi</string>
     <string name="wardrobe_loading_message">Caricamento vestiti...</string>
@@ -174,8 +159,6 @@
     <string name="wardrobe_no_results_title">Nessun risultato</string>
     <string name="wardrobe_no_results_search">Nessun capo trovato per "%1$s"</string>
     <string name="wardrobe_no_results_filter">Nessun capo nella categoria "%1$s"</string>
-    <string name="wardrobe_screen_title">Guardaroba</string>
-    <string name="wardrobe_search_hint">Cerca vestiti</string>
     <string name="wardrobe_item_detail_brand">Brand</string>
     <string name="wardrobe_item_detail_category">Categoria</string>
     <string name="wardrobe_item_detail_color">Colore</string>
@@ -190,9 +173,7 @@
     <string name="profile">Profilo</string>
 
     <!-- Planner Screen -->
-    <string name="planner_title">Seleziona Outfit per il Giorno</string>
     <string name="planner_add_outfit">Aggiungi Outfit</string>
-    <string name="planner_planned_outfits">OUTFIT PIANIFICATI</string>
     <string name="planner_filter">Filtra</string>
     <string name="planner_tab_all">Tutti gli Outfit</string>
     <string name="planner_tab_creator">Salvati</string>
@@ -201,13 +182,7 @@
     <string name="planner_label">OCCASIONE</string>
     <string name="planner_confirm">Conferma Selezione</string>
     <string name="planner_create_new">CREA NUOVO OUTFIT</string>
-    <string name="planner_casual_friday">Look Casual Venerdì</string>
-    <string name="planner_fall_cafe">Appuntamento Autunnale</string>
-    <string name="planner_office_smart">Ufficio Elegante</string>
-    <string name="planner_weekend_brunch">Brunch del Weekend</string>
-    <string name="planner_summer_breeze">Brezza Estiva</string>
     <string name="planner_back">Indietro</string>
-    <string name="planner_selected">Selezionato</string>
     <string name="planner_time_daily">Giornaliero</string>
     <string name="planner_time_morning">Mattina</string>
     <string name="planner_time_afternoon">Pomeriggio</string>
@@ -223,12 +198,6 @@
     <string name="calendar_view_monthly">Mensile</string>
     <string name="calendar_view_weekly">Settimanale</string>
     <string name="calendar_upcoming_highlights">Prossimi Eventi</string>
-    <string name="calendar_event_date_night">Serata Romantica</string>
-    <string name="calendar_event_dressy_casual">Elegante Casual</string>
-    <string name="calendar_event_presentation">Presentazione</string>
-    <string name="calendar_event_formal_business">Business Formale</string>
-    <string name="calendar_add_description">Crea Nuovo Evento</string>
-    <string name="calendar_menu">Menu</string>
     <string name="calendar_add">Aggiungi</string>
     <string name="calendar_no_upcoming_events">Nessun evento in programma</string>
     <string name="calendar_no_upcoming_events_subtitle">Pianifica i tuoi outfit per i prossimi giorni</string>

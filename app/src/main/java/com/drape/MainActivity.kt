@@ -154,7 +154,7 @@ fun DrapeApp() {
                     { appState.navController.navigate(Camerino()) }
                 }
                 
-                val icon = if (isWardrobe) Icons.Default.Add else Icons.Default.Add // Can be different if needed
+                val icon = Icons.Default.Add
                 val contentDescription = if (isWardrobe) stringResource(R.string.add_item) else stringResource(R.string.create_outfit)
 
                 FloatingActionButton(

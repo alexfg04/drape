@@ -36,7 +36,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import android.Manifest
 import android.os.Build
@@ -45,10 +44,8 @@ import androidx.core.content.ContextCompat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.drape.ui.upload_clothes.rememberImagePicker
 import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
-import android.net.Uri
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.drape.receivers.NotificationReceiver
 
@@ -73,15 +70,6 @@ fun ProfileScreen(
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
     val user by profileViewModel.userFlow.collectAsState(initial = null)
     val context = LocalContext.current
-
-    var coverImageUri by remember { mutableStateOf<Uri?>(null) }
-    var isTryOnExpanded by remember { mutableStateOf(false) }
-    // profileImageUri removed as we use user.photoUrl now
-
-    val coverImageLauncher = rememberImagePicker(
-        context = context,
-        onImageSelected = { uri -> coverImageUri = uri }
-    )
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),

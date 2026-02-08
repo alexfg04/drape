@@ -176,8 +176,6 @@ fun SavedOutfitsScreenContent(
                 uiState = uiState,
                 searchQuery = searchQuery,
                 onOutfitImageClick = onOutfitImageClick,
-                onDeleteOutfit = { outfitToDelete = it },
-                onEditOutfit = onEditOutfit,
                 onCreateOutfit = onCreateOutfit,
                 onRefresh = onRefresh
             )
@@ -190,8 +188,6 @@ fun SavedOutfitsListContent(
     uiState: SavedOutfitsUiState,
     searchQuery: String,
     onOutfitImageClick: (Outfit) -> Unit,
-    onDeleteOutfit: (Outfit) -> Unit,
-    onEditOutfit: (Outfit) -> Unit,
     onCreateOutfit: () -> Unit,
     onRefresh: () -> Unit
 ) {
@@ -229,8 +225,6 @@ fun SavedOutfitsListContent(
                     SavedOutfitsGrid(
                         outfits = filteredOutfits,
                         onOutfitImageClick = onOutfitImageClick,
-                        onDeleteOutfit = onDeleteOutfit,
-                        onEditOutfit = onEditOutfit,
                         onCreateOutfit = onCreateOutfit
                     )
                 }
@@ -391,8 +385,6 @@ fun OutfitDetailDialog(
 fun SavedOutfitsGrid(
     outfits: List<Outfit>,
     onOutfitImageClick: (Outfit) -> Unit,
-    onDeleteOutfit: (Outfit) -> Unit,
-    onEditOutfit: (Outfit) -> Unit,
     onCreateOutfit: () -> Unit
 ) {
     LazyVerticalGrid(
@@ -409,8 +401,6 @@ fun SavedOutfitsGrid(
             SavedOutfitItemCard(
                 outfit = outfit,
                 onImageClick = { onOutfitImageClick(outfit) },
-                onDelete = { onDeleteOutfit(outfit) }, // Pass the whole outfit for confirmation
-                onEdit = { onEditOutfit(outfit) }
             )
         }
     }
@@ -420,8 +410,6 @@ fun SavedOutfitsGrid(
 fun SavedOutfitItemCard(
     outfit: Outfit,
     onImageClick: () -> Unit,
-    onDelete: () -> Unit,
-    onEdit: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
