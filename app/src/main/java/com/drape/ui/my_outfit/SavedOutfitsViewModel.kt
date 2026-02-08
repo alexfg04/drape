@@ -23,8 +23,11 @@ data class SavedOutfitsUiState(
     val selectedOutfit: Outfit? = null,
     val isDeleting: Boolean = false,
     val deleteSuccess: Boolean = false,
-    val favoriteOutfitIds: Set<String> = emptySet()
+    val favoriteOutfitIds: Set<String> = emptySet(),
+    val favoriteToggled: FavoriteToggleState? = null
 )
+
+enum class FavoriteToggleState { ADDED, REMOVED }
 
 /**
  * ViewModel for managing the saved outfits screen.
@@ -105,12 +108,17 @@ class SavedOutfitsViewModel @Inject constructor(
      */
     fun toggleFavorite(outfit: Outfit) {
         val currentFavorites = _uiState.value.favoriteOutfitIds.toMutableSet()
-        if (currentFavorites.contains(outfit.id)) {
+        val added = if (currentFavorites.contains(outfit.id)) {
             currentFavorites.remove(outfit.id)
+            false
         } else {
             currentFavorites.add(outfit.id)
+            true
         }
-        _uiState.value = _uiState.value.copy(favoriteOutfitIds = currentFavorites)
+        _uiState.value = _uiState.value.copy(
+            favoriteOutfitIds = currentFavorites,
+            favoriteToggled = if (added) FavoriteToggleState.ADDED else FavoriteToggleState.REMOVED
+        )
     }
 
     /**
@@ -132,5 +140,12 @@ class SavedOutfitsViewModel @Inject constructor(
      */
     fun clearDeleteSuccess() {
         _uiState.value = _uiState.value.copy(deleteSuccess = false)
+    }
+
+    /**
+     * Clears the favorite toggle state.
+     */
+    fun clearFavoriteToggled() {
+        _uiState.value = _uiState.value.copy(favoriteToggled = null)
     }
 }

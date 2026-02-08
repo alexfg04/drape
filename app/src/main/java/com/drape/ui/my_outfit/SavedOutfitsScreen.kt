@@ -75,7 +75,8 @@ fun SavedOutfitsScreen(
         onToggleFavorite = { viewModel.toggleFavorite(it) },
         onRefresh = { viewModel.refresh() },
         onClearError = { viewModel.clearError() },
-        onClearDeleteSuccess = { viewModel.clearDeleteSuccess() }
+        onClearDeleteSuccess = { viewModel.clearDeleteSuccess() },
+        onClearFavoriteToggled = { viewModel.clearFavoriteToggled() }
     )
 }
 
@@ -90,7 +91,8 @@ fun SavedOutfitsScreenContent(
     onToggleFavorite: (Outfit) -> Unit,
     onRefresh: () -> Unit,
     onClearError: () -> Unit,
-    onClearDeleteSuccess: () -> Unit
+    onClearDeleteSuccess: () -> Unit,
+    onClearFavoriteToggled: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var searchQuery by remember { mutableStateOf("") }
@@ -116,6 +118,23 @@ fun SavedOutfitsScreenContent(
                 duration = SnackbarDuration.Long
             )
             onClearError()
+        }
+    }
+
+    // Handle favorite toggle feedback
+    val favoriteAddedMessage = stringResource(R.string.saved_outfits_favorite_added)
+    val favoriteRemovedMessage = stringResource(R.string.saved_outfits_favorite_removed)
+    LaunchedEffect(uiState.favoriteToggled) {
+        uiState.favoriteToggled?.let { state ->
+            val message = when (state) {
+                FavoriteToggleState.ADDED -> favoriteAddedMessage
+                FavoriteToggleState.REMOVED -> favoriteRemovedMessage
+            }
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+            onClearFavoriteToggled()
         }
     }
 
@@ -158,7 +177,7 @@ fun SavedOutfitsScreenContent(
     }
 
     Scaffold(
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = {
              SnackbarHost(hostState = snackbarHostState) { data ->
                  DrapeSnackbar(snackbarData = data)
@@ -452,11 +471,11 @@ fun SavedOutfitItemCard(
 ) {
     Card(
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = Color.Black.copy(alpha = 0.1f))
+            .shadow(8.dp, RoundedCornerShape(24.dp), spotColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
             .clickable { onImageClick() }
     ) {
         Box(
@@ -938,7 +957,8 @@ fun SavedOutfitsScreenPreview() {
             onToggleFavorite = {},
             onRefresh = {},
             onClearError = {},
-            onClearDeleteSuccess = {}
+            onClearDeleteSuccess = {},
+            onClearFavoriteToggled = {}
         )
     }
 }

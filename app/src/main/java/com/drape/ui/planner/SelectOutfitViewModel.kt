@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import java.util.Calendar
 import javax.inject.Inject
 
 /**
@@ -85,7 +84,7 @@ class SelectOutfitViewModel @Inject constructor(
             try {
                 val dateString = getDateString()
                 plannedDaysRepository.addOutfitToDay(dateString, outfitId, label)
-                _uiState.value = _uiState.value.copy(isSaving = false)
+                _uiState.value = _uiState.value.copy(isSaving = false, saveSuccess = true)
                 onSuccess()
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -99,11 +98,16 @@ class SelectOutfitViewModel @Inject constructor(
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)
     }
+
+    fun clearSaveSuccess() {
+        _uiState.value = _uiState.value.copy(saveSuccess = false)
+    }
 }
 
 data class SelectOutfitUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
+    val saveSuccess: Boolean = false,
     val errorMessage: String? = null,
     val selectedDay: Int = 1,
     val outfits: List<Outfit> = emptyList()

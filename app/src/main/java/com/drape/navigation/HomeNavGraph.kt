@@ -59,11 +59,13 @@ fun NavGraphBuilder.homeNavGraph(
             )
         }
 
-        composable<ClothingItemDetail> { backStackEntry ->
-            val route = backStackEntry.toRoute<ClothingItemDetail>()
+        composable<ClothingItemDetail> {
             ClothingItemDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onItemDeleted = { 
+                onItemDeleted = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("item_deleted", true)
                     navController.popBackStack()
                 }
             )
@@ -89,12 +91,19 @@ fun NavGraphBuilder.homeNavGraph(
             val route = backStackEntry.toRoute<EditOutfit>()
             OutfitCreatorScreen(
                 outfitId = route.outfitId,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.navigate(SavedOutfits) }
             )
         }
 
-        composable<Wardrobe> {
+        composable<Wardrobe> { backStackEntry ->
+            val itemAdded = backStackEntry.savedStateHandle.get<Boolean>("item_added") == true
+            val itemDeleted = backStackEntry.savedStateHandle.get<Boolean>("item_deleted") == true
+            if (itemAdded) backStackEntry.savedStateHandle.remove<Boolean>("item_added")
+            if (itemDeleted) backStackEntry.savedStateHandle.remove<Boolean>("item_deleted")
+
             WardrobeScreen(
+                itemAdded = itemAdded,
+                itemDeleted = itemDeleted,
                 onNavigateToOutfitCreator = {
                     navController.navigate(Camerino())
                 },
@@ -110,6 +119,17 @@ fun NavGraphBuilder.homeNavGraph(
         composable<UploadClothes> {
             UploadItemScreen(
                 onBackClick = {
+                    if (!navController.popBackStack()) {
+                        navController.navigate(Home) {
+                            popUpTo(HomeGraph) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onUploadSuccess = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("item_added", true)
                     if (!navController.popBackStack()) {
                         navController.navigate(Home) {
                             popUpTo(HomeGraph) { inclusive = false }
@@ -193,8 +213,12 @@ fun NavGraphBuilder.homeNavGraph(
             )
         }
 
-        composable<Planner> {
+        composable<Planner> { backStackEntry ->
+            val outfitPlanned = backStackEntry.savedStateHandle.get<Boolean>("outfit_planned") == true
+            if (outfitPlanned) backStackEntry.savedStateHandle.remove<Boolean>("outfit_planned")
+
             PlannerScreen(
+                outfitPlanned = outfitPlanned,
                 onNavigateToSelectOutfit = { day, month, year ->
                     navController.navigate(SelectOutfit(day, month, year))
                 }
@@ -206,7 +230,13 @@ fun NavGraphBuilder.homeNavGraph(
             val viewModel: SelectOutfitViewModel = hiltViewModel()
             SelectOutfitScreen(
                 viewModel = viewModel,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onOutfitPlanned = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("outfit_planned", true)
+                    navController.popBackStack()
+                }
             )
         }
     }

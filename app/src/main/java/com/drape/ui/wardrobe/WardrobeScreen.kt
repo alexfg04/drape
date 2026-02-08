@@ -10,16 +10,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Checkroom
-import androidx.compose.material.icons.filled.Layers
-import androidx.compose.material.icons.filled.DirectionsRun
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.AllInclusive
 import androidx.compose.material.icons.filled.Diamond
@@ -52,6 +46,8 @@ import com.drape.ui.components.DrapeSnackbar
  */
 @Composable
 fun WardrobeScreen(
+    itemAdded: Boolean = false,
+    itemDeleted: Boolean = false,
     onNavigateToClothingDetail: (ClothingItem) -> Unit,
     onNavigateToOutfitCreator: () -> Unit,
     onNavigateToProfile: () -> Unit,
@@ -61,6 +57,8 @@ fun WardrobeScreen(
 
     WardrobeScreenContent(
         wardrobeUiState = wardrobeUiState,
+        itemAdded = itemAdded,
+        itemDeleted = itemDeleted,
         onNavigateToOutfitCreator = onNavigateToOutfitCreator,
         onNavigateToProfile = onNavigateToProfile,
         onWardrobeItemClick = onNavigateToClothingDetail,
@@ -83,6 +81,8 @@ fun WardrobeScreen(
 @Composable
 fun WardrobeScreenContent(
     wardrobeUiState: WardrobeUiState,
+    itemAdded: Boolean = false,
+    itemDeleted: Boolean = false,
     onNavigateToOutfitCreator: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onWardrobeItemClick: (ClothingItem) -> Unit,
@@ -92,10 +92,11 @@ fun WardrobeScreenContent(
     onClearDeleteSuccess: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    val deleteSuccessMessage = "Capo eliminato con successo"
+    val deleteSuccessMessage = stringResource(R.string.wardrobe_delete_success)
+    val addSuccessMessage = stringResource(R.string.upload_clothes_success)
     val errorMessage = wardrobeUiState.errorMessage
 
-    // Handle deletion success
+    // Handle deletion success (from wardrobe delete action)
     LaunchedEffect(wardrobeUiState.deleteSuccess) {
         if (wardrobeUiState.deleteSuccess) {
             snackbarHostState.showSnackbar(
@@ -103,6 +104,25 @@ fun WardrobeScreenContent(
                 duration = SnackbarDuration.Short
             )
             onClearDeleteSuccess()
+        }
+    }
+
+    // Handle navigation results
+    LaunchedEffect(itemAdded) {
+        if (itemAdded) {
+            snackbarHostState.showSnackbar(
+                message = addSuccessMessage,
+                duration = SnackbarDuration.Short
+            )
+        }
+    }
+
+    LaunchedEffect(itemDeleted) {
+        if (itemDeleted) {
+            snackbarHostState.showSnackbar(
+                message = deleteSuccessMessage,
+                duration = SnackbarDuration.Short
+            )
         }
     }
 
