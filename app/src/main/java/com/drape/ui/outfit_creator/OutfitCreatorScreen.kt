@@ -3,8 +3,12 @@ package com.drape.ui.outfit_creator
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -37,6 +41,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush.Companion.linearGradient
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -48,6 +53,7 @@ import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,8 +61,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import androidx.core.content.FileProvider
 import com.drape.R
 import com.drape.data.model.ItemCategory
 import com.drape.ui.components.DrapeSnackbar
@@ -76,6 +85,7 @@ fun OutfitCreatorScreen(
     outfitId: String? = null,
     onBackClick: () -> Unit = {},
     onCalendarClick: () -> Unit = {},
+    onTryOnClick: () -> Unit = {},
     viewModel: OutfitCreatorViewModel = hiltViewModel()
 ) {
     LaunchedEffect(outfitId) {
@@ -93,6 +103,189 @@ fun OutfitCreatorScreen(
 
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
+
+    // Body reference upload dialog
+    var showBodyRefDialog by remember { mutableStateOf(false) }
+    // Body reference photo picker
+    val bodyRefPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            showBodyRefDialog = false
+            scope.launch {
+                try {
+                    val uploadedUrl = viewModel.uploadBodyReferenceImage(it)
+                    viewModel.toggleSelectionVisibility(false)
+                    isMenuExpanded = false
+                    val bitmap = captureOutfitBitmap(graphicsLayer)
+                    viewModel.performTryOn(bitmap, uploadedUrl)
+                    onTryOnClick()
+                } catch (e: Exception) {
+                    snackbarHostState.showSnackbar("Errore caricamento: ${e.message}")
+                }
+            }
+        }
+    }
+
+    // Body reference camera
+    var tempBodyRefUri by remember { mutableStateOf<Uri?>(null) }
+    val bodyRefCameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempBodyRefUri?.let { uri ->
+                showBodyRefDialog = false
+                scope.launch {
+                    try {
+                        val uploadedUrl = viewModel.uploadBodyReferenceImage(uri)
+                        viewModel.toggleSelectionVisibility(false)
+                        isMenuExpanded = false
+                        val bitmap = captureOutfitBitmap(graphicsLayer)
+                        viewModel.performTryOn(bitmap, uploadedUrl)
+                        onTryOnClick()
+                    } catch (e: Exception) {
+                        snackbarHostState.showSnackbar("Errore caricamento: ${e.message}")
+                    }
+                }
+            }
+        }
+    }
+
+
+
+    // Body reference full-screen dialog
+    if (showBodyRefDialog) {
+        Dialog(
+            onDismissRequest = { showBodyRefDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                ) {
+                    // Top bar with close button
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { showBodyRefDialog = false }) {
+                            Icon(Icons.Default.Close, contentDescription = "Chiudi")
+                        }
+                    }
+
+                    // Content
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        // Illustration
+                        Image(
+                            painter = painterResource(R.drawable.woman_taking_selfie),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth(0.7f)
+                                .aspectRatio(0.75f)
+                                .clip(RoundedCornerShape(24.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        Spacer(Modifier.height(32.dp))
+
+                        // Title
+                        Text(
+                            text = "Scatta o carica una foto",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        // Description
+                        Text(
+                            text = "Per provare virtualmente i tuoi outfit, abbiamo bisogno di una foto a figura intera.",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(Modifier.height(40.dp))
+
+                        // Camera button (primary)
+                        Button(
+                            onClick = {
+                                val cacheDir = File(context.cacheDir, "camera")
+                                cacheDir.mkdirs()
+                                val file = File(cacheDir, "body_ref_${System.currentTimeMillis()}.jpg")
+                                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                                tempBodyRefUri = uri
+                                bodyRefCameraLauncher.launch(uri)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                text = "Scatta Foto",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        Spacer(Modifier.height(12.dp))
+
+                        // Gallery button (secondary)
+                        OutlinedButton(
+                            onClick = { bodyRefPickerLauncher.launch("image/*") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                text = "Carica dalla Galleria",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF6750A4)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Navigate to try-on result when bitmap is ready or loading
+    // (Removed: navigation now happens immediately from the button click)
 
     // Category labels and mapping
     val categoryMapping = listOf(
@@ -326,7 +519,7 @@ fun OutfitCreatorScreen(
                     Spacer(Modifier.width(16.dp))
 
                     // Virtual Try-On Button (AI Style)
-                    val aiGradient = androidx.compose.ui.graphics.Brush.linearGradient(
+                    val aiGradient = linearGradient(
                         colors = listOf(
                             Color(0xFFD0BCFF), // Light Purple
                             Color(0xFF9A82DB), // Purple
@@ -343,13 +536,37 @@ fun OutfitCreatorScreen(
                         color = MaterialTheme.colorScheme.surface,
                         tonalElevation = 8.dp
                     ) {
-                        IconButton(onClick = { /* TODO: Virtual Try-On */ }) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "AI Virtual Try-On",
-                                tint = Color(0xFF6750A4), // Deep Purple for AI feel
-                                modifier = Modifier.size(28.dp)
-                            )
+                        IconButton(
+                            onClick = {
+                                if (uiState.placedItems.isEmpty()) return@IconButton
+                                if (!uiState.hasBodyReferenceImage) {
+                                    showBodyRefDialog = true
+                                } else {
+                                    scope.launch {
+                                        viewModel.toggleSelectionVisibility(false)
+                                        isMenuExpanded = false
+                                        val bitmap = captureOutfitBitmap(graphicsLayer)
+                                        viewModel.performTryOn(bitmap)
+                                        onTryOnClick()
+                                    }
+                                }
+                            },
+                            enabled = !uiState.isTryingOn && !uiState.isUploadingBodyRef
+                        ) {
+                            if (uiState.isTryingOn || uiState.isUploadingBodyRef) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = Color(0xFF6750A4),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.AutoAwesome,
+                                    contentDescription = "AI Virtual Try-On",
+                                    tint = Color(0xFF6750A4),
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -511,6 +728,21 @@ fun OutfitCreatorScreen(
             }
         }
     }
+}
+
+/**
+ * Captures the current content of the graphics layer as a bitmap and saves it to a temporary file.
+ *
+ * @param graphicsLayer The layer containing the UI to capture.
+ * @param context The current context.
+ * @return The [Uri] of the saved thumbnail file, or null if an error occurs.
+ */
+private suspend fun captureOutfitBitmap(
+    graphicsLayer: GraphicsLayer
+): Bitmap {
+    withFrameNanos { }
+    val imageBitmap = graphicsLayer.toImageBitmap()
+    return imageBitmap.asAndroidBitmap()
 }
 
 /**

@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.google.services)
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.secrets.gradle.plugin)
 }
 
 android {
@@ -36,6 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -74,4 +76,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.play.services.mlkit.subject.segmentation)
     implementation(libs.compose.charts)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp.logging.interceptor)
+}
+
+secrets {
+    propertiesFileName = "local.properties"
 }

@@ -124,8 +124,9 @@ class UserRepository @Inject constructor(
      *
      * @param imageUri The URI of the image to upload
      */
-    suspend fun uploadBodyReferenceImage(imageUri: Uri) {
-        val user = authRemoteDataSource.currentUser ?: return
+    suspend fun uploadBodyReferenceImage(imageUri: Uri): String {
+        val user = authRemoteDataSource.currentUser
+            ?: throw Exception("User not authenticated")
         val userId = user.uid
 
         val imageUrl = storageRemoteDataSource.uploadImage(
@@ -137,6 +138,7 @@ class UserRepository @Inject constructor(
 
         userDataRemoteDataSource.saveUserData(userId, mapOf("bodyReferenceImage" to imageUrl))
         refreshTrigger.tryEmit(Unit)
+        return imageUrl
     }
 
     /**

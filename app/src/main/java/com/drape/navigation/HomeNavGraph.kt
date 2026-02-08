@@ -6,9 +6,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.toRoute
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import com.drape.ui.wardrobe.WardrobeScreen
 import com.drape.ui.home.HomeScreen
 import com.drape.ui.outfit_creator.OutfitCreatorScreen
+import com.drape.ui.outfit_creator.OutfitCreatorViewModel
 import com.drape.ui.profile.ProfileScreen
 import com.drape.ui.upload_clothes.UploadItemScreen
 import com.drape.ui.my_outfit.SavedOutfitsScreen
@@ -18,6 +22,7 @@ import com.drape.ui.clothing_detail.ClothingItemDetailScreen
 import com.drape.ui.planner.SelectOutfitScreen
 import com.drape.ui.planner.SelectOutfitViewModel
 import com.drape.ui.statistics.StatisticsScreen
+import com.drape.ui.tryon.TryOnResultScreen
 
 /**
  * Home navigation graph.
@@ -83,7 +88,8 @@ fun NavGraphBuilder.homeNavGraph(
                             launchSingleTop = true
                         }
                     }
-                }
+                },
+                onTryOnClick = { navController.navigate(TryOnResult) }
             )
         }
 
@@ -91,7 +97,26 @@ fun NavGraphBuilder.homeNavGraph(
             val route = backStackEntry.toRoute<EditOutfit>()
             OutfitCreatorScreen(
                 outfitId = route.outfitId,
-                onBackClick = { navController.navigate(SavedOutfits) }
+                onBackClick = { navController.popBackStack() },
+                onTryOnClick = { navController.navigate(TryOnResult) }
+            )
+        }
+
+        composable<TryOnResult> {
+            val parentEntry = remember(it) {
+                navController.previousBackStackEntry!!
+            }
+            val viewModel: OutfitCreatorViewModel = hiltViewModel(parentEntry)
+            val uiState by viewModel.uiState.collectAsState()
+
+            TryOnResultScreen(
+                bitmap = uiState.tryOnResultBitmap,
+                isLoading = uiState.isTryingOn,
+                error = uiState.tryOnError,
+                onBackClick = {
+                    viewModel.cancelTryOn()
+                    navController.popBackStack()
+                }
             )
         }
 

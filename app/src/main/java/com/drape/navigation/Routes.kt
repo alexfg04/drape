@@ -77,3 +77,6 @@ object Statistics
 
 @Serializable
 data class ClothingItemDetail(val itemId: String)
+
+@Serializable
+object TryOnResult

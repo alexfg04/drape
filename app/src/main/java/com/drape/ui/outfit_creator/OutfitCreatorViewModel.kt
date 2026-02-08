@@ -1,5 +1,7 @@
 package com.drape.ui.outfit_creator
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
@@ -10,13 +12,19 @@ import com.drape.data.model.Outfit
 import com.drape.data.model.PlacedItem
 import com.drape.data.repository.ClothesRepository
 import com.drape.data.repository.OutfitRepository
+import com.drape.data.repository.TryOnRepository
+import com.drape.data.repository.UserRepository
 import com.google.firebase.Timestamp
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.URL
 import javax.inject.Inject
 
 /**
@@ -61,7 +69,12 @@ data class OutfitCreatorUiState(
     val canvasOffset: Offset = Offset.Zero,
     val currentOutfitId: String? = null,
     val outfitName: String = "",
-    val originalCreatedAt: Timestamp? = null
+    val originalCreatedAt: Timestamp? = null,
+    val isTryingOn: Boolean = false,
+    val isUploadingBodyRef: Boolean = false,
+    val tryOnResultBitmap: Bitmap? = null,
+    val tryOnError: String? = null,
+    val hasBodyReferenceImage: Boolean = false
 )
 
 /**
@@ -71,16 +84,20 @@ data class OutfitCreatorUiState(
 @HiltViewModel
 class OutfitCreatorViewModel @Inject constructor(
     private val clothesRepository: ClothesRepository,
-    private val outfitRepository: OutfitRepository
+    private val outfitRepository: OutfitRepository,
+    private val tryOnRepository: TryOnRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OutfitCreatorUiState())
     val uiState: StateFlow<OutfitCreatorUiState> = _uiState.asStateFlow()
 
     private var currentOutfitId: String? = null
+    private var tryOnJob: Job? = null
 
     init {
         loadClothes()
+        observeBodyReferenceImage()
     }
 
     /**
@@ -90,6 +107,17 @@ class OutfitCreatorViewModel @Inject constructor(
         viewModelScope.launch {
             clothesRepository.getUserClothingItems().collect { items ->
                 _uiState.update { it.copy(availableClothes = items) }
+            }
+        }
+    }
+
+    /**
+     * Observes user's body reference image availability.
+     */
+    private fun observeBodyReferenceImage() {
+        viewModelScope.launch {
+            userRepository.userFlow.collect { user ->
+                _uiState.update { it.copy(hasBodyReferenceImage = user?.bodyReferenceImage != null) }
             }
         }
     }
@@ -334,6 +362,71 @@ class OutfitCreatorViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update { it.copy(isSaving = false, errorMessage = e.message) }
             }
+        }
+    }
+
+    /**
+     * Performs a virtual try-on using the outfit thumbnail and the user's body reference image.
+     *
+     * @param outfitBitmap The captured outfit thumbnail as Bitmap.
+     */
+    fun performTryOn(outfitBitmap: Bitmap, bodyRefUrlOverride: String? = null) {
+        tryOnJob?.cancel()
+        tryOnJob = viewModelScope.launch {
+            _uiState.update { it.copy(isTryingOn = true, tryOnError = null, tryOnResultBitmap = null) }
+
+            try {
+                val user = userRepository.userFlow.value
+                val bodyRefUrl = bodyRefUrlOverride ?: user?.bodyReferenceImage
+                    ?: throw Exception("Immagine di riferimento non trovata")
+
+                val personBitmap = withContext(Dispatchers.IO) {
+                    val stream = URL(bodyRefUrl).openStream()
+                    BitmapFactory.decodeStream(stream)
+                }
+
+                val result = tryOnRepository.tryOnClothing(personBitmap, outfitBitmap)
+                result.fold(
+                    onSuccess = { bitmap ->
+                        _uiState.update { it.copy(isTryingOn = false, tryOnResultBitmap = bitmap) }
+                    },
+                    onFailure = { e ->
+                        _uiState.update { it.copy(isTryingOn = false, tryOnError = e.message ?: "Errore durante il try-on") }
+                    }
+                )
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isTryingOn = false, tryOnError = e.message ?: "Errore durante il try-on") }
+            }
+        }
+    }
+
+    /**
+     * Clears the try-on result to allow navigating back.
+     */
+    fun clearTryOnResult() {
+        _uiState.update { it.copy(tryOnResultBitmap = null, tryOnError = null) }
+    }
+
+    /**
+     * Cancels the ongoing try-on request.
+     */
+    fun cancelTryOn() {
+        tryOnJob?.cancel()
+        tryOnJob = null
+        _uiState.update { it.copy(isTryingOn = false, tryOnError = null, tryOnResultBitmap = null) }
+    }
+
+    /**
+     * Uploads a body reference image for virtual try-on.
+     */
+    suspend fun uploadBodyReferenceImage(imageUri: android.net.Uri): String {
+        _uiState.update { it.copy(isUploadingBodyRef = true) }
+        return try {
+            val imageUrl = userRepository.uploadBodyReferenceImage(imageUri)
+            _uiState.update { it.copy(hasBodyReferenceImage = true) }
+            imageUrl
+        } finally {
+            _uiState.update { it.copy(isUploadingBodyRef = false) }
         }
     }
 
