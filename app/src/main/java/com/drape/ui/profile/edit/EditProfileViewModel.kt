@@ -3,7 +3,7 @@ package com.drape.ui.profile.edit
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.drape.data.repository.AuthRepository
+import com.drape.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EditProfileViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditProfileUiState())
@@ -23,7 +23,7 @@ class EditProfileViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val user = authRepository.userFlow.first()
+            val user = userRepository.userFlow.first()
             if (user != null) {
                 _uiState.update {
                     it.copy(
@@ -57,7 +57,7 @@ class EditProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                authRepository.updateProfile(
+                userRepository.updateProfile(
                     displayName = uiState.value.displayName,
                     bio = uiState.value.bio,
                     photoUri = uiState.value.selectedPhotoUri,

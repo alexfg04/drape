@@ -41,13 +41,17 @@ import android.Manifest
 import android.os.Build
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.animation.AnimatedVisibility
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.drape.receivers.NotificationReceiver
+import com.drape.ui.wardrobe.WardrobeViewModel
+import androidx.compose.runtime.LaunchedEffect
 
 /**
  * Profile screen.
@@ -64,12 +68,14 @@ fun ProfileScreen(
     onBackToHome: () -> Unit = {},
     profileViewModel: ProfileViewModel = hiltViewModel(),
     viewModel: SavedOutfitsViewModel = hiltViewModel(),
-    wardrobeViewModel: com.drape.ui.wardrobe.WardrobeViewModel = hiltViewModel()
+    wardrobeViewModel: WardrobeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val wardrobeUiState by wardrobeViewModel.uiState.collectAsState()
     val user by profileViewModel.userFlow.collectAsState(initial = null)
+    val bodyImageUploadState by profileViewModel.bodyImageUploadState.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -80,11 +86,57 @@ fun ProfileScreen(
         }
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-    ) {
+    // Photo picker launcher for body reference image
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            profileViewModel.uploadBodyReferenceImage(it)
+        }
+    }
+
+    // Temp URI for camera capture
+    var tempCameraUri by remember { mutableStateOf<android.net.Uri?>(null) }
+
+    // Camera launcher for body reference image
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempCameraUri?.let { profileViewModel.uploadBodyReferenceImage(it) }
+        }
+    }
+
+    // Handle upload success/error with Snackbar
+    LaunchedEffect(bodyImageUploadState.uploadSuccess, bodyImageUploadState.uploadError) {
+        when {
+            bodyImageUploadState.uploadSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = "Immagine caricata con successo!",
+                    duration = SnackbarDuration.Short
+                )
+                profileViewModel.clearUploadSuccess()
+            }
+            bodyImageUploadState.uploadError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = bodyImageUploadState.uploadError ?: "Errore durante il caricamento",
+                    duration = SnackbarDuration.Long
+                )
+                profileViewModel.clearUploadError()
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues)
+        ) {
         // ... (Header Section remains the same) ...
         Box(
             modifier = Modifier
@@ -341,7 +393,7 @@ fun ProfileScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 // Collapsible Content
-                androidx.compose.animation.AnimatedVisibility(visible = isTryOnExpanded) {
+               AnimatedVisibility(visible = isTryOnExpanded) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -383,11 +435,11 @@ fun ProfileScreen(
                             }
                         }
 
-                        // Placeholder Image Area
+                        // Body Reference Image Area
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(200.dp)
+                                .height(300.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.3f))
                                 .border(
@@ -397,50 +449,102 @@ fun ProfileScreen(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                             // Placeholder for user body image
-                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Nessuna foto salvata",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
-                                )
-                             }
+                            when {
+                                bodyImageUploadState.isUploading -> {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        CircularProgressIndicator()
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Caricamento...",
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                }
+                                user?.bodyReferenceImage != null -> {
+                                    AsyncImage(
+                                        model = ImageRequest.Builder(context)
+                                            .data(user?.bodyReferenceImage)
+                                            .crossfade(true)
+                                            .build(),
+                                        contentDescription = "Body Reference Image",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
+                                else -> {
+                                    // Placeholder when no image
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(48.dp),
+                                            tint = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "Nessuna foto salvata",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                            }
                         }
 
                         // Action Buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = { /* TODO: Take Photo */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
+                        if (user?.bodyReferenceImage == null) {
+                            // No image - show upload buttons
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text("Scatta Foto")
+                                Button(
+                                    onClick = {
+                                        val cacheDir = java.io.File(context.cacheDir, "camera")
+                                        cacheDir.mkdirs()
+                                        val file = java.io.File(cacheDir, "body_ref_${System.currentTimeMillis()}.jpg")
+                                        val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+                                        tempCameraUri = uri
+                                        cameraLauncher.launch(uri)
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = !bodyImageUploadState.isUploading
+                                ) {
+                                    Text("Scatta Foto")
+                                }
+                                OutlinedButton(
+                                    onClick = { photoPickerLauncher.launch("image/*") },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = !bodyImageUploadState.isUploading
+                                ) {
+                                    Text("Carica")
+                                }
                             }
-                            OutlinedButton(
-                                onClick = { /* TODO: Upload Photo */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("Carica")
+                        } else {
+                            // Has image - show edit and remove buttons
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = { photoPickerLauncher.launch("image/*") },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    enabled = !bodyImageUploadState.isUploading
+                                ) {
+                                    Text("Modifica Foto")
+                                }
+                                
+                                TextButton(
+                                    onClick = { profileViewModel.removeBodyReferenceImage() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !bodyImageUploadState.isUploading,
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
+                                ) {
+                                    Text("Rimuovi Foto")
+                                }
                             }
-                        }
-                        
-                        // Edit Button (Visible only if photo exists - simulated as always visible for layout)
-                        TextButton(
-                            onClick = { /* TODO: Edit Photo */ },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Modifica Foto")
                         }
                         
                         Spacer(modifier = Modifier.height(8.dp))
@@ -516,6 +620,7 @@ fun ProfileScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
+    }
     }
 }
 

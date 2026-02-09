@@ -11,5 +11,6 @@ data class User(
     val createdAt: Long = 0L,
     val bio: String = "",
     val photoUrl: String? = null,
-    val coverPhotoUrl: String? = null
+    val coverPhotoUrl: String? = null,
+    val bodyReferenceImage: String? = null
 )
