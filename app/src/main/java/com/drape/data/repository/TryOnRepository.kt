@@ -2,6 +2,7 @@ package com.drape.data.repository
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.util.Base64
 import com.drape.data.datasource.TryOnRemoteDataSource
 import com.drape.data.model.TryOnResponse
@@ -35,14 +36,15 @@ class TryOnRepository @Inject constructor(
         productImage: Bitmap
     ): Result<Bitmap> = withContext(Dispatchers.IO) {
         try {
-            // Convert bitmaps to base64
-            val personBase64 = encodeBitmapToBase64(personImage)
-            val productBase64 = encodeBitmapToBase64(productImage)
+            val personBytes = encodePersonBitmapToWebp(personImage)
+            val productBytes = encodeProductBitmapToJpeg(productImage)
 
             // Call the API
             val response = tryOnRemoteDataSource.tryOnClothing(
-                personImageBase64 = personBase64,
-                productImageBase64 = productBase64
+                personImageBytes = personBytes,
+                personContentType = PERSON_CONTENT_TYPE,
+                productImageBytes = productBytes,
+                productContentType = PRODUCT_CONTENT_TYPE
             )
 
             // Decode the response image
@@ -53,38 +55,35 @@ class TryOnRepository @Inject constructor(
             Result.failure(e)
         }
     }
-
     /**
-     * Performs a virtual try-on using base64 encoded images directly.
-     *
-     * @param personImageBase64 Base64 encoded image of the person
-     * @param productImageBase64 Base64 encoded image of the clothing product
-     * @return Result containing the try-on response, or an exception on failure
+     * Encodes the person bitmap to WebP bytes, resizing and compressing to reduce payload.
      */
-    suspend fun tryOnClothingWithBase64(
-        personImageBase64: String,
-        productImageBase64: String
-    ): Result<TryOnResponse> = withContext(Dispatchers.IO) {
-        try {
-            val response = tryOnRemoteDataSource.tryOnClothing(
-                personImageBase64 = personImageBase64,
-                productImageBase64 = productImageBase64
-            )
-            Result.success(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+    private fun encodePersonBitmapToWebp(bitmap: Bitmap): ByteArray {
+        val resized = resizeBitmap(bitmap, PERSON_MAX_SIZE)
+        val outputStream = ByteArrayOutputStream()
+        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Bitmap.CompressFormat.WEBP_LOSSY
+        } else {
+            Bitmap.CompressFormat.WEBP
         }
+        resized.compress(format, PERSON_WEBP_QUALITY, outputStream)
+        if (resized !== bitmap) {
+            resized.recycle()
+        }
+        return outputStream.toByteArray()
     }
 
     /**
-     * Encodes a Bitmap to base64 string, resizing and compressing to stay under size limits.
+     * Encodes the product bitmap to JPEG bytes using the existing quality/resizing.
      */
-    private fun encodeBitmapToBase64(bitmap: Bitmap): String {
-        val resized = resizeBitmap(bitmap, 1024)
+    private fun encodeProductBitmapToJpeg(bitmap: Bitmap): ByteArray {
+        val resized = resizeBitmap(bitmap, PRODUCT_MAX_SIZE)
         val outputStream = ByteArrayOutputStream()
-        resized.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
-        val byteArray = outputStream.toByteArray()
-        return Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        resized.compress(Bitmap.CompressFormat.JPEG, PRODUCT_JPEG_QUALITY, outputStream)
+        if (resized !== bitmap) {
+            resized.recycle()
+        }
+        return outputStream.toByteArray()
     }
 
     /**
@@ -114,5 +113,14 @@ class TryOnRepository @Inject constructor(
     private fun decodeBase64ToBitmap(base64String: String): Bitmap {
         val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    }
+
+    private companion object {
+        private const val PERSON_MAX_SIZE = 1536
+        private const val PERSON_WEBP_QUALITY = 80
+        private const val PRODUCT_MAX_SIZE = 1024
+        private const val PRODUCT_JPEG_QUALITY = 85
+        private const val PERSON_CONTENT_TYPE = "image/webp"
+        private const val PRODUCT_CONTENT_TYPE = "image/jpeg"
     }
 }

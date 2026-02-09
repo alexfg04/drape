@@ -1,10 +1,12 @@
 package com.drape.data.datasource
 
 import android.util.Log
-import com.drape.data.model.TryOnRequest
 import com.drape.data.model.TryOnResponse
 import com.drape.di.TryOnApiToken
 import com.drape.network.TryOnApiService
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -24,28 +26,51 @@ class TryOnRemoteDataSource @Inject constructor(
     /**
      * Performs a virtual try-on by sending a person image and a product image to the API.
      *
-     * @param personImageBase64 Base64 encoded image of the person
-     * @param productImageBase64 Base64 encoded image of the clothing product
+     * @param personImageBytes Binary image bytes for the person
+     * @param personContentType MIME type for the person image
+     * @param productImageBytes Binary image bytes for the product
+     * @param productContentType MIME type for the product image
      * @return The try-on response containing the generated image
      * @throws Exception if the API call fails
      */
     suspend fun tryOnClothing(
-        personImageBase64: String,
-        productImageBase64: String
+        personImageBytes: ByteArray,
+        personContentType: String,
+        productImageBytes: ByteArray,
+        productContentType: String
     ): TryOnResponse {
-        val request = TryOnRequest(
-            personImageBase64 = personImageBase64,
-            productImageBase64 = productImageBase64
+        val personPart = buildPart(
+            fieldName = "person_image",
+            bytes = personImageBytes,
+            contentType = personContentType
         )
+        val productPart = buildPart(
+            fieldName = "product_image",
+            bytes = productImageBytes,
+            contentType = productContentType
+        )
+
         try {
             return tryOnApiService.tryOnClothing(
                 token = apiToken,
-                request = request
+                personImage = personPart,
+                productImage = productPart
             )
         } catch (e: HttpException) {
             val errorBody = e.response()?.errorBody()?.string()
             Log.e("TryOnAPI", "HTTP ${e.code()}: $errorBody")
             throw Exception("Try-On API error ${e.code()}: $errorBody", e)
         }
+    }
+
+    private fun buildPart(fieldName: String, bytes: ByteArray, contentType: String): MultipartBody.Part {
+        val extension = when {
+            contentType.contains("webp", ignoreCase = true) -> "webp"
+            contentType.contains("png", ignoreCase = true) -> "png"
+            else -> "jpg"
+        }
+        val filename = "${fieldName}.${extension}"
+        val body = bytes.toRequestBody(contentType.toMediaType())
+        return MultipartBody.Part.createFormData(fieldName, filename, body)
     }
 }
