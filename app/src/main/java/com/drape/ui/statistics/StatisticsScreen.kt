@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -116,6 +117,11 @@ fun StatisticsScreen(
                 // Top Used Outfits
                 if (uiState.topUsedOutfits.isNotEmpty()) {
                     TopUsedOutfitsSection(uiState.topUsedOutfits)
+                }
+
+                // Least Used Outfits
+                if (uiState.leastUsedOutfits.isNotEmpty()) {
+                    LeastUsedOutfitsSection(uiState.leastUsedOutfits)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -372,15 +378,15 @@ private fun CategoryDistributionChart(categoryData: Map<String, Int>) {
 private fun TopUsedOutfitsSection(topOutfits: List<TopUsedOutfit>) {
     StatsCard(title = "Outfit Più Utilizzati") {
         Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             topOutfits.forEachIndexed { index, outfit ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -412,7 +418,8 @@ private fun TopUsedOutfitsSection(topOutfits: List<TopUsedOutfit>) {
                         Text(
                             text = outfit.outfitName,
                             style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
@@ -426,6 +433,73 @@ private fun TopUsedOutfitsSection(topOutfits: List<TopUsedOutfit>) {
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Card component displaying the least frequently used outfits.
+ *
+ * Shows a ranked list with outfit name and usage count,
+ * sorted from lowest usage to highest usage.
+ *
+ * @param leastOutfits List of least used outfits
+ */
+@Composable
+private fun LeastUsedOutfitsSection(leastOutfits: List<LeastUsedOutfit>) {
+    StatsCard(title = "Outfit Meno Utilizzati") {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            leastOutfits.forEachIndexed { index, outfit ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(28.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(14.dp)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${index + 1}",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                        }
+
+                        Text(
+                            text = outfit.outfitName,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "${outfit.usageCount} volte",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
                 }

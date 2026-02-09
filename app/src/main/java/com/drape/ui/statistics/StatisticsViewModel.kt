@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import okhttp3.internal.userAgent
 import javax.inject.Inject
 
 /**
@@ -88,6 +89,14 @@ data class TopUsedOutfit(
     val thumbnailUrl: String?
 )
 
+data class LeastUsedOutfit(
+    val outfitId: String,
+    val outfitName: String,
+    val usageCount: Int,
+    val thumbnailUrl: String?
+)
+
+
 /**
  * Combined UI state for the statistics screen.
  * Contains all statistical data and loading state.
@@ -103,6 +112,7 @@ data class StatisticsUiState(
     val clothingStats: ClothingStats = ClothingStats.EMPTY,
     val monthlyStats: List<MonthlyUsageStats> = emptyList(),
     val topUsedOutfits: List<TopUsedOutfit> = emptyList(),
+    val leastUsedOutfits: List<LeastUsedOutfit> = emptyList(),
     val isLoading: Boolean = true
 )
 
@@ -145,12 +155,15 @@ class StatisticsViewModel @Inject constructor(
         val clothingStats = calculateClothingStats(clothes, outfits, plannedDays)
         val monthlyStats = calculateMonthlyStats(plannedDays)
         val topUsedOutfits = calculateTopUsedOutfits(outfits, plannedDays)
+        val leastUsedOutfits = calculateLeastUsedOutfits(outfits, plannedDays)
+
 
         StatisticsUiState(
             outfitStats = outfitStats,
             clothingStats = clothingStats,
             monthlyStats = monthlyStats,
             topUsedOutfits = topUsedOutfits,
+            leastUsedOutfits = leastUsedOutfits,
             isLoading = false
         )
     }.stateIn(
@@ -321,5 +334,30 @@ class StatisticsViewModel @Inject constructor(
             }
             .sortedByDescending { it.usageCount }
             .take(5) // Top 5
+    }
+
+    private fun calculateLeastUsedOutfits(
+        outfits: List<Outfit>,
+        plannedDays: List<PlannedDay>
+    ): List<LeastUsedOutfit> {
+        // usage per outfit
+        val usageCounts = plannedDays
+            .flatMap { it.items }
+            .groupingBy { it.outfitId }
+            .eachCount()
+
+        // map to LeastUsedOutfit, sorted by usage
+        return outfits
+            .map { outfit ->
+                LeastUsedOutfit(
+                    outfitId = outfit.id,
+                    outfitName = outfit.name,
+                    usageCount = usageCounts[outfit.id] ?: 0,
+                    thumbnailUrl = outfit.thumbnailUrl
+                )
+            }
+            .sortedWith(compareBy<LeastUsedOutfit> { it.usageCount }
+                .thenBy { it.outfitName })
+            .take(5) //  5
     }
 }
