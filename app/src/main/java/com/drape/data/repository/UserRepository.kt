@@ -1,6 +1,7 @@
 package com.drape.data.repository
 
 import android.net.Uri
+import android.util.Log
 import com.drape.data.datasource.AuthRemoteDataSource
 import com.drape.data.datasource.StorageRemoteDataSource
 import com.drape.data.datasource.UserDataRemoteDataSource
@@ -148,12 +149,16 @@ class UserRepository @Inject constructor(
 
         val userData = userDataRemoteDataSource.getUserData(userId)
         val currentUrl = userData["bodyReferenceImage"] as? String
-        if (currentUrl != null) {
-            val path = storageRemoteDataSource.extractPathFromUrl(currentUrl)
-            storageRemoteDataSource.deleteImage(path)
-        }
-
         userDataRemoteDataSource.saveUserData(userId, mapOf("bodyReferenceImage" to null))
         refreshTrigger.tryEmit(Unit)
+
+        if (currentUrl != null) {
+            val path = storageRemoteDataSource.extractPathFromUrl(currentUrl)
+            try {
+                storageRemoteDataSource.deleteImage(path)
+            } catch (e: Exception) {
+                Log.w("UserRepository", "Failed to delete body reference image: $path", e)
+            }
+        }
     }
 }

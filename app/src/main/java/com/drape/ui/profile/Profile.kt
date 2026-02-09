@@ -52,7 +52,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.drape.receivers.NotificationReceiver
 import com.drape.ui.wardrobe.WardrobeViewModel
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.launch
 
 /**
  * Profile screen.
@@ -110,22 +109,20 @@ fun ProfileScreen(
 
     // Handle upload success/error with Snackbar
     LaunchedEffect(bodyImageUploadState.uploadSuccess, bodyImageUploadState.uploadError) {
-        launch {
-            when {
-                bodyImageUploadState.uploadSuccess -> {
-                    snackbarHostState.showSnackbar(
-                        message = "Immagine caricata con successo!",
-                        duration = SnackbarDuration.Short
-                    )
-                    profileViewModel.clearUploadSuccess()
-                }
-                bodyImageUploadState.uploadError != null -> {
-                    snackbarHostState.showSnackbar(
-                        message = bodyImageUploadState.uploadError ?: "Errore durante il caricamento",
-                        duration = SnackbarDuration.Long
-                    )
-                    profileViewModel.clearUploadError()
-                }
+        when {
+            bodyImageUploadState.uploadSuccess -> {
+                snackbarHostState.showSnackbar(
+                    message = "Immagine caricata con successo!",
+                    duration = SnackbarDuration.Short
+                )
+                profileViewModel.clearUploadSuccess()
+            }
+            bodyImageUploadState.uploadError != null -> {
+                snackbarHostState.showSnackbar(
+                    message = bodyImageUploadState.uploadError ?: "Errore durante il caricamento",
+                    duration = SnackbarDuration.Long
+                )
+                profileViewModel.clearUploadError()
             }
         }
     }
