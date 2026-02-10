@@ -374,8 +374,8 @@ fun OutfitCreatorScreen(
                             // Hide selection and collapse menu before capture to ensure clean thumbnail
                             viewModel.toggleSelectionVisibility(false)
                             isMenuExpanded = false
-                            // A small delay is needed to ensure the UI recomposition completes before capture
-                            delay(250)
+                            // Wait for recomposition/layout frames instead of using a fixed delay.
+                            repeat(2) { withFrameNanos { } }
                             val thumbnailUri = captureThumbnail(graphicsLayer, context)
                             viewModel.saveOutfit(
                                 defaultName = defaultName,
@@ -971,5 +971,5 @@ private fun clampVerticalOffset(
     val minY = availableTop + itemHalfHeight
     val maxY = canvasHalfHeight - itemHalfHeight
 
-    return proposedOffsetY.coerceIn(minY, maxY)
+    return if (minY > maxY) 0f else proposedOffsetY.coerceIn(minY, maxY)
 }
