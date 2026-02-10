@@ -413,6 +413,7 @@ fun OutfitCreatorScreen(
                         Color(0xFF7D5260)  // Darker shade
                     )
                 )
+                val aiFeatureUnavailableMessage = stringResource(R.string.ai_feature_unavailable)
 
                 Surface(
                     shape = CircleShape,
@@ -426,12 +427,12 @@ fun OutfitCreatorScreen(
                     IconButton(onClick = {
                         if (snackbarHostState.currentSnackbarData == null) {
                             scope.launch {
-                                val job = launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Funzionalità a breve disponibile! ✨",
-                                        duration = SnackbarDuration.Indefinite
-                                    )
-                                }
+                                    val job = launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = aiFeatureUnavailableMessage,
+                                            duration = SnackbarDuration.Indefinite
+                                        )
+                                    }
                                 delay(800)
                                 job.cancel()
                             }
@@ -439,7 +440,7 @@ fun OutfitCreatorScreen(
                     }) {
                         Icon(
                             imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = "AI Virtual Try-On",
+                            contentDescription = stringResource(R.string.ai_virtual_try_on_description),
                             tint = Color(0xFF6750A4), // Deep Purple for AI feel
                             modifier = Modifier.size(28.dp)
                         )
@@ -728,6 +729,11 @@ fun ClothItem(
     val currentCanBringForward by rememberUpdatedState(canBringForward)
     val currentCanSendBackward by rememberUpdatedState(canSendBackward)
     val itemSizePx = with(LocalDensity.current) { ClothItemSize.toPx() }
+    // Keep control widgets visually stable when the clothing item is scaled down/up.
+    val currentControlInverseScale by rememberUpdatedState(1f / currentScale.coerceAtLeast(0.2f))
+    val controlDistanceBoost = (currentControlInverseScale - 1f).coerceAtLeast(0f)
+    val sidePanelOffsetX = (78f + controlDistanceBoost * 18f).dp
+    val cornerHandleOffset = (15f + controlDistanceBoost * 10f).dp
     val currentOnSelect by rememberUpdatedState(onSelect)
     val currentOnBringForward by rememberUpdatedState(onBringForward)
     val currentOnSendBackward by rememberUpdatedState(onSendBackward)
@@ -832,7 +838,11 @@ fun ClothItem(
             Column(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .offset(x = 78.dp)
+                    .offset(x = sidePanelOffsetX)
+                    .graphicsLayer {
+                        scaleX = currentControlInverseScale
+                        scaleY = currentControlInverseScale
+                    }
                     .shadow(8.dp, RoundedCornerShape(24.dp))
                     .clip(RoundedCornerShape(24.dp))
                     .background(MaterialTheme.colorScheme.surface)
@@ -848,7 +858,7 @@ fun ClothItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FlipToFront,
-                        contentDescription = "Bring forward",
+                        contentDescription = stringResource(R.string.bring_forward),
                         tint = if (currentCanBringForward) {
                             MaterialTheme.colorScheme.primary
                         } else {
@@ -863,7 +873,7 @@ fun ClothItem(
                 ) {
                     Icon(
                         imageVector = Icons.Default.FlipToBack,
-                        contentDescription = "Send backward",
+                        contentDescription = stringResource(R.string.send_backward),
                         tint = if (currentCanSendBackward) {
                             MaterialTheme.colorScheme.primary
                         } else {
@@ -877,7 +887,11 @@ fun ClothItem(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(x = 15.dp, y = 15.dp)
+                    .offset(x = cornerHandleOffset, y = cornerHandleOffset)
+                    .graphicsLayer {
+                        scaleX = currentControlInverseScale
+                        scaleY = currentControlInverseScale
+                    }
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(Color.White)
@@ -898,7 +912,11 @@ fun ClothItem(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = 15.dp, y = (-15).dp)
+                    .offset(x = cornerHandleOffset, y = -cornerHandleOffset)
+                    .graphicsLayer {
+                        scaleX = currentControlInverseScale
+                        scaleY = currentControlInverseScale
+                    }
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(Color.White)
@@ -951,6 +969,7 @@ private fun clampVerticalOffset(
 
     val availableTop = -canvasHalfHeight + topUiReservedSpacePx
     val minY = availableTop + itemHalfHeight
+    val maxY = canvasHalfHeight - itemHalfHeight
 
-    return proposedOffsetY.coerceAtLeast(minY)
+    return proposedOffsetY.coerceIn(minY, maxY)
 }

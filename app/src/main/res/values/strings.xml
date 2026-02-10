@@ -83,6 +83,10 @@
     <string name="outfit_creator_menu_title_collapsed">Scegli i tuoi capi</string>
     <string name="outfit_creator_none">Nessuno</string>
     <string name="outfit_creator_reset_position">Reset Posizione</string>
+    <string name="ai_feature_unavailable">Funzionalità a breve disponibile! ✨</string>
+    <string name="ai_virtual_try_on_description">AI Virtual Try-On</string>
+    <string name="bring_forward">Porta avanti</string>
+    <string name="send_backward">Porta indietro</string>
 
     <!-- Upload Clothes Screen -->
     <string name="upload_clothes_details">Dettagli</string>
