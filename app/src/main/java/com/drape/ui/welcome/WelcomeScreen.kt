@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,8 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.drape.R
 import com.drape.ui.theme.DrapeTheme
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Welcome screen shown to unauthenticated users.
@@ -48,9 +44,6 @@ fun WelcomeScreen(
     onStartClick: () -> Unit = {},
     onSignInClick: () -> Unit = {}
 ) {
-    val caroselloImages = listOf(R.drawable.carosello1, R.drawable.carosello1, R.drawable.carosello1)
-    val scrollState = rememberScrollState()
-
     Surface(
         modifier = modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -58,22 +51,27 @@ fun WelcomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(scrollState)
-                .padding(vertical = 48.dp, horizontal = 24.dp),
+                .padding(vertical = 24.dp, horizontal = 24.dp)
+                .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = stringResource(R.string.welcome_logo_description),
-                modifier = Modifier.height(128.dp),
-                contentScale = ContentScale.Fit
-            )
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.carosello1),
+                    contentDescription = stringResource(R.string.welcome_carousel_description),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
-            Spacer(modifier = Modifier.height(40.dp))
-
-            CaroselloBenvenuto(lista = caroselloImages)
-
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = stringResource(R.string.welcome_title),
@@ -137,74 +135,7 @@ fun WelcomeScreen(
     }
 }
 
-@Composable
-fun CaroselloBenvenuto(lista: List<Int>) {
-    val pagerState = rememberPagerState(pageCount = { lista.size })
-    val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(3000)
-            if (lista.isNotEmpty()) {
-                val nextPage = (pagerState.currentPage + 1) % lista.size
-                pagerState.animateScrollToPage(nextPage)
-            }
-        }
-    }
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(220.dp),
-            contentPadding = PaddingValues(horizontal = 48.dp),
-            pageSpacing = 16.dp
-        ) { pagina ->
-            Card(
-                modifier = Modifier.fillMaxSize(),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = lista[pagina]),
-                    contentDescription = stringResource(R.string.welcome_carousel_description),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Row(
-            Modifier.wrapContentHeight().fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(pagerState.pageCount) { iteration ->
-                val active = pagerState.currentPage == iteration
-                val color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
-                val width = if (active) 24.dp else 8.dp
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .clip(CircleShape)
-                        .background(color)
-                        .size(width = width, height = 8.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            coroutineScope.launch {
-                                pagerState.animateScrollToPage(iteration)
-                            }
-                        }
-                )
-            }
-        }
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
