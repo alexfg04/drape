@@ -10,6 +10,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -21,13 +23,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FlipToBack
+import androidx.compose.material.icons.filled.FlipToFront
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,7 +49,9 @@ import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +59,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.drape.R
@@ -67,7 +72,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import kotlin.math.abs
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
+
+private val ClothItemSize = 250.dp
+private val TopUiReservedSpace = 140.dp
 
 /**
  * Main screen for creating and customizing outfits.
@@ -91,9 +102,13 @@ fun OutfitCreatorScreen(
     val scope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
     val snackbarHostState = remember { SnackbarHostState() }
+    var bottomPanelHeightPx by remember { mutableIntStateOf(0) }
+    val bottomPanelHeightDp = with(LocalDensity.current) { bottomPanelHeightPx.toDp() }
+    val topOverlayHeight = TopUiReservedSpace + WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
+    val previewScrollState = rememberScrollState()
 
     // Category labels and mapping
     val categoryMapping = listOf(
@@ -124,72 +139,135 @@ fun OutfitCreatorScreen(
                     .background(Color(0xFFF8F9FA))
             ) {
                 // PREVIEW AREA (Interactive Canvas)
-                Box(
+                BoxWithConstraints(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .clipToBounds()
                         .pointerInput(Unit) {
-                            detectDragGestures { change, dragAmount ->
-                                change.consume()
-                                viewModel.updateCanvasOffset(dragAmount)
-                            }
-                        }
-                    .pointerInput(Unit) {
-                        // Tap on background to hide selection
-                        detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                // SCROLLABLE CONTAINER
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset {
-                            IntOffset(
-                                uiState.canvasOffset.x.roundToInt(),
-                                uiState.canvasOffset.y.roundToInt()
-                            )
-                        }
-                        .drawWithContent {
-                            // Start recording into graphicsLayer (Excludes UI controls outside this Box)
-                            graphicsLayer.record(
-                                size = IntSize(size.width.roundToInt(), size.height.roundToInt())
-                            ) {
-                                this@drawWithContent.drawContent()
-                            }
-                            // Draw the recorded layer to the screen
-                            drawLayer(graphicsLayer)
+                            // Tap on background to hide selection
+                            detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    // Render items in depth order (Shoes -> Bottom -> Top -> Accessories)
-                    categoryMapping.sortedBy { cat: ItemCategory -> getRenderPriority(cat) }.forEach { category ->
-                        val itemState = uiState.placedItems[category]
-                        if (itemState != null) {
-                            ClothItem(
-                                imageUrl = itemState.clothingItem.imageUrl,
-                                scale = itemState.scale,
-                                rotation = itemState.rotation,
-                                offset = itemState.offset,
-                                isActive = uiState.isSelectionVisible && (selectedCategory == category),
-                                onSelect = { viewModel.selectCategory(category) },
-                                onTransformUpdate = { s, r, o ->
-                                    viewModel.updateTransform(category, s, r, o)
+                    val previewHeightDp = maxHeight
+                    val canvasWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
+                    val canvasHeightPx = with(LocalDensity.current) { maxHeight.toPx() }
+                    val topUiReservedSpacePx = with(LocalDensity.current) { TopUiReservedSpace.toPx() }
+
+                    // SCROLLABLE CONTAINER
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(previewScrollState)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(previewHeightDp)
+                                .drawWithContent {
+                                    // Start recording into graphicsLayer (Excludes UI controls outside this Box)
+                                    graphicsLayer.record(
+                                        size = IntSize(size.width.roundToInt(), size.height.roundToInt())
+                                    ) {
+                                        this@drawWithContent.drawContent()
+                                    }
+                                    // Draw the recorded layer to the screen
+                                    drawLayer(graphicsLayer)
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            val placedItemsSorted = uiState.placedItems
+                                .mapNotNull { (category, itemState) ->
+                                    itemState?.let { category to it }
                                 }
-                            )
+                                .sortedWith(
+                                    compareBy<Pair<ItemCategory, PlacedItemState>> { it.second.zIndex }
+                                        .thenBy { getRenderPriority(it.first) }
+                                )
+                            val minPlacedZ = placedItemsSorted.minOfOrNull { it.second.zIndex }
+                            val maxPlacedZ = placedItemsSorted.maxOfOrNull { it.second.zIndex }
+
+                            // Render items in depth order (back to front).
+                            placedItemsSorted.forEach { (category, itemState) ->
+                                val isSelectedItem = selectedCategory == category
+                                val canBringForward = isSelectedItem && maxPlacedZ != null && itemState.zIndex < maxPlacedZ
+                                val canSendBackward = isSelectedItem && minPlacedZ != null && itemState.zIndex > minPlacedZ
+
+                                ClothItem(
+                                    imageUrl = itemState.clothingItem.imageUrl,
+                                    scale = itemState.scale,
+                                    rotation = itemState.rotation,
+                                    offset = itemState.offset,
+                                    isActive = uiState.isSelectionVisible && isSelectedItem,
+                                    canvasWidthPx = canvasWidthPx,
+                                    canvasHeightPx = canvasHeightPx,
+                                    topUiReservedSpacePx = topUiReservedSpacePx,
+                                    canBringForward = canBringForward,
+                                    canSendBackward = canSendBackward,
+                                    onSelect = { viewModel.selectCategory(category) },
+                                    onBringForward = { viewModel.bringSelectedItemForward() },
+                                    onSendBackward = { viewModel.sendSelectedItemBackward() },
+                                    onTransformUpdate = { s, r, o ->
+                                        viewModel.updateTransform(category, s, r, o)
+                                    }
+                                )
+                            }
                         }
+                        Spacer(modifier = Modifier.height(previewHeightDp))
                     }
+
+                // Success Feedback
+                if (uiState.saveSuccess) {
+                    AlertDialog(
+                        onDismissRequest = {
+                            viewModel.clearSaveSuccess()
+                            onBackClick()
+                        },
+                        title = { Text(stringResource(R.string.outfit_creator_success_title)) },
+                        text = { Text(stringResource(R.string.outfit_creator_success_message)) },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                viewModel.clearSaveSuccess()
+                                onBackClick()
+                            }) { Text(stringResource(R.string.ok)) }
+                        }
+                    )
                 }
 
-                // TOP BAR (Back Button + Outfit Name)
-                    Row(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
+                val errorMessage = uiState.errorResId?.let { stringResource(it) }
+                // Error Feedback
+                LaunchedEffect(errorMessage) {
+                    errorMessage?.let { resId ->
+                        snackbarHostState.showSnackbar(
+                            message = resId,
+                            duration = SnackbarDuration.Long
+                        )
+                        viewModel.clearError()
+                    }
+                }
+            }
+            }
+
+            // Top mask: keeps canvas visually clipped below the fixed header area while scrolling
+            Box(
+                modifier = Modifier
+                    .zIndex(4f)
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(topOverlayHeight)
+                    .background(Color(0xFFF8F9FA))
+            )
+
+            // TOP BAR (fixed overlay)
+            Row(
+                modifier = Modifier
+                    .zIndex(5f)
+                    .align(Alignment.TopCenter)
                     .fillMaxWidth()
                     .statusBarsPadding()
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
                     onClick = onBackClick,
@@ -225,7 +303,7 @@ fun OutfitCreatorScreen(
                         },
                         textStyle = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onBackground
                         ),
                         singleLine = true,
@@ -241,162 +319,140 @@ fun OutfitCreatorScreen(
                     )
                 }
 
-                // Spacer to balance the back button visually if needed, or an action button
                 Spacer(modifier = Modifier.width(48.dp))
-            }// CATEGORY INDICATOR
+            }
+
+            Surface(
+                modifier = Modifier
+                    .zIndex(5f)
+                    .align(Alignment.TopCenter)
+                    .padding(top = 80.dp)
+                    .statusBarsPadding(),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
+                shape = CircleShape
+            ) {
+                Text(
+                    text = categories[selectedCategoryIndex],
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            // ACTION BAR (kept above bottom panel)
+            Row(
+                modifier = Modifier
+                    .zIndex(4f)
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = bottomPanelHeightDp + 24.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Calendar Button
                 Surface(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 80.dp) // Push down below the top bar
-                        .statusBarsPadding(),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f),
-                    shape = CircleShape
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
+                    tonalElevation = 4.dp
                 ) {
-                    Text(
-                        text = categories[selectedCategoryIndex],
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    IconButton(onClick = onCalendarClick) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange,
+                            contentDescription = stringResource(R.string.outfit_creator_schedule_description),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
 
-                // ACTION BAR
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 24.dp)
-                        .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
+                Spacer(Modifier.width(16.dp))
+                val defaultName = stringResource(R.string.outfit_creator_default_name)
+                // Save Button
+                Button(
+                    onClick = {
+                        scope.launch {
+                            // Hide selection and collapse menu before capture to ensure clean thumbnail
+                            viewModel.toggleSelectionVisibility(false)
+                            isMenuExpanded = false
+                            // Wait for recomposition/layout frames instead of using a fixed delay.
+                            repeat(2) { withFrameNanos { } }
+                            val thumbnailUri = captureThumbnail(graphicsLayer, context)
+                            viewModel.saveOutfit(
+                                defaultName = defaultName,
+                                thumbnailUri = thumbnailUri,
+                                scrollOffsetYPx = previewScrollState.value.toFloat()
+                            )
+                        }
+                    },
+                    enabled = !uiState.isSaving,
+                    modifier = Modifier.height(48.dp).shadow(12.dp, RoundedCornerShape(24.dp)),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                    contentPadding = PaddingValues(horizontal = 32.dp)
                 ) {
-                    // Calendar Button
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surface,
-                        modifier = Modifier.size(48.dp).shadow(8.dp, CircleShape),
-                        tonalElevation = 4.dp
-                    ) {
-                        IconButton(onClick = onCalendarClick) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = stringResource(R.string.outfit_creator_schedule_description),
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.width(16.dp))
-                    val defaultName = stringResource(R.string.outfit_creator_default_name)
-                    // Save Button
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                // Hide selection and collapse menu before capture to ensure clean thumbnail
-                                // (the menu affects the canvas size via weight(1f), causing a cropped image)
-                                viewModel.toggleSelectionVisibility(false)
-                                isMenuExpanded = false
-                                // A small delay is needed to ensure the UI recomposition completes before capture
-                                kotlinx.coroutines.delay(250)
-                                val thumbnailUri = captureThumbnail(graphicsLayer, context)
-                                viewModel.saveOutfit(defaultName, thumbnailUri)
-                            }
-                        },
-                        enabled = !uiState.isSaving,
-                        modifier = Modifier.height(48.dp).shadow(12.dp, RoundedCornerShape(24.dp)),
-                        shape = RoundedCornerShape(24.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-                        contentPadding = PaddingValues(horizontal = 32.dp)
-                    ) {
-                        if (uiState.isSaving) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(
-                                text = stringResource(R.string.outfit_creator_save_button),
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 16.sp
-                            )
-                        }
-                    }
-
-                    Spacer(Modifier.width(16.dp))
-
-                    // Virtual Try-On Button (AI Style)
-                    val aiGradient = androidx.compose.ui.graphics.Brush.linearGradient(
-                        colors = listOf(
-                            Color(0xFFD0BCFF), // Light Purple
-                            Color(0xFF9A82DB), // Purple
-                            Color(0xFF7D5260)  // Darker shade
+                    if (uiState.isSaving) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                    } else {
+                        Icon(Icons.Default.Check, null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.outfit_creator_save_button),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp
                         )
+                    }
+                }
+
+                Spacer(Modifier.width(16.dp))
+
+                // Virtual Try-On Button (AI Style)
+                val aiGradient = androidx.compose.ui.graphics.Brush.linearGradient(
+                    colors = listOf(
+                        Color(0xFFD0BCFF), // Light Purple
+                        Color(0xFF9A82DB), // Purple
+                        Color(0xFF7D5260)  // Darker shade
                     )
-                    
-                    Surface(
-                        shape = CircleShape,
-                        modifier = Modifier
-                            .size(56.dp) // Slightly larger
-                            .shadow(12.dp, CircleShape)
-                            .border(2.dp, aiGradient, CircleShape),
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 8.dp
-                    ) {
-                        IconButton(onClick = {
-                            if (snackbarHostState.currentSnackbarData == null) {
-                                scope.launch {
+                )
+                val aiFeatureUnavailableMessage = stringResource(R.string.ai_feature_unavailable)
+
+                Surface(
+                    shape = CircleShape,
+                    modifier = Modifier
+                        .size(56.dp) // Slightly larger
+                        .shadow(12.dp, CircleShape)
+                        .border(2.dp, aiGradient, CircleShape),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp
+                ) {
+                    IconButton(onClick = {
+                        if (snackbarHostState.currentSnackbarData == null) {
+                            scope.launch {
                                     val job = launch {
                                         snackbarHostState.showSnackbar(
-                                            message = "Funzionalità a breve disponibile! ✨",
+                                            message = aiFeatureUnavailableMessage,
                                             duration = SnackbarDuration.Indefinite
                                         )
                                     }
-                                    delay(800)
-                                    job.cancel()
-                                }
+                                delay(800)
+                                job.cancel()
                             }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = "AI Virtual Try-On",
-                                tint = Color(0xFF6750A4), // Deep Purple for AI feel
-                                modifier = Modifier.size(28.dp)
-                            )
                         }
-                    }
-                }
-
-                // Success Feedback
-                if (uiState.saveSuccess) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            viewModel.clearSaveSuccess()
-                            onBackClick()
-                        },
-                        title = { Text(stringResource(R.string.outfit_creator_success_title)) },
-                        text = { Text(stringResource(R.string.outfit_creator_success_message)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                viewModel.clearSaveSuccess()
-                                onBackClick()
-                            }) { Text(stringResource(R.string.ok)) }
-                        }
-                    )
-                }
-
-                val errorMessage = uiState.errorResId?.let { stringResource(it) }
-                // Error Feedback
-                LaunchedEffect(errorMessage) {
-                    errorMessage?.let { resId ->
-                        snackbarHostState.showSnackbar(
-                            message = resId,
-                            duration = SnackbarDuration.Long
+                    }) {
+                        Icon(
+                            imageVector = Icons.Default.AutoAwesome,
+                            contentDescription = stringResource(R.string.ai_virtual_try_on_description),
+                            tint = Color(0xFF6750A4), // Deep Purple for AI feel
+                            modifier = Modifier.size(28.dp)
                         )
-                        viewModel.clearError()
                     }
                 }
             }
 
             Surface(
                 modifier = Modifier
+                    .zIndex(3f)
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { bottomPanelHeightPx = it.height }
                     .fillMaxWidth()
                     .shadow(24.dp, RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)),
                 color = MaterialTheme.colorScheme.surface,
@@ -519,7 +575,6 @@ fun OutfitCreatorScreen(
                     }
                 }
                 }
-            }
 
             // Central Snackbars
             SnackbarHost(
@@ -654,20 +709,40 @@ fun ClothItem(
     rotation: Float,
     offset: Offset,
     isActive: Boolean,
+    canvasWidthPx: Float,
+    canvasHeightPx: Float,
+    topUiReservedSpacePx: Float,
+    canBringForward: Boolean,
+    canSendBackward: Boolean,
     onSelect: () -> Unit,
+    onBringForward: () -> Unit,
+    onSendBackward: () -> Unit,
     onTransformUpdate: (Float?, Float?, Offset?) -> Unit
 ) {
     // We use rememberUpdatedState to ensure pointerInput captures the latest values without resetting
     val currentOffset by rememberUpdatedState(offset)
     val currentScale by rememberUpdatedState(scale)
     val currentRotation by rememberUpdatedState(rotation)
+    val currentCanvasWidthPx by rememberUpdatedState(canvasWidthPx)
+    val currentCanvasHeightPx by rememberUpdatedState(canvasHeightPx)
+    val currentTopUiReservedSpacePx by rememberUpdatedState(topUiReservedSpacePx)
+    val currentCanBringForward by rememberUpdatedState(canBringForward)
+    val currentCanSendBackward by rememberUpdatedState(canSendBackward)
+    val itemSizePx = with(LocalDensity.current) { ClothItemSize.toPx() }
+    // Keep control widgets visually stable when the clothing item is scaled down/up.
+    val currentControlInverseScale by rememberUpdatedState(1f / currentScale.coerceAtLeast(0.2f))
+    val controlDistanceBoost = (currentControlInverseScale - 1f).coerceAtLeast(0f)
+    val sidePanelOffsetX = (78f + controlDistanceBoost * 18f).dp
+    val cornerHandleOffset = (15f + controlDistanceBoost * 10f).dp
     val currentOnSelect by rememberUpdatedState(onSelect)
+    val currentOnBringForward by rememberUpdatedState(onBringForward)
+    val currentOnSendBackward by rememberUpdatedState(onSendBackward)
     val currentOnTransformUpdate by rememberUpdatedState(onTransformUpdate)
 
     Box(
         modifier = Modifier
             .offset { IntOffset(currentOffset.x.roundToInt(), currentOffset.y.roundToInt()) }
-            .size(250.dp)
+            .size(ClothItemSize)
             .graphicsLayer {
                 scaleX = currentScale
                 scaleY = currentScale
@@ -686,8 +761,8 @@ fun ClothItem(
                         // Transform the drag amount from local coordinates (rotated/scaled) 
                         // back to global screen coordinates
                         val rad = Math.toRadians(currentRotation.toDouble())
-                        val cos = Math.cos(rad)
-                        val sin = Math.sin(rad)
+                        val cos = cos(rad)
+                        val sin = sin(rad)
 
                         // 1. Un-scale the drag amount 
                         // (The gesture detector is inside the graphicsLayer, so it receives scaled deltas.
@@ -713,8 +788,28 @@ fun ClothItem(
                         val globalY = scaledX * sin + scaledY * cos
                         
                         val globalDrag = Offset(globalX.toFloat(), globalY.toFloat())
-                        
-                        currentOnTransformUpdate(null, null, currentOffset + globalDrag)
+                        val nextOffset = currentOffset + globalDrag
+
+                        val boundedX = clampHorizontalOffset(
+                            proposedOffsetX = nextOffset.x,
+                            canvasWidthPx = currentCanvasWidthPx,
+                            itemSizePx = itemSizePx,
+                            scale = currentScale,
+                            cos = cos,
+                            sin = sin
+                        )
+
+                        val boundedY = clampVerticalOffset(
+                            proposedOffsetY = nextOffset.y,
+                            canvasHeightPx = currentCanvasHeightPx,
+                            topUiReservedSpacePx = currentTopUiReservedSpacePx,
+                            itemSizePx = itemSizePx,
+                            scale = currentScale,
+                            cos = cos,
+                            sin = sin
+                        )
+
+                        currentOnTransformUpdate(null, null, nextOffset.copy(x = boundedX, y = boundedY))
                     }
                 )
             },
@@ -739,11 +834,64 @@ fun ClothItem(
                 )
             }
 
+            // Z-index step controls for the selected item.
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .offset(x = sidePanelOffsetX)
+                    .graphicsLayer {
+                        scaleX = currentControlInverseScale
+                        scaleY = currentControlInverseScale
+                    }
+                    .shadow(8.dp, RoundedCornerShape(24.dp))
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
+                    .padding(vertical = 8.dp, horizontal = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                IconButton(
+                    onClick = currentOnBringForward,
+                    enabled = currentCanBringForward,
+                    modifier = Modifier.size(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FlipToFront,
+                        contentDescription = stringResource(R.string.bring_forward),
+                        tint = if (currentCanBringForward) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        }
+                    )
+                }
+                IconButton(
+                    onClick = currentOnSendBackward,
+                    enabled = currentCanSendBackward,
+                    modifier = Modifier.size(38.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FlipToBack,
+                        contentDescription = stringResource(R.string.send_backward),
+                        tint = if (currentCanSendBackward) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        }
+                    )
+                }
+            }
+
             // RESIZE HANDLE
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(x = 15.dp, y = 15.dp)
+                    .offset(x = cornerHandleOffset, y = cornerHandleOffset)
+                    .graphicsLayer {
+                        scaleX = currentControlInverseScale
+                        scaleY = currentControlInverseScale
+                    }
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(Color.White)
@@ -764,7 +912,11 @@ fun ClothItem(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .offset(x = 15.dp, y = (-15).dp)
+                    .offset(x = cornerHandleOffset, y = -cornerHandleOffset)
+                    .graphicsLayer {
+                        scaleX = currentControlInverseScale
+                        scaleY = currentControlInverseScale
+                    }
                     .size(44.dp)
                     .clip(CircleShape)
                     .background(Color.White)
@@ -782,4 +934,42 @@ fun ClothItem(
             }
         }
     }
+}
+
+private fun clampHorizontalOffset(
+    proposedOffsetX: Float,
+    canvasWidthPx: Float,
+    itemSizePx: Float,
+    scale: Float,
+    cos: Double,
+    sin: Double
+): Float {
+    val transformedWidth = itemSizePx * scale * (abs(cos) + abs(sin)).toFloat()
+    val itemHalfWidth = transformedWidth / 2f
+    val canvasHalfWidth = canvasWidthPx / 2f
+
+    val minX = -canvasHalfWidth + itemHalfWidth
+    val maxX = canvasHalfWidth - itemHalfWidth
+
+    return if (minX > maxX) 0f else proposedOffsetX.coerceIn(minX, maxX)
+}
+
+private fun clampVerticalOffset(
+    proposedOffsetY: Float,
+    canvasHeightPx: Float,
+    topUiReservedSpacePx: Float,
+    itemSizePx: Float,
+    scale: Float,
+    cos: Double,
+    sin: Double
+): Float {
+    val transformedHeight = itemSizePx * scale * (abs(cos) + abs(sin)).toFloat()
+    val itemHalfHeight = transformedHeight / 2f
+    val canvasHalfHeight = canvasHeightPx / 2f
+
+    val availableTop = -canvasHalfHeight + topUiReservedSpacePx
+    val minY = availableTop + itemHalfHeight
+    val maxY = canvasHalfHeight - itemHalfHeight
+
+    return if (minY > maxY) 0f else proposedOffsetY.coerceIn(minY, maxY)
 }
