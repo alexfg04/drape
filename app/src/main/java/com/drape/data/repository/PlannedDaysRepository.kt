@@ -3,7 +3,10 @@ package com.drape.data.repository
 import com.drape.data.datasource.PlannedDaysRemoteDataSource
 import com.drape.data.model.PlannedDay
 import com.drape.data.model.PlannedItem
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -102,11 +105,17 @@ class PlannedDaysRepository @Inject constructor(
      *
      * @return A Flow emitting a list of PlannedDays
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getAllPlannedDays(): Flow<List<PlannedDay>> {
-        val userId = authRepository.currentUser?.id
-            ?: return flowOf(emptyList())
-
-        return plannedDaysRemoteDataSource.getUserPlannedDays(userId)
+        return authRepository.currentUserIdFlow
+            .flatMapLatest { userId ->
+                if (userId.isNullOrBlank()) {
+                    flowOf(emptyList())
+                } else {
+                    plannedDaysRemoteDataSource.getUserPlannedDays(userId)
+                }
+            }
+            .catch { emit(emptyList()) }
     }
 
     /**
@@ -117,11 +126,17 @@ class PlannedDaysRepository @Inject constructor(
      * @param endDate End date in "yyyy-MM-dd" format (inclusive)
      * @return A Flow emitting planned days in the range
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getPlannedDaysInRange(startDate: String, endDate: String): Flow<List<PlannedDay>> {
-        val userId = authRepository.currentUser?.id
-            ?: return flowOf(emptyList())
-
-        return plannedDaysRemoteDataSource.getUserPlannedDaysInRange(userId, startDate, endDate)
+        return authRepository.currentUserIdFlow
+            .flatMapLatest { userId ->
+                if (userId.isNullOrBlank()) {
+                    flowOf(emptyList())
+                } else {
+                    plannedDaysRemoteDataSource.getUserPlannedDaysInRange(userId, startDate, endDate)
+                }
+            }
+            .catch { emit(emptyList()) }
     }
 
     /**

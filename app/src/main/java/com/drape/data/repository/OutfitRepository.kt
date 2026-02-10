@@ -4,7 +4,10 @@ import android.net.Uri
 import com.drape.data.datasource.OutfitsRemoteDataSource
 import com.drape.data.datasource.StorageRemoteDataSource
 import com.drape.data.model.Outfit
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -99,11 +102,17 @@ class OutfitRepository @Inject constructor(
      *
      * @return A [Flow] emitting a list of [Outfit]s belonging to the authenticated user.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun getUserOutfits(): Flow<List<Outfit>> {
-        val userId = authRepository.currentUser?.id
-            ?: return flowOf(emptyList())
-            
-        return outfitsRemoteDataSource.getUserOutfits(userId)
+        return authRepository.currentUserIdFlow
+            .flatMapLatest { userId ->
+                if (userId.isNullOrBlank()) {
+                    flowOf(emptyList())
+                } else {
+                    outfitsRemoteDataSource.getUserOutfits(userId)
+                }
+            }
+            .catch { emit(emptyList()) }
     }
 
     /**

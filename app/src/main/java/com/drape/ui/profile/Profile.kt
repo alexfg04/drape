@@ -603,8 +603,8 @@ fun ProfileScreen(
             
             TextButton(
                 onClick = {
-                    profileViewModel.signOut()
                     onLogout()
+                    profileViewModel.signOut()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
