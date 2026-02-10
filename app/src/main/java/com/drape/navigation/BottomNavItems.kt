@@ -2,9 +2,9 @@ package com.drape.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Checkroom
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 
 import com.drape.R
 import com.drape.ui.components.DrapeNavigationItem
@@ -17,12 +17,12 @@ import com.drape.ui.components.IconSource
 val BottomNavItems = listOf(
     DrapeNavigationItem(
         titleRes = R.string.home_nav_home,
-        icon = IconSource.Vector(Icons.Default.Home),
+        icon = IconSource.Vector(Icons.Filled.Home),
         route = Home
     ),
     DrapeNavigationItem(
         titleRes = R.string.home_nav_camerino,
-        icon = IconSource.Vector(Icons.Default.Face),
+        icon = IconSource.Vector(Icons.Filled.Checkroom),
         route = SavedOutfits
     ),
     DrapeNavigationItem(
@@ -32,7 +32,7 @@ val BottomNavItems = listOf(
     ),
     DrapeNavigationItem(
         titleRes = R.string.home_nav_planner,
-        icon = IconSource.Vector(Icons.Default.CalendarMonth),
+        icon = IconSource.Vector(Icons.Filled.CalendarMonth),
         route = Planner
     )
 )
