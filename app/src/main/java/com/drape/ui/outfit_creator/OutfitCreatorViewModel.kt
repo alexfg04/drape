@@ -203,13 +203,19 @@ class OutfitCreatorViewModel @Inject constructor(
             if (item == null) {
                 newPlacedItems.remove(category)
             } else {
-                // Initialize with default transformation if it doesn't exist
+                // For new/replaced items: place at center and bring to front for immediate manipulation.
                 val existing = newPlacedItems[category]
                 if (existing?.clothingItem?.id != item.id) {
+                    val maxZIndex = state.placedItems
+                        .filterKeys { it != category }
+                        .values
+                        .filterNotNull()
+                        .maxOfOrNull { it.zIndex } ?: -1
+
                     newPlacedItems[category] = PlacedItemState(
                         clothingItem = item,
-                        zIndex = getZIndexForCategory(category),
-                        offset = getDefaultOffsetForCategory(category)
+                        zIndex = maxZIndex + 1,
+                        offset = Offset.Zero
                     )
                 }
             }
@@ -237,14 +243,48 @@ class OutfitCreatorViewModel @Inject constructor(
             state.copy(placedItems = newPlacedItems)
         }
     }
+    /**
+     * Moves the selected item one step forward in stacking order.
+     */
+    fun bringSelectedItemForward() {
+        _uiState.update { state ->
+            val selectedCategory = state.selectedCategory
+            val selectedItem = state.placedItems[selectedCategory] ?: return@update state
+
+            val candidate = state.placedItems
+                .filterKeys { it != selectedCategory }
+                .mapNotNull { (category, itemState) -> itemState?.let { category to it } }
+                .filter { (_, itemState) -> itemState.zIndex > selectedItem.zIndex }
+                .minByOrNull { (_, itemState) -> itemState.zIndex }
+                ?: return@update state
+
+            val newPlacedItems = state.placedItems.toMutableMap()
+            newPlacedItems[selectedCategory] = selectedItem.copy(zIndex = candidate.second.zIndex)
+            newPlacedItems[candidate.first] = candidate.second.copy(zIndex = selectedItem.zIndex)
+            state.copy(placedItems = newPlacedItems)
+        }
+    }
 
     /**
-     * Adjusts the overall canvas pan/scroll offset.
-     *
-     * @param delta The change in offset to apply.
+     * Moves the selected item one step backward in stacking order.
      */
-    fun updateCanvasOffset(delta: Offset) {
-        _uiState.update { it.copy(canvasOffset = it.canvasOffset + delta) }
+    fun sendSelectedItemBackward() {
+        _uiState.update { state ->
+            val selectedCategory = state.selectedCategory
+            val selectedItem = state.placedItems[selectedCategory] ?: return@update state
+
+            val candidate = state.placedItems
+                .filterKeys { it != selectedCategory }
+                .mapNotNull { (category, itemState) -> itemState?.let { category to it } }
+                .filter { (_, itemState) -> itemState.zIndex < selectedItem.zIndex }
+                .maxByOrNull { (_, itemState) -> itemState.zIndex }
+                ?: return@update state
+
+            val newPlacedItems = state.placedItems.toMutableMap()
+            newPlacedItems[selectedCategory] = selectedItem.copy(zIndex = candidate.second.zIndex)
+            newPlacedItems[candidate.first] = candidate.second.copy(zIndex = selectedItem.zIndex)
+            state.copy(placedItems = newPlacedItems)
+        }
     }
 
     /**
@@ -259,7 +299,7 @@ class OutfitCreatorViewModel @Inject constructor(
             newPlacedItems[category] = itemState.copy(
                 scale = 1f,
                 rotation = 0f,
-                offset = getDefaultOffsetForCategory(category)
+                offset = Offset.Zero
             )
             state.copy(placedItems = newPlacedItems)
         }
@@ -284,8 +324,13 @@ class OutfitCreatorViewModel @Inject constructor(
      *
      * @param defaultName The default name to use if the user hasn't entered one.
      * @param thumbnailUri The URI of the captured outfit thumbnail image.
+     * @param scrollOffsetYPx Current vertical preview scroll in pixels; used to normalize saved Y positions.
      */
-    fun saveOutfit(defaultName: String, thumbnailUri: Uri? = null) {
+    fun saveOutfit(
+        defaultName: String,
+        thumbnailUri: Uri? = null,
+        scrollOffsetYPx: Float = 0f
+    ) {
         val currentState = _uiState.value
         if (currentState.placedItems.isEmpty()) {
             _uiState.update { it.copy(errorResId = com.drape.R.string.outfit_creator_error_empty) }
@@ -308,7 +353,7 @@ class OutfitCreatorViewModel @Inject constructor(
                             itemId = it.clothingItem.id,
                             category = category,
                             posX = it.offset.x,
-                            posY = it.offset.y,
+                            posY = it.offset.y - scrollOffsetYPx,
                             scale = it.scale,
                             rotation = it.rotation,
                             zIndex = it.zIndex
@@ -349,22 +394,6 @@ class OutfitCreatorViewModel @Inject constructor(
             ItemCategory.BOTTOM -> 1
             ItemCategory.TOP -> 2
             ItemCategory.ACCESSORIES -> 3
-        }
-    }
-
-    /**
-     * Returns the default (starting) position offset for a specific category on the canvas.
-     *
-     * @param category The [ItemCategory].
-     * @return The default [Offset].
-     */
-    private fun getDefaultOffsetForCategory(category: ItemCategory): Offset {
-        // These values should ideally come from screen density or be normalized
-        return when (category) {
-            ItemCategory.TOP -> Offset(0f, -100f) 
-            ItemCategory.BOTTOM -> Offset(0f, 500f)
-            ItemCategory.SHOES -> Offset(0f, 1000f)
-            ItemCategory.ACCESSORIES -> Offset(300f, -100f)
         }
     }
 }
