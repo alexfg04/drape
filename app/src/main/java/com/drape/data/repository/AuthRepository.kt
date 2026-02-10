@@ -65,15 +65,6 @@ class AuthRepository @Inject constructor(
         authRemoteDataSource.signUp(email, password, displayName)
     }
 
-    /**
-     * Signs in using Google Sign-In.
-     *
-     * @param idToken the ID token obtained from Google Sign-In
-     * @throws FirebaseAuthException if authentication fails
-     */
-    suspend fun signInWithGoogle(idToken: String) {
-        authRemoteDataSource.signInWithGoogle(idToken)
-    }
 
     /**
      * Signs out the current user.

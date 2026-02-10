@@ -24,23 +24,6 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-    fun signInWithGoogle(idToken: String) {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            try {
-                authRepository.signInWithGoogle(idToken)
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    isLoginSuccessful = true
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    errorMessage = e.localizedMessage ?: "Errore durante l'accesso con Google"
-                )
-            }
-        }
-    }
 
     fun clearError() {
         _uiState.value = _uiState.value.copy(errorMessage = null)

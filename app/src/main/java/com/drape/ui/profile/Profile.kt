@@ -254,7 +254,7 @@ fun ProfileScreen(
             
             if (!user?.bio.isNullOrEmpty()) {
                 Text(
-                    text = user!!.bio,
+                    text = user?.bio ?: "",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(horizontal = 32.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -283,18 +283,16 @@ fun ProfileScreen(
                 value = uiState.outfits.size.toString(),
                 icon = Icons.Default.Favorite,
                 iconColor = Color(0xFF1976D2),
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onSavedOutfitsClick() }
+                modifier = Modifier.weight(1f),
+                onClick = { onSavedOutfitsClick() }
             )
             StatBox(
                 label = "Capi",
                 value = wardrobeUiState.clothingItems.size.toString(),
                 icon = Icons.Default.Star,
                 iconColor = Color(0xFF7B1FA2),
-                modifier = Modifier
-                    .weight(1f)
-                    .clickable { onWardrobeClick() }
+                modifier = Modifier.weight(1f),
+                onClick = { onWardrobeClick() }
             )
             StatBox(
                 label = "Giorni",
@@ -630,60 +628,84 @@ fun StatBox(
     value: String,
     icon: ImageVector,
     iconColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
 ) {
-    Card(
-        modifier = modifier.aspectRatio(1f),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        border = BorderStroke(1.dp, iconColor.copy(alpha = 0.1f))
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Background decoration
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(48.dp)
-                    .align(Alignment.BottomEnd)
-                    .offset(x = 12.dp, y = 12.dp),
-                tint = iconColor.copy(alpha = 0.05f)
-            )
-            
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = modifier.aspectRatio(1f),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            border = BorderStroke(1.dp, iconColor.copy(alpha = 0.1f))
+        ) {
+            StatBoxContent(label, value, icon, iconColor)
+        }
+    } else {
+        Card(
+            modifier = modifier.aspectRatio(1f),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            border = BorderStroke(1.dp, iconColor.copy(alpha = 0.1f))
+        ) {
+            StatBoxContent(label, value, icon, iconColor)
+        }
+    }
+}
+
+@Composable
+private fun StatBoxContent(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    iconColor: Color
+) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background decoration
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier
+                .size(48.dp)
+                .align(Alignment.BottomEnd)
+                .offset(x = 12.dp, y = 12.dp),
+            tint = iconColor.copy(alpha = 0.05f)
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = iconColor.copy(alpha = 0.1f),
+                modifier = Modifier.size(36.dp)
             ) {
-                Surface(
-                    shape = CircleShape,
-                    color = iconColor.copy(alpha = 0.1f),
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.padding(8.dp),
-                        tint = iconColor
-                    )
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.padding(8.dp),
+                    tint = iconColor
                 )
             }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }

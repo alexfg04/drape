@@ -38,7 +38,6 @@ import com.drape.ui.theme.DrapeTheme
  * @param onBackClick callback invoked when user taps the back button
  * @param onEmailSignUpClick callback invoked to navigate to email registration
  * @param onNavigateToHome callback invoked after successful login
- * @param onGoogleSignInClick callback invoked to start Google Sign-In flow
  */
 @Composable
 fun SceltaLogScreen(
@@ -46,8 +45,7 @@ fun SceltaLogScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onBackClick: () -> Unit = {},
     onEmailSignUpClick: () -> Unit = {},
-    onNavigateToHome: () -> Unit = {},
-    onGoogleSignInClick: () -> Unit = {}
+    onNavigateToHome: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -62,8 +60,7 @@ fun SceltaLogScreen(
         isLoading = uiState.isLoading,
         errorMessage = uiState.errorMessage,
         onBackClick = onBackClick,
-        onEmailSignUpClick = onEmailSignUpClick,
-        onGoogleSignInClick = onGoogleSignInClick
+        onEmailSignUpClick = onEmailSignUpClick
     )
 }
 
@@ -73,8 +70,7 @@ private fun SceltaLogScreenContent(
     isLoading: Boolean = false,
     errorMessage: String? = null,
     onBackClick: () -> Unit = {},
-    onEmailSignUpClick: () -> Unit = {},
-    onGoogleSignInClick: () -> Unit = {}
+    onEmailSignUpClick: () -> Unit = {}
 ) {
     val scrollState = rememberScrollState()
 
@@ -131,33 +127,6 @@ private fun SceltaLogScreenContent(
                 )
             }
 
-            SceltaLogSocialButton(
-                text = stringResource(R.string.login_continue_google),
-                iconRes = R.drawable.ic_google,
-                enabled = !isLoading,
-                onClick = onGoogleSignInClick
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                Text(
-                    text = stringResource(R.string.login_or_divider),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    fontSize = 14.sp
-                )
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
             Button(
                 onClick = onEmailSignUpClick,
                 enabled = !isLoading,
@@ -189,45 +158,7 @@ private fun SceltaLogScreenContent(
     }
 }
 
-@Composable
-fun SceltaLogSocialButton(
-    iconRes: Int,
-    text: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    onClick: () -> Unit = {}
-) {
-    OutlinedButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(28.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                painter = painterResource(id = iconRes),
-                contentDescription = null,
-                tint = androidx.compose.ui.graphics.Color.Unspecified,
-                modifier = Modifier.size(24.dp)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = text,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Medium
-                )
-            )
-        }
-    }
-}
+
 
 @Composable
 fun SceltaLogLegalFooter(modifier: Modifier = Modifier) {
@@ -263,18 +194,6 @@ fun SceltaLogLegalFooter(modifier: Modifier = Modifier) {
 fun SceltaLogScreenPreview() {
     DrapeTheme {
         SceltaLogScreenContent()
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
-@Composable
-fun SceltaLogSocialButtonPreview() {
-    DrapeTheme {
-        SceltaLogSocialButton(
-            iconRes = R.drawable.ic_google,
-            text = "Continua con Google", // Preview-only, uses stringResource in production
-            modifier = Modifier.padding(16.dp)
-        )
     }
 }
 

@@ -68,7 +68,6 @@ private fun SignInScreenContent(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
     val isEmailValid = email.contains("@")
@@ -173,25 +172,6 @@ private fun SignInScreenContent(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                RadioButton(
-                    selected = rememberMe,
-                    onClick = { if (!isLoading) rememberMe = !rememberMe },
-                    colors = RadioButtonDefaults.colors(
-                        selectedColor = MaterialTheme.colorScheme.primary,
-                        unselectedColor = MaterialTheme.colorScheme.outline
-                    )
-                )
-                Text(
-                    text = stringResource(R.string.auth_remember_me),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

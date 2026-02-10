@@ -28,10 +28,7 @@ fun NavGraphBuilder.authNavGraph(
             SceltaLogScreen(
                 onBackClick = { navController.popBackStack() },
                 onEmailSignUpClick = { navController.navigate(SignUpEmail) },
-                onNavigateToHome = onNavigateToHome,
-                onGoogleSignInClick = {
-                    // TODO: Implement Google Sign-In logic
-                }
+                onNavigateToHome = onNavigateToHome
             )
         }
         composable<SignUpEmail> {

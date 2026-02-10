@@ -155,23 +155,31 @@ fun NavGraphBuilder.homeNavGraph(
             ProfileScreen(
                 onSavedOutfitsClick = {
                     // Navigate to SavedOutfits tab, preserving bottom bar state
-                    navController.navigate(SavedOutfits) {
-                        popUpTo(HomeGraph) {
-                            saveState = true
+                    if (!navController.popBackStack(SavedOutfits, inclusive = false)) {
+                        // Pop Profile first so it's not saved as part of the previous tab's state
+                        navController.popBackStack()
+                        navController.navigate(SavedOutfits) {
+                            popUpTo(HomeGraph) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
                     }
                 },
                 onWardrobeClick = {
                      // Navigate to Wardrobe tab
-                     navController.navigate(Wardrobe) {
-                        popUpTo(HomeGraph) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                     if (!navController.popBackStack(Wardrobe, inclusive = false)) {
+                         // Pop Profile first so it's not saved as part of the previous tab's state
+                         navController.popBackStack()
+                         navController.navigate(Wardrobe) {
+                            popUpTo(HomeGraph) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                         }
+                     }
                 },
                 onEditProfileClick = {
                     navController.navigate(EditProfile)

@@ -49,13 +49,11 @@ fun DrapeNavGraph(
 
         // Home Flow: Home, Camerino, Add, Profile
         // Note: Bottom navigation is handled at app level (MainActivity)
-           homeNavGraph(
+        homeNavGraph(
             navController = navController,
             onLogout = {
                 navController.navigate(AuthGraph) {
-                    popUpTo<HomeGraph> { inclusive = true }
-                    // Also clear splash if present, though it should be gone by now
-                    popUpTo<Splash> { inclusive = true }
+                    popUpTo(HomeGraph) { inclusive = true }
                 }
             }
         )

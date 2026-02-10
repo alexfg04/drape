@@ -2,7 +2,6 @@ package com.drape.data.datasource
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.userProfileChangeRequest
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -40,10 +39,6 @@ class AuthRemoteDataSource @Inject constructor(
         )?.await()
     }
 
-    suspend fun signInWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential).await()
-    }
 
     fun signOut() {
         auth.signOut()
