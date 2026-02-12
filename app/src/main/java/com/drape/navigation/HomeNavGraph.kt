@@ -91,7 +91,7 @@ fun NavGraphBuilder.homeNavGraph(
             val route = backStackEntry.toRoute<EditOutfit>()
             OutfitCreatorScreen(
                 outfitId = route.outfitId,
-                onBackClick = { navController.navigate(SavedOutfits) }
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -223,10 +223,12 @@ fun NavGraphBuilder.homeNavGraph(
 
         composable<Planner> { backStackEntry ->
             val outfitPlanned = backStackEntry.savedStateHandle.get<Boolean>("outfit_planned") == true
-            if (outfitPlanned) backStackEntry.savedStateHandle.remove<Boolean>("outfit_planned")
 
             PlannerScreen(
                 outfitPlanned = outfitPlanned,
+                onOutfitPlannedConsumed = {
+                    backStackEntry.savedStateHandle.remove<Boolean>("outfit_planned")
+                },
                 onNavigateToSelectOutfit = { day, month, year ->
                     navController.navigate(SelectOutfit(day, month, year))
                 }
