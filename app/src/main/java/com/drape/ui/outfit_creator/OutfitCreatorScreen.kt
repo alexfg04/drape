@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.FlipToBack
 import androidx.compose.material.icons.filled.FlipToFront
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -88,6 +89,7 @@ import kotlin.math.sin
 
 private val ClothItemSize = 250.dp
 private val TopUiReservedSpace = 140.dp
+private val BottomDragExtraSpace = 32.dp
 
 /**
  * Main screen for creating and customizing outfits.
@@ -113,12 +115,14 @@ fun OutfitCreatorScreen(
     val graphicsLayer = rememberGraphicsLayer()
     val snackbarHostState = remember { SnackbarHostState() }
     var bottomPanelHeightPx by remember { mutableIntStateOf(0) }
+    var actionBarHeightPx by remember { mutableIntStateOf(0) }
     val bottomPanelHeightDp = with(LocalDensity.current) { bottomPanelHeightPx.toDp() }
     val topOverlayHeight = TopUiReservedSpace + WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     // Menu visibility state
     var isMenuExpanded by remember { mutableStateOf(true) }
     val previewScrollState = rememberScrollState()
+    var previewViewportSize by remember { mutableStateOf(IntSize.Zero) }
 
     // Body reference upload dialog
     var showBodyRefDialog by remember { mutableStateOf(false) }
@@ -324,6 +328,18 @@ fun OutfitCreatorScreen(
         containerColor = Color.Transparent, // Preserve background color from Column
         contentWindowInsets = WindowInsets(0)
     ) { paddingValues ->
+        val errorMessage = uiState.errorResId?.let { stringResource(it) }
+        // Keep side-effects out of the layout content block to avoid composable target warnings.
+        LaunchedEffect(errorMessage) {
+            errorMessage?.let { resId ->
+                snackbarHostState.showSnackbar(
+                    message = resId,
+                    duration = SnackbarDuration.Long
+                )
+                viewModel.clearError()
+            }
+        }
+
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
@@ -331,23 +347,29 @@ fun OutfitCreatorScreen(
                     .padding(paddingValues)
                     .background(Color(0xFFF8F9FA))
             ) {
+                val density = LocalDensity.current
+                val previewHeightDp = with(density) { previewViewportSize.height.toDp() }
+                val canvasWidthPx = previewViewportSize.width.toFloat()
+                val canvasHeightPx = previewViewportSize.height.toFloat()
+                val topUiReservedSpacePx = with(density) { TopUiReservedSpace.toPx() }
+                // Allow dragging below overlays (action bar + bottom sheet), especially on small phones.
+                val bottomDragAllowancePx = bottomPanelHeightPx.toFloat() +
+                    actionBarHeightPx.toFloat() +
+                    with(density) { BottomDragExtraSpace.toPx() }
+
                 // PREVIEW AREA (Interactive Canvas)
-                BoxWithConstraints(
+                Box(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxWidth()
                         .clipToBounds()
+                        .onSizeChanged { previewViewportSize = it }
                         .pointerInput(Unit) {
                             // Tap on background to hide selection
                             detectTapGestures(onTap = { viewModel.toggleSelectionVisibility(false) })
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    val previewHeightDp = maxHeight
-                    val canvasWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
-                    val canvasHeightPx = with(LocalDensity.current) { maxHeight.toPx() }
-                    val topUiReservedSpacePx = with(LocalDensity.current) { TopUiReservedSpace.toPx() }
-
                     // SCROLLABLE CONTAINER
                     Column(
                         modifier = Modifier
@@ -396,6 +418,7 @@ fun OutfitCreatorScreen(
                                     canvasWidthPx = canvasWidthPx,
                                     canvasHeightPx = canvasHeightPx,
                                     topUiReservedSpacePx = topUiReservedSpacePx,
+                                    bottomDragAllowancePx = bottomDragAllowancePx,
                                     canBringForward = canBringForward,
                                     canSendBackward = canSendBackward,
                                     onSelect = { viewModel.selectCategory(category) },
@@ -409,37 +432,25 @@ fun OutfitCreatorScreen(
                         }
                         Spacer(modifier = Modifier.height(previewHeightDp))
                     }
-
-                // Success Feedback
-                if (uiState.saveSuccess) {
-                    AlertDialog(
-                        onDismissRequest = {
-                            viewModel.clearSaveSuccess()
-                            onBackClick()
-                        },
-                        title = { Text(stringResource(R.string.outfit_creator_success_title)) },
-                        text = { Text(stringResource(R.string.outfit_creator_success_message)) },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                viewModel.clearSaveSuccess()
-                                onBackClick()
-                            }) { Text(stringResource(R.string.ok)) }
-                        }
-                    )
-                }
-
-                val errorMessage = uiState.errorResId?.let { stringResource(it) }
-                // Error Feedback
-                LaunchedEffect(errorMessage) {
-                    errorMessage?.let { resId ->
-                        snackbarHostState.showSnackbar(
-                            message = resId,
-                            duration = SnackbarDuration.Long
-                        )
-                        viewModel.clearError()
-                    }
                 }
             }
+
+            // Success Feedback
+            if (uiState.saveSuccess) {
+                AlertDialog(
+                    onDismissRequest = {
+                        viewModel.clearSaveSuccess()
+                        onBackClick()
+                    },
+                    title = { Text(stringResource(R.string.outfit_creator_success_title)) },
+                    text = { Text(stringResource(R.string.outfit_creator_success_message)) },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.clearSaveSuccess()
+                            onBackClick()
+                        }) { Text(stringResource(R.string.ok)) }
+                    }
+                )
             }
 
             // Top mask: keeps canvas visually clipped below the fixed header area while scrolling
@@ -537,6 +548,7 @@ fun OutfitCreatorScreen(
                 modifier = Modifier
                     .zIndex(4f)
                     .align(Alignment.BottomCenter)
+                    .onSizeChanged { actionBarHeightPx = it.height }
                     .padding(bottom = bottomPanelHeightDp + 24.dp)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -650,48 +662,6 @@ fun OutfitCreatorScreen(
                         }
                     }
                 }
-                // Virtual Try-On Button (AI Style)
-                val aiGradient = androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFFD0BCFF), // Light Purple
-                        Color(0xFF9A82DB), // Purple
-                        Color(0xFF7D5260)  // Darker shade
-                    )
-                )
-                val aiFeatureUnavailableMessage = stringResource(R.string.ai_feature_unavailable)
-
-                Surface(
-                    shape = CircleShape,
-                    modifier = Modifier
-                        .size(56.dp) // Slightly larger
-                        .shadow(12.dp, CircleShape)
-                        .border(2.dp, aiGradient, CircleShape),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 8.dp
-                ) {
-                    IconButton(onClick = {
-                        if (snackbarHostState.currentSnackbarData == null) {
-                            scope.launch {
-                                    val job = launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = aiFeatureUnavailableMessage,
-                                            duration = SnackbarDuration.Indefinite
-                                        )
-                                    }
-                                delay(800)
-                                job.cancel()
-                            }
-                        }
-                    }) {
-                        Icon(
-                            imageVector = Icons.Default.AutoAwesome,
-                            contentDescription = stringResource(R.string.ai_virtual_try_on_description),
-                            tint = Color(0xFF6750A4), // Deep Purple for AI feel
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-            }
 
             Surface(
                 modifier = Modifier
@@ -972,6 +942,7 @@ fun ClothItem(
     canvasWidthPx: Float,
     canvasHeightPx: Float,
     topUiReservedSpacePx: Float,
+    bottomDragAllowancePx: Float,
     canBringForward: Boolean,
     canSendBackward: Boolean,
     onSelect: () -> Unit,
@@ -986,6 +957,7 @@ fun ClothItem(
     val currentCanvasWidthPx by rememberUpdatedState(canvasWidthPx)
     val currentCanvasHeightPx by rememberUpdatedState(canvasHeightPx)
     val currentTopUiReservedSpacePx by rememberUpdatedState(topUiReservedSpacePx)
+    val currentBottomDragAllowancePx by rememberUpdatedState(bottomDragAllowancePx)
     val currentCanBringForward by rememberUpdatedState(canBringForward)
     val currentCanSendBackward by rememberUpdatedState(canSendBackward)
     val itemSizePx = with(LocalDensity.current) { ClothItemSize.toPx() }
@@ -1012,67 +984,73 @@ fun ClothItem(
                 // Unified tap/drag management to avoid conflicts
                 detectTapGestures(onTap = { currentOnSelect() })
             }
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragStart = { currentOnSelect() },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        
-                        // Transform the drag amount from local coordinates (rotated/scaled) 
-                        // back to global screen coordinates
-                        val rad = Math.toRadians(currentRotation.toDouble())
-                        val cos = cos(rad)
-                        val sin = sin(rad)
+            .then(
+                if (isActive) {
+                    Modifier.pointerInput(Unit) {
+                        detectDragGestures(
+                            onDrag = { change, dragAmount ->
+                                change.consume()
 
-                        // 1. Un-scale the drag amount 
-                        // (The gesture detector is inside the graphicsLayer, so it receives scaled deltas.
-                        // We actually want the screen-space movement. 
-                        // However, since we are adding this to the offset which is OUTSIDE the graphicsLayer,
-                        // we need to understand how the touch moves relative to the parent.
-                        // BUT: detectDragGestures returns values in the local coordinate system of the node.
-                        // If the node is scaled by S, a physical movement of P pixels is reported as P/S in local space.
-                        // To move the object by P pixels in parent space, we need to add P to the offset.
-                        // So we must Multiply by Scale: (P/S) * S = P.
-                        val scaledX = dragAmount.x * currentScale
-                        val scaledY = dragAmount.y * currentScale
+                                // Transform the drag amount from local coordinates (rotated/scaled)
+                                // back to global screen coordinates
+                                val rad = Math.toRadians(currentRotation.toDouble())
+                                val cos = cos(rad)
+                                val sin = sin(rad)
 
-                        // 2. Un-rotate the drag amount
-                        // If the node is rotated by R, a movement along X in parent space is reported 
-                        // as a movement along rotated X axis in local space.
-                        // We can use standard 2D rotation matrix to transform the local delta back to parent frame.
-                        // Local (x,y) -> Parent (X,Y)
-                        // X = x * cos(R) - y * sin(R)
-                        // Y = x * sin(R) + y * cos(R)
-                        
-                        val globalX = scaledX * cos - scaledY * sin
-                        val globalY = scaledX * sin + scaledY * cos
-                        
-                        val globalDrag = Offset(globalX.toFloat(), globalY.toFloat())
-                        val nextOffset = currentOffset + globalDrag
+                                // 1. Un-scale the drag amount
+                                // (The gesture detector is inside the graphicsLayer, so it receives scaled deltas.
+                                // We actually want the screen-space movement.
+                                // However, since we are adding this to the offset which is OUTSIDE the graphicsLayer,
+                                // we need to understand how the touch moves relative to the parent.
+                                // BUT: detectDragGestures returns values in the local coordinate system of the node.
+                                // If the node is scaled by S, a physical movement of P pixels is reported as P/S in local space.
+                                // To move the object by P pixels in parent space, we need to add P to the offset.
+                                // So we must Multiply by Scale: (P/S) * S = P.
+                                val scaledX = dragAmount.x * currentScale
+                                val scaledY = dragAmount.y * currentScale
 
-                        val boundedX = clampHorizontalOffset(
-                            proposedOffsetX = nextOffset.x,
-                            canvasWidthPx = currentCanvasWidthPx,
-                            itemSizePx = itemSizePx,
-                            scale = currentScale,
-                            cos = cos,
-                            sin = sin
+                                // 2. Un-rotate the drag amount
+                                // If the node is rotated by R, a movement along X in parent space is reported
+                                // as a movement along rotated X axis in local space.
+                                // We can use standard 2D rotation matrix to transform the local delta back to parent frame.
+                                // Local (x,y) -> Parent (X,Y)
+                                // X = x * cos(R) - y * sin(R)
+                                // Y = x * sin(R) + y * cos(R)
+
+                                val globalX = scaledX * cos - scaledY * sin
+                                val globalY = scaledX * sin + scaledY * cos
+
+                                val globalDrag = Offset(globalX.toFloat(), globalY.toFloat())
+                                val nextOffset = currentOffset + globalDrag
+
+                                val boundedX = clampHorizontalOffset(
+                                    proposedOffsetX = nextOffset.x,
+                                    canvasWidthPx = currentCanvasWidthPx,
+                                    itemSizePx = itemSizePx,
+                                    scale = currentScale,
+                                    cos = cos,
+                                    sin = sin
+                                )
+
+                                val boundedY = clampVerticalOffset(
+                                    proposedOffsetY = nextOffset.y,
+                                    canvasHeightPx = currentCanvasHeightPx,
+                                    topUiReservedSpacePx = currentTopUiReservedSpacePx,
+                                    bottomDragAllowancePx = currentBottomDragAllowancePx,
+                                    itemSizePx = itemSizePx,
+                                    scale = currentScale,
+                                    cos = cos,
+                                    sin = sin
+                                )
+
+                                currentOnTransformUpdate(null, null, nextOffset.copy(x = boundedX, y = boundedY))
+                            }
                         )
-
-                        val boundedY = clampVerticalOffset(
-                            proposedOffsetY = nextOffset.y,
-                            canvasHeightPx = currentCanvasHeightPx,
-                            topUiReservedSpacePx = currentTopUiReservedSpacePx,
-                            itemSizePx = itemSizePx,
-                            scale = currentScale,
-                            cos = cos,
-                            sin = sin
-                        )
-
-                        currentOnTransformUpdate(null, null, nextOffset.copy(x = boundedX, y = boundedY))
                     }
-                )
-            },
+                } else {
+                    Modifier
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         AsyncImage(
@@ -1218,6 +1196,7 @@ private fun clampVerticalOffset(
     proposedOffsetY: Float,
     canvasHeightPx: Float,
     topUiReservedSpacePx: Float,
+    bottomDragAllowancePx: Float,
     itemSizePx: Float,
     scale: Float,
     cos: Double,
@@ -1229,7 +1208,7 @@ private fun clampVerticalOffset(
 
     val availableTop = -canvasHalfHeight + topUiReservedSpacePx
     val minY = availableTop + itemHalfHeight
-    val maxY = canvasHalfHeight - itemHalfHeight
+    val maxY = canvasHalfHeight + bottomDragAllowancePx - itemHalfHeight
 
     return if (minY > maxY) 0f else proposedOffsetY.coerceIn(minY, maxY)
 }

@@ -138,7 +138,6 @@ fun WardrobeScreenContent(
     }
 
     var searchQuery by remember { mutableStateOf("") }
-    var isSearchActive by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -309,7 +308,6 @@ fun WardrobeListContent(
 }
 
 /**
-<<<<<<< refactor/my-outfit-ui
  * Dialog displaying details of a selected clothing item.
  * Provides an option to delete the item.
  *
@@ -435,8 +433,6 @@ fun DetailRow(label: String, value: String) {
 }
 
 /**
-=======
->>>>>>> main
  * Full-screen loading state for the Wardrobe.
  */
 @Composable
