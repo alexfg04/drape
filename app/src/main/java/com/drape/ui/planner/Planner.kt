@@ -127,6 +127,7 @@ fun PlannerScreen(
     }
 
     Scaffold(
+        contentWindowInsets = WindowInsets(0),
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
                 DrapeSnackbar(snackbarData = data)

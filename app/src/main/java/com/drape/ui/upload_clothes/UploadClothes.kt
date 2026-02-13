@@ -33,8 +33,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,7 +55,6 @@ import kotlinx.coroutines.withContext
 import androidx.core.net.toUri
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.stringArrayResource
-import android.util.Log
 import com.drape.R
 
 /**
@@ -93,8 +96,15 @@ fun UploadItemContent(
     onClearProcessedImage: () -> Unit
 ) {
     val context = LocalContext.current
+    val windowInfo = LocalWindowInfo.current
+    val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val containerHeightDp = with(density) { windowInfo.containerSize.height.toDp() }
+    val isSmallHeightDevice = containerHeightDp <= 760.dp
+    val imagePreviewHeight = if (isSmallHeightDevice) 250.dp else 350.dp
+    val sectionSpacing = if (isSmallHeightDevice) 16.dp else 24.dp
+    val bottomSpacerHeight = if (isSmallHeightDevice) 20.dp else 62.dp
     
     val uriSaver = Saver<MutableState<Uri?>, String>(
         save = { it.value?.toString() ?: "" },
@@ -228,6 +238,7 @@ fun UploadItemContent(
                 MainImagePreview(
                     imageUri = if (removeBackgroundEnabled) uiState.processedImageUri ?: selectedImageUri else selectedImageUri,
                     isProcessing = uiState.isProcessingBackground,
+                    previewHeight = imagePreviewHeight,
                     onClick = {
                         imagePickerLauncher.launch(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
@@ -235,12 +246,13 @@ fun UploadItemContent(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(sectionSpacing))
 
                 // 2. Card Rimozione Sfondo
                 RemoveBackgroundCard(
                     isChecked = removeBackgroundEnabled,
                     isProcessing = uiState.isProcessingBackground,
+                    compactMode = isSmallHeightDevice,
                     onCheckedChange = { enabled ->
                         removeBackgroundEnabled = enabled
                         selectedImageUri?.let { uri ->
@@ -254,10 +266,15 @@ fun UploadItemContent(
                 )
 
                 // Spingiamo i pulsanti di azione verso il basso
-                Spacer(modifier = Modifier.weight(1f))
+                if (isSmallHeightDevice) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
 
                 // 3. Pulsanti di editing (Undo, Crop, Rotate)
                 ActionButtonsRow(
+                    compactMode = isSmallHeightDevice,
                     onUndo = { 
                         selectedImageUri = null
                         onClearProcessedImage()
@@ -289,7 +306,7 @@ fun UploadItemContent(
                 )
                 
                 // Spazio finale
-                Spacer(modifier = Modifier.height(62.dp))
+                Spacer(modifier = Modifier.height(bottomSpacerHeight))
             }
         }
     }
@@ -378,6 +395,7 @@ fun TopBarSection(title: String, onClose: () -> Unit) {
 fun MainImagePreview(
     imageUri: Uri?,
     isProcessing: Boolean = false,
+    previewHeight: Dp = 350.dp,
     onClick: () -> Unit
 ) {
     Card(
@@ -385,7 +403,7 @@ fun MainImagePreview(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(350.dp)
+            .height(previewHeight)
             .clickable { onClick() }
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -486,51 +504,62 @@ fun MainImagePreview(
 fun RemoveBackgroundCard(
     isChecked: Boolean,
     isProcessing: Boolean,
+    compactMode: Boolean = false,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val cardPadding = if (compactMode) 12.dp else 16.dp
+    val iconContainerSize = if (compactMode) 40.dp else 48.dp
+    val iconSize = if (compactMode) 20.dp else 24.dp
+    val horizontalSpacing = if (compactMode) 12.dp else 16.dp
+
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(cardPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.background,
-                modifier = Modifier.size(48.dp)
+                modifier = Modifier.size(iconContainerSize)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     if (isProcessing) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(iconSize),
                             strokeWidth = 2.dp
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Outlined.AutoAwesome,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(iconSize)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(horizontalSpacing))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = stringResource(R.string.upload_clothes_remove_background),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = if (compactMode) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = if (isProcessing) stringResource(R.string.upload_clothes_processing) else stringResource(R.string.upload_clothes_process_info),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = if (compactMode) 1 else 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
 
@@ -556,20 +585,43 @@ fun RemoveBackgroundCard(
  */
 @Composable
 fun ActionButtonsRow(
+    compactMode: Boolean = false,
     onUndo: () -> Unit,
     onCrop: () -> Unit,
     onRotate: () -> Unit
 ) {
+    val buttonSize = if (compactMode) 60.dp else 56.dp
+    val iconSize = if (compactMode) 26.dp else 24.dp
+    val spacing = if (compactMode) 20.dp else 32.dp
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ActionButton(icon = Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", onClick = onUndo)
-        Spacer(modifier = Modifier.width(32.dp))
-        ActionButton(icon = Icons.Default.Crop, contentDescription = "Crop", onClick = onCrop)
-        Spacer(modifier = Modifier.width(32.dp))
-        ActionButton(icon = Icons.Default.Refresh, contentDescription = "Rotate", onClick = onRotate)
+        ActionButton(
+            icon = Icons.AutoMirrored.Filled.Undo,
+            contentDescription = "Undo",
+            buttonSize = buttonSize,
+            iconSize = iconSize,
+            onClick = onUndo
+        )
+        Spacer(modifier = Modifier.width(spacing))
+        ActionButton(
+            icon = Icons.Default.Crop,
+            contentDescription = "Crop",
+            buttonSize = buttonSize,
+            iconSize = iconSize,
+            onClick = onCrop
+        )
+        Spacer(modifier = Modifier.width(spacing))
+        ActionButton(
+            icon = Icons.Default.Refresh,
+            contentDescription = "Rotate",
+            buttonSize = buttonSize,
+            iconSize = iconSize,
+            onClick = onRotate
+        )
     }
 }
 
@@ -581,19 +633,25 @@ fun ActionButtonsRow(
  * @param onClick Callback triggered on click.
  */
 @Composable
-fun ActionButton(icon: ImageVector, contentDescription: String, onClick: () -> Unit) {
+fun ActionButton(
+    icon: ImageVector,
+    contentDescription: String,
+    buttonSize: Dp = 56.dp,
+    iconSize: Dp = 24.dp,
+    onClick: () -> Unit
+) {
     Surface(
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp,
-        modifier = Modifier.size(56.dp)
+        modifier = Modifier.size(buttonSize)
     ) {
         IconButton(onClick = onClick) {
             Icon(
                 icon, 
                 contentDescription = contentDescription, 
                 tint = MaterialTheme.colorScheme.onSurfaceVariant, 
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(iconSize)
             )
         }
     }
@@ -635,7 +693,6 @@ fun AddItemForm(
     uiState: UploadClothesUiState,
     onSave: () -> Unit
 ) {
-    val context = LocalContext.current
     val categories = ItemCategory.entries.toList()
     val seasons = stringArrayResource(R.array.seasons).toList()
     var categoryExpanded by remember { mutableStateOf(false) }
@@ -658,7 +715,9 @@ fun AddItemForm(
         modifier = modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .navigationBarsPadding()
+            .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Validation Image
@@ -719,7 +778,7 @@ fun AddItemForm(
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 readOnly = true,
                 value = displayCategory,
                 onValueChange = {},
@@ -773,7 +832,7 @@ fun AddItemForm(
             OutlinedTextField(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 readOnly = true,
                 value = season,
                 onValueChange = {},
@@ -923,14 +982,18 @@ fun ColorCircle(
  * @param onClick Callback triggered on click.
  */
 @Composable
-fun BottomActionButton(onClick: () -> Unit) {
+fun BottomActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)
+            .navigationBarsPadding()
             .height(56.dp)
     ) {
         Text(

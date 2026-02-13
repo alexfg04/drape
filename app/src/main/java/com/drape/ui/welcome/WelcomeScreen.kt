@@ -1,22 +1,12 @@
 package com.drape.ui.welcome
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -64,7 +54,7 @@ fun WelcomeScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 Image(
-                    painter = painterResource(id = R.drawable.carosello1),
+                    painter = painterResource(id = R.drawable.welcome_screen_image),
                     contentDescription = stringResource(R.string.welcome_carousel_description),
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -123,6 +113,10 @@ fun WelcomeScreen(
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge
                     )
+
+                    // Aggiunto spacer per creare separazione tra i due Text
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = stringResource(R.string.welcome_sign_in),
                         color = MaterialTheme.colorScheme.primary,
