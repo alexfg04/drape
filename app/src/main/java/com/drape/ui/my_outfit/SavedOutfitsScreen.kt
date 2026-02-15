@@ -40,10 +40,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
 import com.drape.data.model.Outfit
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.theme.DrapeTheme
 import com.drape.ui.components.DrapeSnackbar
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -292,7 +292,7 @@ fun OutfitDetailDialog(
                         contentAlignment = Alignment.Center
                     ) {
                         if (outfit.thumbnailUrl.isNotBlank()) {
-                            AsyncImage(
+                            ShimmerAsyncImage(
                                 model = ImageRequest.Builder(LocalContext.current)
                                     .data(outfit.thumbnailUrl)
                                     .crossfade(true)
@@ -428,7 +428,7 @@ fun SavedOutfitItemCard(
         ) {
             // Hero Image
             if (outfit.thumbnailUrl.isNotBlank()) {
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(outfit.thumbnailUrl)
                         .crossfade(true)

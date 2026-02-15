@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,11 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.drape.R
 import com.drape.data.model.ClothingItem
 import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.theme.DrapeTheme
 
 /**
@@ -180,7 +178,7 @@ private fun ClothingItemDetailContent(
         ) {
             val context = LocalContext.current
             if (item.imageUrl.isNotEmpty()) {
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = ImageRequest.Builder(context)
                         .data(item.imageUrl)
                         .diskCacheKey(item.id)
