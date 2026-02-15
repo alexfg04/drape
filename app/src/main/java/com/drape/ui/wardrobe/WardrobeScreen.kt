@@ -33,13 +33,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.ItemCategory
 import com.drape.ui.theme.*
 import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.ShimmerAsyncImage
 
 /**
  * Main screen for viewing and managing the user's wardrobe.
@@ -374,7 +374,7 @@ fun ClothingItemDetailCard(item: ClothingItem) {
             contentAlignment = Alignment.Center
         ) {
             val context = LocalContext.current
-            AsyncImage(
+            ShimmerAsyncImage(
                 model = ImageRequest.Builder(context).data(item.imageUrl).diskCacheKey(item.id)
                     .memoryCacheKey(item.id).crossfade(true).build(),
                 contentDescription = item.name,
@@ -672,14 +672,13 @@ fun WardrobeItemCard(item: ClothingItem, onClick: () -> Unit, modifier: Modifier
                 contentAlignment = Alignment.Center
             ) {
                 val context = LocalContext.current
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = ImageRequest.Builder(context).data(item.imageUrl).diskCacheKey(item.id)
                         .memoryCacheKey(item.id).crossfade(true).build(),
                     contentDescription = item.name,
                     contentScale = ContentScale.Fit, // Changed to Fit to ensure entire item is visible without cropping
                     modifier = Modifier
                         .fillMaxSize()
-                        //.padding(8.dp) // Removed padding to maximize item size
                 )
             }
 

@@ -24,10 +24,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.drape.R
 
 import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.theme.DrapeTheme
 
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -332,7 +332,7 @@ fun PlannedOutfitCard(
         Box(modifier = Modifier.fillMaxSize()) {
             // Outfit image
             if (!outfit.imageUrl.isNullOrEmpty()) {
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = outfit.imageUrl,
                     contentDescription = outfit.outfitTitle,
                     modifier = Modifier.fillMaxSize(),
@@ -684,7 +684,7 @@ fun UpcomingEventCard(event: UpcomingEventDisplay) {
                     .fillMaxHeight()
             ) {
                 if (!event.imageUrl.isNullOrEmpty()) {
-                    AsyncImage(
+                    ShimmerAsyncImage(
                         model = event.imageUrl,
                         contentDescription = event.outfitName,
                         modifier = Modifier.fillMaxSize(),
@@ -715,56 +715,6 @@ fun UpcomingEventCard(event: UpcomingEventDisplay) {
                 )
                 Text(
                     text = event.label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    }
-}
-
-// Keep for Preview compatibility
-data class HighlightItem(val title: String, val subtitle: String, val date: String)
-
-@Composable
-fun HighlightCard(item: HighlightItem, modifier: Modifier = Modifier) {
-    Card(
-        modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Outfit Thumb
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                modifier = Modifier.width(50.dp).fillMaxHeight()
-            ) {
-                // Image
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Column {
-                Text(
-                    text = item.date,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = item.subtitle,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

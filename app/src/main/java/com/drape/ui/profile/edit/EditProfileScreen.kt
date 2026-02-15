@@ -10,7 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
@@ -26,9 +26,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.R
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.components.DrapeSnackbar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -87,7 +87,7 @@ fun EditProfileScreen(
                 title = { Text("Modifica Profilo") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -128,7 +128,7 @@ fun EditProfileScreen(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                 ) {
                      if (coverModel != null) {
-                        AsyncImage(
+                        ShimmerAsyncImage(
                             model = ImageRequest.Builder(context)
                                 .data(coverModel)
                                 .crossfade(true)
@@ -180,7 +180,7 @@ fun EditProfileScreen(
                 ) {
                     val model = uiState.selectedPhotoUri ?: uiState.currentPhotoUrl
                     if (model != null) {
-                        AsyncImage(
+                        ShimmerAsyncImage(
                             model = ImageRequest.Builder(context)
                                 .data(model)
                                 .crossfade(true)

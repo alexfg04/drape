@@ -36,10 +36,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.drape.R
 import com.drape.data.model.Outfit
 import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.theme.DrapeTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -279,7 +279,7 @@ fun OutfitCard(
         Box(modifier = Modifier.fillMaxSize()) {
             // Outfit thumbnail
             if (outfit.thumbnailUrl.isNotEmpty()) {
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = outfit.thumbnailUrl,
                     contentDescription = outfit.name,
                     modifier = Modifier.fillMaxSize(),

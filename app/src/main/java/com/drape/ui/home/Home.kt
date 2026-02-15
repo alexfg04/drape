@@ -31,10 +31,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import com.drape.R
 import com.drape.data.model.ClothingItem
 import com.drape.data.model.Outfit
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.statistics.HomeStatisticsCard
 import com.drape.ui.theme.DrapeTheme
 
@@ -387,7 +387,7 @@ fun OutfitCard(
         ) {
             // Outfit thumbnail
             if (outfit.thumbnailUrl.isNotEmpty()) {
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = outfit.thumbnailUrl,
                     contentDescription = outfit.name,
                     modifier = Modifier.fillMaxSize(),
@@ -430,7 +430,7 @@ fun OutfitCard(
                 fontWeight = FontWeight.Bold,
                 fontSize = 14.sp,
                 color = if (outfit.thumbnailUrl.isNotEmpty()) {
-                    androidx.compose.ui.graphics.Color.White
+                    Color.White
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },
@@ -469,7 +469,7 @@ fun ClothingItemCard(
                     .clip(RoundedCornerShape(8.dp))
             ) {
                 if (item.imageUrl.isNotEmpty()) {
-                    AsyncImage(
+                    ShimmerAsyncImage(
                         model = item.imageUrl,
                         contentDescription = item.name,
                         modifier = Modifier.fillMaxSize(),

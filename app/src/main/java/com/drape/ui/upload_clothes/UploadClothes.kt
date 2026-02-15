@@ -42,10 +42,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.data.model.ItemCategory
 import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.components.getDisplayNameForCategory
 import com.drape.ui.theme.DrapeTheme
 import com.drape.ui.upload_clothes.ImagePickerHandler.rotateImage
@@ -408,7 +408,7 @@ fun MainImagePreview(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (imageUri != null) {
-                AsyncImage(
+                ShimmerAsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(imageUri)
                         .crossfade(true)
@@ -722,7 +722,7 @@ fun AddItemForm(
     ) {
         // Validation Image
         if (imageUri != null) {
-            AsyncImage(
+            ShimmerAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageUri)
                     .crossfade(true)

@@ -70,14 +70,13 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import androidx.core.content.FileProvider
 import com.drape.R
 import com.drape.data.model.ItemCategory
 import com.drape.ui.components.DrapeSnackbar
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.components.getDisplayNameForCategory
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -323,6 +322,60 @@ fun OutfitCreatorScreen(
     val currentItems = uiState.availableClothes.filter {
         it.category.equals(selectedCategory.name, ignoreCase = true)
     }
+    val editorImageUrls = remember(uiState.placedItems) {
+        uiState.placedItems.values
+            .mapNotNull { it?.clothingItem?.imageUrl?.takeIf { imageUrl -> imageUrl.isNotBlank() } }
+            .distinct()
+            .sorted()
+    }
+    val editorImageReadyMap = remember { mutableStateMapOf<String, Boolean>() }
+    var isEditorImagesTimedOut by remember { mutableStateOf(false) }
+    var showEditorImagesOverlay by remember { mutableStateOf(false) }
+    LaunchedEffect(editorImageUrls) {
+        editorImageReadyMap.keys.toList().forEach { trackedUrl ->
+            if (trackedUrl !in editorImageUrls) {
+                editorImageReadyMap.remove(trackedUrl)
+            }
+        }
+        editorImageUrls.forEach { imageUrl ->
+            if (editorImageReadyMap[imageUrl] == null) {
+                editorImageReadyMap[imageUrl] = false
+            }
+        }
+        isEditorImagesTimedOut = false
+    }
+    val areEditorImagesReady by remember(editorImageUrls, editorImageReadyMap) {
+        derivedStateOf {
+            editorImageUrls.isEmpty() || editorImageUrls.all { imageUrl ->
+                editorImageReadyMap[imageUrl] == true
+            }
+        }
+    }
+    val shouldWaitForEditorImages by remember(areEditorImagesReady, isEditorImagesTimedOut) {
+        derivedStateOf { !areEditorImagesReady && !isEditorImagesTimedOut }
+    }
+
+    // Debounce short-lived URL swaps to avoid overlay flashing on cached images.
+    LaunchedEffect(editorImageUrls, shouldWaitForEditorImages) {
+        if (!shouldWaitForEditorImages) {
+            showEditorImagesOverlay = false
+            return@LaunchedEffect
+        }
+        kotlinx.coroutines.delay(250)
+        if (shouldWaitForEditorImages) {
+            showEditorImagesOverlay = true
+        }
+    }
+
+    // Safety timeout: if loading stalls, dismiss the blocking overlay after ~10s.
+    LaunchedEffect(showEditorImagesOverlay, shouldWaitForEditorImages) {
+        if (!showEditorImagesOverlay || !shouldWaitForEditorImages) return@LaunchedEffect
+        kotlinx.coroutines.delay(10_000)
+        if (showEditorImagesOverlay && shouldWaitForEditorImages) {
+            isEditorImagesTimedOut = true
+            showEditorImagesOverlay = false
+        }
+    }
 
     Scaffold(
         containerColor = Color.Transparent, // Preserve background color from Column
@@ -426,6 +479,11 @@ fun OutfitCreatorScreen(
                                     onSendBackward = { viewModel.sendSelectedItemBackward() },
                                     onTransformUpdate = { s, r, o ->
                                         viewModel.updateTransform(category, s, r, o)
+                                    },
+                                    onImageReadyStateChanged = { isReady ->
+                                        if (editorImageReadyMap[itemState.clothingItem.imageUrl] != isReady) {
+                                            editorImageReadyMap[itemState.clothingItem.imageUrl] = isReady
+                                        }
                                     }
                                 )
                             }
@@ -800,6 +858,36 @@ fun OutfitCreatorScreen(
             ) { data ->
                 DrapeSnackbar(snackbarData = data)
             }
+
+            if (showEditorImagesOverlay) {
+                Box(
+                    modifier = Modifier
+                        .zIndex(20f)
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        CircularProgressIndicator()
+                        Text(
+                            text = stringResource(R.string.outfit_creator_loading_editor_images),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -872,7 +960,7 @@ fun GalleryItem(
         contentAlignment = Alignment.Center
     ) {
         if (imageUrl != null) {
-            AsyncImage(
+            ShimmerAsyncImage(
                 model = imageUrl,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize().padding(12.dp),
@@ -948,7 +1036,8 @@ fun ClothItem(
     onSelect: () -> Unit,
     onBringForward: () -> Unit,
     onSendBackward: () -> Unit,
-    onTransformUpdate: (Float?, Float?, Offset?) -> Unit
+    onTransformUpdate: (Float?, Float?, Offset?) -> Unit,
+    onImageReadyStateChanged: (Boolean) -> Unit = {}
 ) {
     // We use rememberUpdatedState to ensure pointerInput captures the latest values without resetting
     val currentOffset by rememberUpdatedState(offset)
@@ -970,6 +1059,7 @@ fun ClothItem(
     val currentOnBringForward by rememberUpdatedState(onBringForward)
     val currentOnSendBackward by rememberUpdatedState(onSendBackward)
     val currentOnTransformUpdate by rememberUpdatedState(onTransformUpdate)
+    val currentOnImageReadyStateChanged by rememberUpdatedState(onImageReadyStateChanged)
 
     Box(
         modifier = Modifier
@@ -1053,11 +1143,12 @@ fun ClothItem(
             ),
         contentAlignment = Alignment.Center
     ) {
-        AsyncImage(
+        ShimmerAsyncImage(
             model = imageUrl,
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
+            contentScale = ContentScale.Fit,
+            onLoadingStateChanged = currentOnImageReadyStateChanged
         )
 
         if (isActive) {

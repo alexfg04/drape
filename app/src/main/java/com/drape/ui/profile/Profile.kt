@@ -44,12 +44,12 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
-import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.drape.ui.my_outfit.SavedOutfitsViewModel
 import com.drape.ui.theme.DrapeTheme
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import com.drape.receivers.NotificationReceiver
+import com.drape.ui.components.ShimmerAsyncImage
 import com.drape.ui.wardrobe.WardrobeViewModel
 import androidx.compose.runtime.LaunchedEffect
 
@@ -151,7 +151,7 @@ fun ProfileScreen(
                 color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 if (user?.coverPhotoUrl != null) {
-                    AsyncImage(
+                    ShimmerAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(user?.coverPhotoUrl)
                             .crossfade(true)
@@ -204,7 +204,7 @@ fun ProfileScreen(
                 color = MaterialTheme.colorScheme.secondaryContainer
             ) {
                 if (user?.photoUrl != null) {
-                    AsyncImage(
+                    ShimmerAsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(user?.photoUrl)
                             .crossfade(true)
@@ -459,7 +459,7 @@ fun ProfileScreen(
                                     }
                                 }
                                 user?.bodyReferenceImage != null -> {
-                                    AsyncImage(
+                                    ShimmerAsyncImage(
                                         model = ImageRequest.Builder(context)
                                             .data(user?.bodyReferenceImage)
                                             .crossfade(true)
