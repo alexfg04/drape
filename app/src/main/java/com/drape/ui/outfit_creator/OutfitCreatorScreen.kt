@@ -329,6 +329,8 @@ fun OutfitCreatorScreen(
             .sorted()
     }
     val editorImageReadyMap = remember { mutableStateMapOf<String, Boolean>() }
+    var isEditorImagesTimedOut by remember { mutableStateOf(false) }
+    var showEditorImagesOverlay by remember { mutableStateOf(false) }
     LaunchedEffect(editorImageUrls) {
         editorImageReadyMap.keys.toList().forEach { trackedUrl ->
             if (trackedUrl !in editorImageUrls) {
@@ -340,12 +342,38 @@ fun OutfitCreatorScreen(
                 editorImageReadyMap[imageUrl] = false
             }
         }
+        isEditorImagesTimedOut = false
     }
     val areEditorImagesReady by remember(editorImageUrls, editorImageReadyMap) {
         derivedStateOf {
             editorImageUrls.isEmpty() || editorImageUrls.all { imageUrl ->
                 editorImageReadyMap[imageUrl] == true
             }
+        }
+    }
+    val shouldWaitForEditorImages by remember(areEditorImagesReady, isEditorImagesTimedOut) {
+        derivedStateOf { !areEditorImagesReady && !isEditorImagesTimedOut }
+    }
+
+    // Debounce short-lived URL swaps to avoid overlay flashing on cached images.
+    LaunchedEffect(editorImageUrls, shouldWaitForEditorImages) {
+        if (!shouldWaitForEditorImages) {
+            showEditorImagesOverlay = false
+            return@LaunchedEffect
+        }
+        kotlinx.coroutines.delay(250)
+        if (shouldWaitForEditorImages) {
+            showEditorImagesOverlay = true
+        }
+    }
+
+    // Safety timeout: if loading stalls, dismiss the blocking overlay after ~10s.
+    LaunchedEffect(showEditorImagesOverlay, shouldWaitForEditorImages) {
+        if (!showEditorImagesOverlay || !shouldWaitForEditorImages) return@LaunchedEffect
+        kotlinx.coroutines.delay(10_000)
+        if (showEditorImagesOverlay && shouldWaitForEditorImages) {
+            isEditorImagesTimedOut = true
+            showEditorImagesOverlay = false
         }
     }
 
@@ -831,12 +859,20 @@ fun OutfitCreatorScreen(
                 DrapeSnackbar(snackbarData = data)
             }
 
-            if (!areEditorImagesReady) {
+            if (showEditorImagesOverlay) {
                 Box(
                     modifier = Modifier
                         .zIndex(20f)
                         .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f)),
+                        .background(MaterialTheme.colorScheme.background.copy(alpha = 0.92f))
+                        .pointerInput(Unit) {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    val event = awaitPointerEvent()
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
