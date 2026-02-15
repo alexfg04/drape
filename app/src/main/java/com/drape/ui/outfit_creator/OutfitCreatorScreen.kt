@@ -881,7 +881,7 @@ fun OutfitCreatorScreen(
                     ) {
                         CircularProgressIndicator()
                         Text(
-                            text = "Caricamento immagini dell'editor...",
+                            text = stringResource(R.string.outfit_creator_loading_editor_images),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
