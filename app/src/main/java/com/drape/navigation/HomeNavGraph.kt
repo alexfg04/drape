@@ -89,7 +89,8 @@ fun NavGraphBuilder.homeNavGraph(
                         }
                     }
                 },
-                onTryOnClick = { navController.navigate(TryOnResult) }
+                onTryOnClick = { navController.navigate(TryOnResult) },
+                onCalendarClick = { navController.navigate(Planner) }
             )
         }
 
@@ -98,7 +99,8 @@ fun NavGraphBuilder.homeNavGraph(
             OutfitCreatorScreen(
                 outfitId = route.outfitId,
                 onBackClick = { navController.popBackStack() },
-                onTryOnClick = { navController.navigate(TryOnResult) }
+                onTryOnClick = { navController.navigate(TryOnResult) },
+                onCalendarClick = { navController.navigate(Planner) }
             )
         }
 
