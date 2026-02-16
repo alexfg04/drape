@@ -90,7 +90,15 @@ fun NavGraphBuilder.homeNavGraph(
                     }
                 },
                 onTryOnClick = { navController.navigate(TryOnResult) },
-                onCalendarClick = { navController.navigate(Planner) }
+                onCalendarClick = {
+                    navController.navigate(Planner) {
+                        popUpTo(HomeGraph) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
@@ -100,7 +108,15 @@ fun NavGraphBuilder.homeNavGraph(
                 outfitId = route.outfitId,
                 onBackClick = { navController.popBackStack() },
                 onTryOnClick = { navController.navigate(TryOnResult) },
-                onCalendarClick = { navController.navigate(Planner) }
+                onCalendarClick = {
+                    navController.navigate(Planner) {
+                        popUpTo(HomeGraph) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
