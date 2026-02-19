@@ -1,5 +1,8 @@
 package com.drape.ui.profile.edit
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,13 +21,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.request.ImageRequest
 import com.drape.R
@@ -40,6 +46,16 @@ fun EditProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val galleryPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_IMAGES
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
+    }
+    fun hasGalleryPermission(): Boolean = ContextCompat.checkSelfPermission(
+        context,
+        galleryPermission
+    ) == PackageManager.PERMISSION_GRANTED
+    var pendingPickerAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
     val saveSuccessMessage = stringResource(R.string.profile_saved)
     LaunchedEffect(uiState.saveSuccess) {
@@ -73,8 +89,32 @@ fun EditProfileScreen(
     ) { uri ->
         viewModel.onCoverPhotoSelected(uri)
     }
+    val galleryPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            pendingPickerAction?.invoke()
+        } else {
+            viewModel.clearError()
+        }
+        pendingPickerAction = null
+    }
 
     val pickImageRequest = PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+    fun launchWithGalleryPermission(action: () -> Unit) {
+        if (hasGalleryPermission()) {
+            action()
+        } else {
+            pendingPickerAction = action
+            galleryPermissionLauncher.launch(galleryPermission)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!hasGalleryPermission()) {
+            galleryPermissionLauncher.launch(galleryPermission)
+        }
+    }
 
     Scaffold(
         snackbarHost = {
@@ -123,7 +163,11 @@ fun EditProfileScreen(
                 val coverModel = uiState.selectedCoverUri ?: uiState.currentCoverUrl
                 
                 Surface(
-                    modifier = Modifier.fillMaxSize().clickable { coverPickerLauncher.launch(pickImageRequest) },
+                    modifier = Modifier.fillMaxSize().clickable {
+                        launchWithGalleryPermission {
+                            coverPickerLauncher.launch(pickImageRequest)
+                        }
+                    },
                     color = MaterialTheme.colorScheme.primaryContainer,
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                 ) {
@@ -154,7 +198,11 @@ fun EditProfileScreen(
                     }
                 }
                  SmallFloatingActionButton(
-                    onClick = { coverPickerLauncher.launch(pickImageRequest) },
+                    onClick = {
+                        launchWithGalleryPermission {
+                            coverPickerLauncher.launch(pickImageRequest)
+                        }
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .padding(8.dp)
@@ -173,8 +221,10 @@ fun EditProfileScreen(
                     modifier = Modifier
                         .size(120.dp)
                         .clickable {
-                        imagePickerLauncher.launch(pickImageRequest)
-                    },
+                            launchWithGalleryPermission {
+                                imagePickerLauncher.launch(pickImageRequest)
+                            }
+                        },
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.secondaryContainer
                 ) {
@@ -208,7 +258,9 @@ fun EditProfileScreen(
                 
                 SmallFloatingActionButton(
                     onClick = {
-                        imagePickerLauncher.launch(pickImageRequest)
+                        launchWithGalleryPermission {
+                            imagePickerLauncher.launch(pickImageRequest)
+                        }
                     },
                     modifier = Modifier.size(32.dp),
                     containerColor = MaterialTheme.colorScheme.primary
