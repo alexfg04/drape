@@ -99,9 +99,11 @@ class NotificationReceiver : BroadcastReceiver() {
             remoteViews.setTextViewText(R.id.notification_text, message)
 
             val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setStyle(NotificationCompat.DecoratedCustomViewStyle()) // Wrap with system header
-                .setCustomContentView(remoteViews)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(title)
+                .setContentText("Il tuo planner è ancora vuoto.")
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setCustomBigContentView(remoteViews)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
