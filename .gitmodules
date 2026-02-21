@@ -1,0 +1,3 @@
+[submodule "vto-backend"]
+	path = vto-backend
+	url = https://github.com/alexfg04/drape-vto.git
